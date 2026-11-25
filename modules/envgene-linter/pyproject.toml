@@ -1,0 +1,72 @@
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{include = "envgene_linter", from = "src"}]
+readme = ["PYPI_README.md", "CHANGELOG.md"]
+exclude = [
+  "tests",
+  "testdata",
+  "docs",
+  "scripts",
+]
+
+[project]
+name = "qubership-envgene-linter"
+version = "0.0.9"
+description = "Qubership EnvGene CLI for instance configuration and template checks in instance and template repositories."
+dynamic = ["readme"]
+requires-python = "~=3.12"
+authors = [
+  {name = "Qubership"},
+]
+maintainers = [
+  {name = "Qubership"},
+]
+keywords = [
+  "envgene",
+  "linter",
+  "lint",
+  "configuration",
+  "yaml",
+  "quality",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+  "click==8.1.7",
+  "Jinja2==3.1.6",
+  "ruamel.yaml==0.18.17",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+]
+release = [
+  "build>=1.2",
+  "twine>=6",
+]
+
+[project.urls]
+Homepage = "https://github.com/Netcracker/qubership-envgene/tree/feature/envgene-linter-dev/modules/envgene-linter"
+Documentation = "https://github.com/Netcracker/qubership-envgene/blob/feature/envgene-linter-dev/modules/envgene-linter/README.md"
+Source = "https://github.com/Netcracker/qubership-envgene/tree/feature/envgene-linter-dev/modules/envgene-linter"
+Issues = "https://github.com/Netcracker/qubership-envgene/issues"
+
+[project.scripts]
+envgene-linter = "envgene_linter.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

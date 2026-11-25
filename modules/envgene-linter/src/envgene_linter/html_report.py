@@ -1,0 +1,196 @@
+"""Self-contained HTML check report for an instance repository."""
+
+from __future__ import annotations
+
+import html
+from collections import defaultdict
+from pathlib import Path
+
+from .model import Action, Finding
+from .report import RULE_ORDER, relative_path, rule_sort_key
+from .rulemeta import RULES
+
+REPORT_FILENAME = "envgene-linter-report.html"
+
+_CHIP_CLASS = {
+    Action.FIX.value: "chip-fix",
+    Action.REVIEW.value: "chip-review",
+}
+
+_CSS = """
+:root { color-scheme: light; }
+body {
+  font: 15px/1.45 system-ui, sans-serif;
+  max-width: 56rem;
+  margin: 2rem auto;
+  padding: 0 1.25rem 3rem;
+  color: #1a1a1a;
+}
+h1 {
+  font: 700 1.7rem/1.2 Georgia, "Times New Roman", serif;
+  margin: 0 0 1.4rem;
+}
+details.rule-section {
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+  padding: 0.65rem 0.85rem 0.35rem;
+  margin: 0 0 1rem;
+}
+details.rule-section + details.rule-section { margin-top: 0.85rem; }
+summary.rule-id {
+  font: 600 1.15rem/1.3 Georgia, "Times New Roman", serif;
+  cursor: pointer;
+  margin: 0 0 0.6rem;
+}
+.finding {
+  margin: 0 0 0.85rem;
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+  background: #fafafa;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  font-size: 0.95rem;
+}
+.label {
+  padding: 0.5rem 0.7rem;
+  background: #f3f3f3;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+.value {
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid #eee;
+}
+.finding > div:nth-last-child(-n+2) { border-bottom: 0; }
+.suggestion { white-space: pre-wrap; overflow-wrap: anywhere; font-family: ui-monospace, monospace; margin: 0; }
+.source-locations { margin-top: 0.5rem; }
+.source-locations summary { cursor: pointer; }
+.file { font-family: ui-monospace, monospace; font-size: 0.88em; }
+.chip {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid #bbb;
+  background: #eee;
+}
+.chip-fix { background: #e8f0fe; border-color: #9db7e8; }
+.chip-review { background: #eee; border-color: #bbb; }
+.skipped-checks { border: 2px solid #b97800; background: #fff8e8; padding: 0.8rem; margin-bottom: 1rem; }
+.skipped-checks h2 { margin-top: 0; font-size: 1.15rem; }
+"""
+
+
+def report_path(root: Path) -> Path:
+    return root / REPORT_FILENAME
+
+
+def ensure_report_ignored(root: Path, *additional_filenames: str) -> None:
+    path = root / ".gitignore"
+    text = path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
+    existing = {line.strip() for line in text.splitlines()}
+    missing = [
+        name for name in (REPORT_FILENAME, *additional_filenames)
+        if name not in existing and f"/{name}" not in existing
+    ]
+    if not missing:
+        return
+    if text and not text.endswith("\n"):
+        text += "\n"
+    path.write_text(text + "\n".join(missing) + "\n", encoding="utf-8")
+
+
+def _chip(value: str) -> str:
+    cls = _CHIP_CLASS.get(value, "chip-review")
+    return f'<span class="chip {cls}">{html.escape(value)}</span>'
+
+
+def _file_html(item: Finding, root: Path) -> str:
+    lines = []
+    for loc in item.file_locations():
+        text = f"{relative_path(loc.path, root)}:{loc.line}:{loc.column}"
+        lines.append(f'<span class="file">{html.escape(text)}</span>')
+    positions = "<br>\n".join(lines)
+    files = dict.fromkeys(relative_path(loc.path, root) for loc in item.file_locations())
+    if item.rule == "PLACE-12" and len(lines) > len(files):
+        visible = "<br>\n".join(f'<span class="file">{html.escape(path)}</span>' for path in files)
+        return (visible + '<details class="source-locations">'
+                + f'<summary>All {len(lines)} source positions</summary>' + positions + '</details>')
+    return positions
+
+
+def _card(item: Finding, root: Path) -> list[str]:
+    suggestion = html.escape(item.hint)
+    if "\n" in item.hint:
+        suggestion = f'<pre class="suggestion">{suggestion}</pre>'
+    rows = (
+        ("FILE", _file_html(item, root)),
+        ("ISSUE", html.escape(item.message)),
+        ("ACTION", _chip(item.action.value)),
+        ("FIX SUGGESTION", suggestion),
+    )
+    parts = ['<div class="finding">']
+    for label, value in rows:
+        parts.append(f'<div class="label">{html.escape(label)}</div>')
+        parts.append(f'<div class="value">{value}</div>')
+    parts.append("</div>")
+    return parts
+
+
+def render_html(
+    findings: list[Finding], root: Path, *, disabled_rules: tuple[str, ...] = (),
+    not_applicable_rules: tuple[str, ...] = (), skipped: list[str] | None = None,
+) -> str:
+    repository_root = root.resolve()
+    repository_name = html.escape(repository_root.name or repository_root.anchor)
+    by_rule: dict[str, list[Finding]] = defaultdict(list)
+    for item in findings:
+        if item.rule not in disabled_rules and item.rule not in not_applicable_rules:
+            by_rule[item.rule].append(item)
+    parts = [
+        "<!DOCTYPE html>",
+        '<html lang="en">',
+        "<head>",
+        '<meta charset="utf-8">',
+        f"<title>{repository_name} — Envgene Linter Report</title>",
+        f"<style>{_CSS}</style>",
+        "</head>",
+        "<body>",
+        "<h1>Envgene Linter Report</h1>",
+        f'<p class="repository">Repository: <strong>{repository_name}</strong></p>',
+    ]
+    skipped = [note for note in skipped or ()
+               if not any(note.startswith(f'{rule}:') or note.endswith(f'; {rule} skipped')
+                          for rule in disabled_rules)]
+    if skipped:
+        parts.extend([
+            '<section class="skipped-checks">',
+            '<h2>Incomplete checks</h2>',
+            '<p>Some sources could not be checked. Review these skips before treating this report as complete.</p>',
+            '<ul>',
+            *(f'<li>{html.escape(note)}</li>' for note in skipped),
+            '</ul></section>',
+        ])
+    visible_not_applicable = set(not_applicable_rules) - set(disabled_rules)
+    if visible_not_applicable:
+        labels = ", ".join(html.escape(rule) for rule in sorted(visible_not_applicable, key=rule_sort_key))
+        parts.append(f'<p class="not-applicable-rules">Not applicable to this repository: {labels}</p>')
+    if not by_rule:
+        if set(RULE_ORDER).issubset(set(disabled_rules) | set(not_applicable_rules)):
+            parts.append("<p>No applicable rules enabled</p>" if visible_not_applicable else "<p>No rules enabled</p>")
+        else:
+            parts.append("<p>No findings in the checked sources.</p>" if skipped else "<p>No findings</p>")
+    else:
+        for rule in sorted(by_rule, key=rule_sort_key):
+            meta = RULES.get(rule)
+            title = f"{rule}: {meta.description}" if meta is not None else rule
+            parts.append('<details class="rule-section">')
+            parts.append(f'<summary class="rule-id">{html.escape(title)}</summary>')
+            for item in by_rule[rule]:
+                parts.extend(_card(item, root))
+            parts.append("</details>")
+    parts.extend(["</body>", "</html>", ""])
+    return "\n".join(parts)

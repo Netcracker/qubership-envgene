@@ -40,7 +40,7 @@ Flow:
 
 ```text
 1.1 preprocess -> 1.13 generate_deployment_plan -> 1.14 env_build -> 1.15 generate_effective_set
-              -> 1.16 git_commit -> 1.18 es_pusher -> 1.20 postprocess
+              -> 1.16 git_commit -> 1.18 generate_argocd_repo -> 1.20 postprocess
 ```
 
 Launch parameters:
@@ -64,12 +64,12 @@ Actions:
   written into `deployment/<ns>/` and `runtime/<ns>/` (no app content). The cleaned namespaces are not removed
   from `deployment/mapping.yaml` and `runtime/mapping.yaml` - the `.cleaned` marker in each namespace folder is
   what tells downstream tooling the namespace is cleaned. No cleanup context is produced.
-- `es_pusher` pushes the effective set with `ESPUSHER_OVERWRITE: true`, so the deploy target repository reflects
-  the reduced state.
+- `generate_argocd_repo` runs `argocd-dpg cleanup structure`, so the deploy target repository reflects the reduced
+  state.
 
 `1.14 env_build` fires only `set_cleaned_mark`. The rendering functions (`generate_composite_structure`,
 `compute_composite_topology`, `generate_solution_structure`, `run_build_environment`) are `DEPLOY` only, so the
-env instance is left otherwise untouched. `generate_argocd_repo` and the `sync` job do not fire for `CLEAN`.
+env instance is left otherwise untouched. The `sync` job does not fire for `CLEAN`.
 
 ## CLEAN selected namespaces
 
@@ -83,7 +83,7 @@ Flow:
 
 ```text
 1.1 preprocess -> 1.13 generate_deployment_plan -> 1.14 env_build -> 1.15 generate_effective_set
-              -> 1.16 git_commit -> 1.18 es_pusher -> 1.20 postprocess
+              -> 1.16 git_commit -> 1.18 generate_argocd_repo -> 1.20 postprocess
 ```
 
 Launch parameters:

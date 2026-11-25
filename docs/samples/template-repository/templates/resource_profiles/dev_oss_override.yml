@@ -1,0 +1,29 @@
+---
+name: "dev_oss_override"
+baseline: "dev"
+description: "Override for dev-profile"
+applications:
+- name: "core-app"
+  services:
+  - name: "core-service"
+    parameters:
+    - name: "CPU_LIMIT"
+      value: "1"
+    - name: "MEMORY_LIMIT"
+      value: "562Mi"
+    - name: "REPLICAS"
+      value: "3"
+    - name: "CPU_REQUEST"
+      value: "150m"
+- name: "oss-app"
+  services:
+  - name: "oss-service"
+    parameters:
+    - name: "CPU_LIMIT"
+      value: "2"
+    - name: "REPLICAS"
+      value: "3"
+    - name: "CPU_REQUEST"
+      value: "150m"
+    - name: "MEMORY_LIMIT"
+      value: "336Mi"

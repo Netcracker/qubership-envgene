@@ -125,6 +125,10 @@ An in-scope item is always a change. Something that stays as it is - a path left
 format unchanged - is a boundary, not a change: it belongs in Out of scope, or nowhere. A phrase like `keep X
 unchanged` or `X still works as today` in In scope is the tell - move it to Out of scope or drop it.
 
+Do not list test coverage as an in-scope item. Tests for the change are implied and ship with the
+implementation, so a `Tests: cover ...` item is noise. The one exception is a ticket whose primary
+deliverable is the tests themselves - a test-only CR - where the tests are the change.
+
 Carry the design-time seam into Implementation notes. When the design settled a load-bearing implementation
 insight - where the change attaches and how - record it as guidance, because the developer who implements
 this may be a different person or session than the one who designed it, and that insight does not survive
@@ -169,6 +173,13 @@ deletion of its source branch. This rule holds for every source.
   `https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/<path>.md`. Get the SHA from the
   PR head (`mcp__github__pull_request_read` method `get`, field `head.sha`), the merge commit, or
   `git log -1 --format=%H -- <path>` for a committed local file.
+- When the design was authored through the analyst flow, it lives in the OpenSpec change folder, not a
+  single feature doc. The design is the change's own artifacts: the proposal, the delta spec, and the ADR
+  under `docs/adr/`. The `Design reference` entry must still be clickable: use the hand-off PR reference
+  (`#NNNN`), which carries all three and stays after merge, or SHA-permalinks to each file. Never paste
+  bare repo paths as the reference - they render as dead text on GitHub, so a path names which file to
+  link, not the link itself. Anchor each in-scope item to its own spec requirement heading
+  (`### Requirement: <name>`) rather than to a feature-doc section.
 - Give each `In scope changes` item an inline anchor permalink to the specific design section that
   motivates it, on the most relevant noun (the modified file, schema field, job, or parameter):
   `https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/<path>.md#<anchor>`. Compute the
@@ -238,6 +249,9 @@ is a miss that has actually shipped in a filed CR, so treat them as blocking rat
   An item that reads like a step-by-step of how the behavior works belongs in the design doc, not the ticket.
 - In-scope non-change: no item asserts that something stays as it is (`keep`, `unchanged`, `still`, `as today`).
   A non-change is an Out-of-scope boundary, not an in-scope change - move it there or drop it.
+- In-scope tests: no item is a bare test-coverage task (`Tests: cover ...`, `Add tests for ...`). Test
+  coverage is implied and ships with the implementation - drop it, unless the ticket's primary deliverable
+  is the tests themselves.
 
 ### File the issue
 

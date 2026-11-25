@@ -24,6 +24,8 @@
   - [TC-003-021: Using `current_env.cloud_passport`. `inventory.cloudPassport` NOT set in Environment Inventory](#tc-003-021-using-current_envcloud_passport-inventorycloudpassport-not-set-in-environment-inventory)
   - [TC-003-022: Using `current_env.solution_structure`. SD exist in Instance repository](#tc-003-022-using-current_envsolution_structure-sd-exist-in-instance-repository)
   - [TC-003-023: Using `current_env.solution_structure`. SD NOT in Instance repository](#tc-003-023-using-current_envsolution_structure-sd-not-in-instance-repository)
+  - [TC-003-024: Using `current_env.cluster.name`. `inventory.cloudName` and `inventory.cloudPassport` NOT set in Environment Inventory](#tc-003-024-using-current_envclustername-inventorycloudname-and-inventorycloudpassport-not-set-in-environment-inventory)
+  - [TC-003-025: Using `current_env.cluster.name`. `inventory.cloudName` and `inventory.cloudPassport` set in Environment Inventory](#tc-003-025-using-current_envclustername-inventorycloudname-and-inventorycloudpassport-set-in-environment-inventory)
 
 Test Cases for [Template Macros](/docs/template-macros.md)
 
@@ -622,3 +624,71 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 **Expected Results:**
 
 - Namespace in Environment Instance contains values where `current_env.solution_structure` was substituted with value `{}`
+
+## TC-003-024: Using `current_env.cluster.name`. `inventory.cloudName` and `inventory.cloudPassport` NOT set in Environment Inventory
+
+**Status:** New
+
+**Test Data:**
+
+- Credential Template in Template repository with a Credential that uses `current_env.cluster.name` in `remoteRefPath`
+- Environment Inventory at `/environments/test-cluster-01/test-env-01/Inventory/env_definition.yml`
+
+**Pre-requisites:**
+
+- Template Descriptor sets `external_credential_template`
+- Credential Template contains the Credential:
+
+  ```yaml
+  argocd-cred:
+    type: external
+    secretStore: default_store
+    remoteRefPath: "{{ current_env.cluster.name }}"
+    create: false
+    properties:
+      - name: username
+      - name: password
+  ```
+
+- Environment Inventory does not set `inventory.cloudName` and `inventory.cloudPassport`
+- Instance repository contains no Cloud Passport for the cluster `test-cluster-01`
+- Instance repository does not override `argocd-cred`
+
+**Steps:**
+
+- `ENV_NAMES`: `test-cluster-01/test-env-01`
+- `ENV_BUILDER`: `true`
+- `GENERATE_EFFECTIVE_SET`: `true`
+
+**Expected Results:**
+
+- Environment Credentials File in Environment Instance contains `argocd-cred` with `remoteRefPath: test-cluster-01`
+- Effective Set contains the VALS reference `ref+vault://<mountPath>/test-cluster-01/argocd-cred` for `argocd-cred`,
+  where `<mountPath>` is the `mountPath` of `default_store`
+- `current_env.cloud` is rendered as `test_cluster_01_test_env_01`, the same as without the new macro
+
+## TC-003-025: Using `current_env.cluster.name`. `inventory.cloudName` and `inventory.cloudPassport` set in Environment Inventory
+
+**Status:** New
+
+**Test Data:**
+
+- Credential Template from [TC-003-024](#tc-003-024-using-current_envclustername-inventorycloudname-and-inventorycloudpassport-not-set-in-environment-inventory)
+- Environment Inventory at `/environments/test-cluster-01/test-env-01/Inventory/env_definition.yml`
+- Cloud Passport referenced by `inventory.cloudPassport`
+
+**Pre-requisites:**
+
+- Environment Inventory sets `inventory.cloudName` and `inventory.cloudPassport`
+- Cloud Passport referenced by `inventory.cloudPassport` exists in Instance repository. Its credentials file does not
+  contain `argocd-cred`
+
+**Steps:**
+
+- `ENV_NAMES`: `test-cluster-01/test-env-01`
+- `ENV_BUILDER`: `true`
+
+**Expected Results:**
+
+- Environment Credentials File in Environment Instance contains `argocd-cred` with `remoteRefPath: test-cluster-01`
+- `current_env.cluster.name` is not affected by `inventory.cloudName` and `inventory.cloudPassport`

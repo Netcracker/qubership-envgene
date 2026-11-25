@@ -1,0 +1,3 @@
+version: 1.5
+cloud:
+  CLOUD_API_HOST: api.example.test

@@ -16,7 +16,7 @@
 | 2026-11-12 09:12 | propose | - | - | owner: <owner> from CODEOWNERS; order change approved by <owner> (MR !n) |
 | 2026-11-12 10:00 | propose | `openspec validate <id> --strict --no-interactive` | 0 | valid @ 3f2a9c1 |
 | 2026-11-12 14:30 | propose | - | - | gate: proposal approved by <owner> on MR !n @ 3f2a9c1 |
-| 2026-11-12 15:00 | design | - | - | gate: approach B accepted by <developer> (design.md @ 9b0e4d2) |
+| 2026-11-12 15:00 | design | - | - | gate: approach B accepted by <developer> (component-design.md @ 9b0e4d2) |
 | 2026-11-12 15:20 | implement | `python -m pytest modules/envgene/envgenehelper -k X` | 1 | red: 2 failures, function missing |
 | 2026-11-12 15:41 | implement | `python -m pytest modules/envgene/envgenehelper -k X` | 0 | green: 2 tests @ 9b0e4d2 |
 | 2026-11-12 17:10 | verify | `cd modules/envgene/envgenehelper && python -m pytest` | 0 | 412 passed, baseline 405 @ 7c01d2e |
@@ -36,14 +36,15 @@ A gate is passed by a row with the gate word `gate:` in the result column. Each 
 
 | Gate | Written by | Row | Passed when |
 |---|---|---|---|
-| propose | `envgene-propose` | `gate: proposal approved by <owner> on MR !n @ <sha>` | owner merged or approved the proposal MR; `proposal.md`, `specs/`, the ADR and, for an upstream hand-off, `design.md` unchanged since `<sha>` |
-| design | `envgene-design` | `gate: approach <x> accepted by <developer> (design.md @ <sha>)` | team's own change only: developer accepted the decision; every contract id of `design.md` defined and covered in the design. An upstream hand-off has no design gate |
+| propose | `envgene-propose` | `gate: proposal approved by <owner> on MR !n @ <sha>` | owner merged or approved the proposal MR; `proposal.md`, `specs/` and the ADR unchanged since `<sha>` (neither the read-only `design.md` nor `component-design.md` is part of this gate) |
+| design | `envgene-design` | `gate: approach <x> accepted by <developer> (component-design.md @ <sha>)` | every change, including a hand-off: the Work map has no `not-in-repo` rows; developer accepted the decision; every contract id of `component-design.md` defined and covered in the design. For a hand-off the stage builds on the read-only upstream `design.md`; it never edits it |
+| plan | `envgene-plan` | `gate: plan.md written, <n> steps for <m> tasks, contracts <k>/<k> covered @ <sha>` | `plan.md` saved; every contract id of `component-design.md` covered by a step |
 | verify | `envgene-verification` | one `verify` row per command, at HEAD: `<passed>/<total> @ <sha> (baseline <counts>)` | every command exit 0, or no new failure against its `baseline:` row |
 | lint | `envgene-verification` | a `verify` row for the lint command at HEAD: `<n> errors @ <sha>` | exit 0 |
-| review | `envgene-review` | `gate: review <verdict> by envgene-reviewer @ <sha>, <n> critical, <n> important` | verdict `ready` or `ready with fixes`, no open critical or important |
-| docs | `envgene-documentation` | `gate: docs check passes @ <sha>` | no new findings against the base branch |
-| finish | `envgene-finish` | `gate: code approved by <owner> on PR #<n> @ <sha>, checks green` | owner approval read from the PR; GitHub Actions checks green for that commit |
-| archive | `envgene-finish` | `gate: archived as the last commit, openspec validate --all --strict exit 0 @ <sha>` | archive commit is the last commit; the merge by a person is read from the PR and posted as a PR comment |
+| review | `envgene-review` | `gate: review confirmed by <person> @ <sha>; envgene-reviewer <ready\|ready with fixes>, <n> critical, <n> important, <n> minor` | envgene-reviewer verdict `ready` or `ready with fixes`, no open critical or important; the person said "ok" for this HEAD |
+| docs | `envgene-documentation` | `gate: docs check passes @ <sha>` | `reviewing-docs` has no open findings; `discrepancy-audit` finds no contradiction with the code or schema, or every contradiction is closed by a decision row naming the side that moved, or the ledger says why it was skipped; the lint row at HEAD is exit 0 |
+| finish | `envgene-finish` | `gate: code approved by <owner> on MR !<n> @ <sha>, checks green` | owner approval read from the GitLab MR; its pipeline green for that commit; a GitHub PR, when there is one, merged and its image referenced in the MR |
+| archive | `envgene-finish` | `gate: archived as the last commit, openspec validate --all --strict exit 0 @ <sha>` | archive commit is the last commit; the merge by a person is read from the GitLab MR and posted as an MR comment |
 
 ## Rules
 

@@ -110,3 +110,53 @@ Feature: Cred store - cred-store.md
     Then the effective set is generated successfully
     And in the "test-app" collision-credentials.yaml the value of "web" is encrypted
     And in the "test-app" collision-credentials.yaml the value of "worker" is encrypted
+
+  Scenario: UC-CS-KEY-1: A newly added AGE recipient is applied to an existing ES cred file
+    Given the workspace is initialized with test data from "e2e/uc_cc_cp_5"
+    And the pipeline has GENERATE_EFFECTIVE_SET set to "true"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"web\":\"collision-value\"}}"
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the "test-app" collision-credentials.yaml has the default AGE recipient
+    When the added AGE recipient is enabled in the pipeline parameters
+    And the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the "test-app" collision-credentials.yaml has the default and added AGE recipients
+    And the decrypted "test-app" collision-credentials.yaml has "web" equal to "collision-value"
+
+  Scenario: UC-CS-KEY-2: A removed AGE recipient stays in an existing ES cred file
+    Given the workspace is initialized with test data from "e2e/uc_cc_cp_5"
+    And the pipeline has GENERATE_EFFECTIVE_SET set to "true"
+    And the pipeline parameter "CUSTOM_PARAMS" is set to "{\"deployment\":{\"web\":\"collision-value\"}}"
+    And the added AGE recipient is enabled in the pipeline parameters
+    When the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the "test-app" collision-credentials.yaml has the default and added AGE recipients
+    When the cred files are recorded as a baseline
+    And the added AGE recipient is removed from the pipeline parameters
+    And the unified pipeline orchestrator runs
+    Then the effective set is generated successfully
+    And the "test-app" collision-credentials.yaml has the default and added AGE recipients
+    And the decrypted "test-app" collision-credentials.yaml has "web" equal to "collision-value"
+
+  Scenario: UC-CS-KEY-3: A newly added AGE recipient is applied to an unchanged env cred file
+    Given the workspace is initialized with test data from "e2e/uc_cp_03_no_passport"
+    And the cred files of the environment are SOPS-encrypted with the test key
+    And the cred files are recorded as a baseline
+    And the pipeline parameter "ENV_BUILDER" is set to "true"
+    And the added AGE recipient is enabled in the pipeline parameters
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And the cred file "environments/test-cluster/test-env/Credentials/credentials.yml" has the default and added AGE recipients
+    And in the cred file "environments/test-cluster/test-env/Credentials/credentials.yml" no value has a new ciphertext
+    And the decrypted cred file "environments/test-cluster/test-env/Credentials/credentials.yml" has "dummy-cred.data.secret" equal to "dummy-secret"
+
+  Scenario: UC-CS-KEY-4: A removed AGE recipient leaves an unchanged env cred file as is
+    Given the workspace is initialized with test data from "e2e/uc_cp_03_no_passport"
+    And the cred files of the environment are SOPS-encrypted with the test key and the added AGE recipient
+    And the cred files are recorded as a baseline
+    And the pipeline parameter "ENV_BUILDER" is set to "true"
+    When the unified pipeline orchestrator runs
+    Then the orchestrator completes successfully
+    And every cred file is byte-equal to the baseline
+    And the decrypted cred file "environments/test-cluster/test-env/Credentials/credentials.yml" has "dummy-cred.data.secret" equal to "dummy-secret"

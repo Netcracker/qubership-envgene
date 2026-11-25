@@ -48,11 +48,11 @@
 **Effective Set:**
 
 - [**Generate an Effective Set**](/docs/how-to/generate-effective-set.md) - Trigger Effective Set generation from a Solution Descriptor artifact and template version
+- [**Enable the Compact `deploy-descriptor.yaml` Layout**](/docs/how-to/enable-compact-deploy-descriptor.md) - Reduce the size of `deploy-descriptor.yaml` for an application with many services
 
 **Advanced Configuration:**
 
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
-- [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
 - [**Configure local Credentials**](/docs/how-to/configure-local-credentials.md) - Set and update the credentials of an environment stored encrypted in the Instance repository
 - [**Configure a Secret Store**](/docs/how-to/configure-secret-store.md) - Describe a Secret Store and give the Instance pipeline access to it
@@ -85,7 +85,6 @@
   Credential sources, auto-generation, precedence ladder, and mode-dependent merging
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO in the Effective Set, and External Credential Context
-- [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
@@ -106,7 +105,8 @@
 - [**Template Examples**](/docs/samples/template-repository/) - Ready-to-use template examples
 - [**Environment Examples**](/docs/samples/instance-repository/) - Sample environment configurations
 - [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/) - Template and inventory examples for non-BG to BGD migration
-- [**Cloud Artifact Registry Samples**](/docs/samples/cloud-artifact-registries/) - RegDef and ArtDef samples for AWS CodeArtifact and GCP Artifact Registry
+- [**Cloud Artifact Registry Samples**](/docs/samples/cloud-artifact-registries/) - RegDef v1.0, registry auth parameters,
+  and ArtDef samples for AWS CodeArtifact and GCP Artifact Registry
 
 ## Development
 

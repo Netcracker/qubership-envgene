@@ -39,6 +39,7 @@
         - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `custom-params.yaml`](#version-20deployment-parameter-context-custom-paramsyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
+          - [\[Version 2.0\] `deploy-descriptor.yaml` layouts](#version-20-deploy-descriptoryaml-layouts)
           - [\[Version 2.0\] Predefined `deploy-descriptor.yaml` parameters](#version-20-predefined-deploy-descriptoryaml-parameters)
           - [\[Version 2.0\] Service Artifacts](#version-20-service-artifacts)
           - [\[Version 2.0\] Primary Service Artifact](#version-20-primary-service-artifact)
@@ -92,7 +93,7 @@
 
 1. If a Solution Descriptor is not present for the Environment for which Effective Set generation is launched, the Calculator must be launched WITHOUT the following attributes:
    1. `--sboms-path`/`-sp`
-   2. `--sd-path`/`-sdp`
+   2. `--deploy-plan-path`/`-dpp`
    3. `--registries`/`-r`
 
 ## Proposed Approach
@@ -108,14 +109,14 @@ Below is a **complete** list of attributes
 | `--env-id`/`-e`                                     | string  | yes       | Environment ID in `<cluster-name>/<environment-name>` notation                                                                                                                                                                                                                                                | N/A     | `cluster/platform-00`                                                     |
 | `--envs-path`/`-ep`                                 | string  | yes       | Path to `/environments` folder                                                                                                                                                                                                                                                                                | N/A     | `/environments`                                                           |
 | `--sboms-path`/`-sp`                                | string  | no        | Path to the folder with Application SBOMs. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                  | N/A     | `/sboms`                                                                  |
-| `--sd-path`/`-sdp`                                  | string  | yes       | Path to the Solution Descriptor                                                                                                                                                                                                                                                                               | N/A     | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml` |
-| `--registries`/`-r`                                 | string  | no        | Required when `--sd-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                                            | N/A     | `/configuration/registry.yml`                                             |
+| `--deploy-plan-path`/`-dpp`                         | string  | no        | Path to the deploy plan, a non-empty YAML list of the applications to calculate. Mandatory for Effective Set v1.0                                                                                                                                                                                             | N/A     | `/environments/cluster/platform-00/Inventory/deploy-plan.yml`             |
+| `--registries`/`-r`                                 | string  | no        | Required when `--deploy-plan-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                                   | N/A     | `/configuration/registry.yml`                                             |
 | `--output`/`-o`                                     | string  | yes       | Folder where the result will be put by Calculator command-line tool                                                                                                                                                                                                                                           | N/A     | `/environments/cluster/platform-00/effective-set`                         |
 | `--effective-set-version`/`-esv`                    | string  | no        | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`                                                                                                                                                                                                                     | `v2.0`  | `v1.0`                                                                    |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string  | no        | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided                                                                                                                                                                               | N/A     |                                                                           |
 | `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`              |
 | `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                                                                                                       | `false` | `true`                                                                    |
-| `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to the deployment and runtime contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params)       | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
+| `--custom-params`/`-cp`                             | string  | no        | Custom Params to inject into the Effective Set with highest priority. Applied to the deployment and runtime contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params)                                          | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
 | `--generate-cleanup-context`/`-gcc`                 | boolean | no        | Determines whether the cleanup context is generated for every namespace of the environment. If `true`, it is produced for all namespaces. If `false`, no cleanup context is produced                                                                                                                          | `false` | `true`                                                                    |
 | `--creds-output`                                    | string  | no        | File to write the credential files of the Effective Set to, as one JSON object of file path to content. If the attribute is not provided, the JSON goes to standard output                                                                                                                                    | N/A     | `/dev/fd/3`                                                               |
 
@@ -481,7 +482,7 @@ Normative algorithms for normalization to `normalizedSecretName`, VALS reference
 
 SBOMs for Effective Set calculation are optional. When the Calculator command-line tool is launched without the following attributes:
 
-- `--sd-path`/`-ssp`
+- `--deploy-plan-path`/`-dpp`
 - `--sboms-path`/`-sp`
 - `--registries`/`-r`
 
@@ -512,7 +513,7 @@ Parameters can be set at different levels:
 
 If the same parameter key is set in multiple sources or levels, the Calculator uses the following priority (from highest to lowest):
 
-1. [Custom Params](/docs/glossary.md#custom-params) (`--custom-params`)
+1. [Custom Params](/docs/instance-pipeline-parameters.md#custom_params) (`--custom-params`)
 2. User-defined in [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) of the Environment Instance
 3. Service level defined in Resource Profile Baseline in Application SBOM
 4. Service level defined in other Application SBOM attributes
@@ -870,7 +871,27 @@ This file describes the parameters of the application artifacts generated during
 >[!Note]
 > The `DEPLOYMENT_SESSION_ID` parameter is an exception to this rule - it is taken from `extra_params`
 
-The structure of this file is as follows:
+The structure of this file depends on the layout of the application. See
+[`deploy-descriptor.yaml` layouts](#version-20-deploy-descriptoryaml-layouts).
+
+###### [Version 2.0] `deploy-descriptor.yaml` layouts
+
+The layout is set per application by the optional attribute `metadata.deployContextLayout` in the Deployment
+Descriptor (DD). EnvGene copies it to the Application SBOM. See
+[Application SBOM Metadata](/docs/features/sbom-generation.md#application-sbom-metadata).
+
+| `metadata.deployContextLayout` | Layout                       |
+|--------------------------------|------------------------------|
+| absent                         | [`full`](#full-layout)       |
+| `full`                         | [`full`](#full-layout)       |
+| `compact`                      | [`compact`](#compact-layout) |
+
+The layout affects only `deploy-descriptor.yaml`. Other Effective Set files do not change.
+
+**`full` layout**<a id="full-layout"></a>
+
+The default layout. Every service section contains the list of all services twice: in `deployDescriptor` and in
+`global`:
 
 ```yaml
 global: &id001
@@ -891,6 +912,32 @@ deployDescriptor: *id003
 <common-predefined-key-1>: <common-predefined-value-1>
 <common-predefined-key-N>: <common-predefined-value-N>
 ```
+
+**`compact` layout**<a id="compact-layout"></a>
+
+The list of all services is written once, in `global.deployDescriptor`. Service sections contain only the
+[common predefined parameters](#version-20-predefined-deploy-descriptoryaml-parameters):
+
+```yaml
+<common-predefined-key-1>: <common-predefined-value-1>
+<common-predefined-key-N>: <common-predefined-value-N>
+global:
+  deployDescriptor:
+    <service-name-1>:
+      <service-predefined-key-1>: <service-predefined-value-1>
+      <service-predefined-key-N>: <service-predefined-value-N>
+    <service-name-2>:
+      <service-predefined-key-1>: <service-predefined-value-1>
+      <service-predefined-key-N>: <service-predefined-value-N>
+<service-name-1>: &id001
+  <common-predefined-key-1>: <common-predefined-value-1>
+  <common-predefined-key-N>: <common-predefined-value-N>
+<service-name-2>: *id001
+```
+
+> [!IMPORTANT]
+> Before you set `compact`, make sure the application charts do not read `.Values.deployDescriptor`.
+> In the `compact` layout, the list of services is available only in `.Values.global.deployDescriptor`.
 
 ###### [Version 2.0] Predefined `deploy-descriptor.yaml` parameters
 
