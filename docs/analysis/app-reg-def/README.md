@@ -7,7 +7,6 @@ consumer can download its deployment descriptor as well as do CRUD on applicatio
 
 Shared, read first:
 
-- [brief.md](brief.md) - the exploration brief, decisions and the open backlog.
 - [model.md](model.md) - the objects and the repository layout.
 
 Service variant:
