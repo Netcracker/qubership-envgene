@@ -72,6 +72,10 @@ one:
 2. Add the missing `UC-<PREFIX>-<N>:` entries to the use-case document of the area
    in the same change. Without them the suite ends with a feature file that no
    document requires, and the next change cannot tell whether it is still needed.
+   Section 3 pairs a feature file with the use-case document of the same name, so
+   when no document of that name exists, create it and put the new entries there.
+   Extending a grouped prefix of a neighbouring document (`UC-RP-<group>-<n>`) is
+   right only when the feature file is the document's own.
 
 ### Axes of Coverage
 
@@ -104,6 +108,14 @@ again, which is how `cred-store.feature` covers a second run.
 
 Two combinations with the same observable result need no two scenarios. The list
 covers every way the result can differ, not every input value.
+
+One run has several observables (a file, a field of a committed file, a value of
+the Effective Set, a log line). Assert all of them in the one scenario of that
+run: the scenario is the shape of the run, not the artifact it happens to touch.
+
+When a combination has neither a scenario nor a unit test nor a limit that keeps
+it out, say so and record it as a known gap. An invented scenario is worse than a
+named gap, because it hides the gap from the next reader.
 
 ---
 
