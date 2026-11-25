@@ -141,7 +141,7 @@ Feature: The PROFILE parameter of a run as a resource profile
     And the service "svc1" of application "app1" receives "REPLICAS" as "7"
     And the service "svc1" of application "app1" does not receive "TEMPLATE_PARAM"
 
-  Scenario: UC-DP-NB-1: A baseline the deployed application does not have layers nothing under its services
+  Scenario: UC-DP-NB-1: A baseline the deployed application does not have falls back to the baseline of the profile
     Given the workspace is initialized with test data from "e2e/uc_rp_dp_5"
     And the pipeline parameter "GENERATE_EFFECTIVE_SET" is set to "true"
     And the Calculator CLI generates the effective set
@@ -201,6 +201,7 @@ Feature: The PROFILE parameter of a run as a resource profile
     And the generated resource profile lists "app1" with baseline "prod"
     And the run writes the generated resource profile with baseline "prod"
     And the environment definition assigns the generated resource profile to "bss"
+    And the pipeline log shows "Writing the override of 'bss' with baseline 'prod'"
 
   Scenario: UC-DP-AC-3: A key that already names the generated override is not written again
     Given the workspace is initialized with test data from "e2e/uc_rp_dp_12"
@@ -265,6 +266,7 @@ Feature: The PROFILE parameter of a run as a resource profile
     And the generated resource profile opens with the marker of EnvGene
     And the run writes the generated resource profile with baseline "prod"
     And the environment definition assigns the generated resource profile to "bss"
+    And the environment definition records the generated entry with the comment of EnvGene
 
   # The run below builds the environment without a Solution Descriptor and without a GitLab deploy,
   # so it deploys no application and PROFILE has no effect. The overall result of such a run is not

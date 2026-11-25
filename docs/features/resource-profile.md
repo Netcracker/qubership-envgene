@@ -31,7 +31,8 @@ For the implementation details, see the
 [`env_build` step](/docs/technical-design/instance-pipeline/steps/env-build.md) for how overrides are
 combined and the [Calculator CLI](/docs/features/calculator-cli.md) for how the baseline and override are
 resolved.
-For worked scenarios, see [Resource profiles use cases](/docs/use-cases/resource-profiles.md).
+For worked scenarios, see [Resource profiles use cases](/docs/use-cases/resource-profiles.md) and
+[Deployment profile use cases](/docs/use-cases/deployment-profile.md).
 
 ## Three-level hierarchy
 
@@ -387,6 +388,7 @@ replicas: 1
 - [Configure resource profiles](/docs/how-to/configure-resource-profiles.md) - task scenarios for setting profiles
 - [Resource profiles tutorial](/docs/tutorials/resource-profiles.md) - a guided end-to-end lesson
 - [Resource profiles use cases](/docs/use-cases/resource-profiles.md) - observable behavior scenarios
+- [Deployment profile use cases](/docs/use-cases/deployment-profile.md) - observable behavior scenarios of PROFILE
 - [ADR-0006](/docs/adr/0006-resource-profile-baseline-override-resolution.md) - the resolution design decision
 - [`env_build`](/docs/technical-design/instance-pipeline/steps/env-build.md) - how overrides are combined
 - [`generate_effective_set`](/docs/technical-design/instance-pipeline/steps/generate-effective-set.md) - launches the calculator

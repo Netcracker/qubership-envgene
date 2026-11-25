@@ -14,7 +14,7 @@
     - [UC-DP-RP-2: Merge mode keeps the template override and changes only the baseline](#uc-dp-rp-2-merge-mode-keeps-the-template-override-and-changes-only-the-baseline)
     - [UC-DP-RP-3: Replace mode drops the template override and keeps the values of the environment override](#uc-dp-rp-3-replace-mode-drops-the-template-override-and-keeps-the-values-of-the-environment-override)
   - [A baseline the application does not have](#a-baseline-the-application-does-not-have)
-    - [UC-DP-NB-1: A baseline the deployed application does not have layers nothing under its services](#uc-dp-nb-1-a-baseline-the-deployed-application-does-not-have-layers-nothing-under-its-services)
+    - [UC-DP-NB-1: A baseline the deployed application does not have falls back to the baseline of the profile](#uc-dp-nb-1-a-baseline-the-deployed-application-does-not-have-falls-back-to-the-baseline-of-the-profile)
   - [Namespace selection](#namespace-selection)
     - [UC-DP-NS-1: Only the namespaces the run deploys get the PROFILE override](#uc-dp-ns-1-only-the-namespaces-the-run-deploys-get-the-profile-override)
     - [UC-DP-PF-1: One run with PROFILE writes one override per deployPostfix](#uc-dp-pf-1-one-run-with-profile-writes-one-override-per-deploypostfix)
@@ -285,8 +285,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters identical to tho
 
 1. The `env_build` job writes the generated override and assembles the profile of the Namespace from it, because the
    Namespace has no profile of its own.
-2. The same job sets `profile.name` of the Namespace object to the assembled profile and leaves the Cloud object
-   untouched.
+2. The same job sets `profile.name` of the Namespace object to the assembled profile. The generated override does
+   not reach the Cloud object, and the profile the environment assigns to the Cloud stays on it.
 3. The `generate_effective_set` job sees a Namespace with a profile and stops consulting the Cloud.
 
 **Results:**
@@ -299,8 +299,9 @@ Instance pipeline (GitLab or GitHub) is started with parameters identical to tho
 4. The Effective Set of the deployed application is resolved on the Namespace side, so it has the values of the `prod`
    baseline, `BASELINE_MEMORY: prod-mem` and `REPLICAS: 2`, and it has neither `CLOUD_PARAM` nor the `REPLICAS: 5` of
    the Cloud override.
-5. The other applications of the Namespace also lose the Cloud override, because the active side is chosen per
-   Namespace. This is the intended consequence of giving the Namespace a profile of its own.
+5. The active side is chosen per Namespace, so a Namespace that gains a profile of its own stops consulting the
+   Cloud for all of its applications. The scenario carries one application, so this consequence for the others is
+   stated by the feature and not asserted by the scenario.
 
 ## Merge and replace modes
 
@@ -401,7 +402,7 @@ Identical to [UC-DP-RP-1](#uc-dp-rp-1-replace-mode-leaves-the-generated-profile-
 does not check the name against the application, because the baselines an application provides are published by its
 SBOM, which the effective-set stage generates after the environment build.
 
-### UC-DP-NB-1: A baseline the deployed application does not have layers nothing under its services
+### UC-DP-NB-1: A baseline the deployed application does not have falls back to the baseline of the profile
 
 **Pre-requisites:**
 
@@ -529,7 +530,6 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 1. `Inventory/resource_profiles/bss-profile-override.yml` names `app1` with `baseline: dev` and still names `app3`
    with `baseline: prod`.
 2. `envTemplate.generatedProfileDefaults.bss` still names `bss-profile-override`.
-3. The run reports no warning about a hand-written override, because the file carries the marker of EnvGene.
 
 ### UC-DP-AC-2: A rerun with the same PROFILE names its application once
 
@@ -556,8 +556,8 @@ with `PROFILE: prod`.
 **Results:**
 
 1. `Inventory/resource_profiles/bss-profile-override.yml` names `app1` once, with `baseline: prod`.
-2. `envTemplate.generatedProfileDefaults.bss` still names `bss-profile-override`, and the run reports no warning
-   about the override it rewrites.
+2. `envTemplate.generatedProfileDefaults.bss` still names `bss-profile-override`, and the log states that the run
+   wrote the override of the deployPostfix with the baseline of the run.
 
 ### UC-DP-AC-3: A key that already names the generated override is not written again
 
@@ -668,8 +668,12 @@ text. These use cases take that name from an author and that text from a reader.
 
 **Trigger:**
 
-Instance pipeline (GitLab or GitHub) is started with parameters identical to those of
-[UC-DP-ES-1](#uc-dp-es-1-a-run-with-profile-applies-its-baseline-through-the-effective-set), with `PROFILE: prod`.
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <cluster>/<env>`
+2. `OPERATION_TYPE: DEPLOY`
+3. `SD_DATA` or `SD_VERSION` that deploys an application with deployPostfix `bss`
+4. `PROFILE: prod`
 
 **Steps:**
 
@@ -693,7 +697,12 @@ Instance pipeline (GitLab or GitHub) is started with parameters identical to tho
 
 **Trigger:**
 
-Identical to [UC-DP-ES-1](#uc-dp-es-1-a-run-with-profile-applies-its-baseline-through-the-effective-set).
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <cluster>/<env>`
+2. `OPERATION_TYPE: DEPLOY`
+3. `SD_DATA` or `SD_VERSION` that deploys an application with deployPostfix `bss`
+4. `PROFILE: prod`
 
 **Steps:**
 
@@ -741,8 +750,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Pre-requisites:**
 
-1. A generated override and a recorded map of an earlier deploy run, so that the result of the CLEAN run is the
-   absence of a change.
+1. An Environment Instance that no earlier run with `PROFILE` has written an override for, so the CLEAN run has
+   nothing to rewrite and nothing to keep.
 
 **Trigger:**
 
@@ -759,6 +768,6 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Results:**
 
-1. No generated override is written or changed, and `envTemplate.generatedProfileDefaults` keeps the keys of the
-   earlier deploy runs.
+1. No generated override is written, `Inventory/resource_profiles` gains no `-profile-override` file and
+   `envTemplate.generatedProfileDefaults` gains no key.
 2. The log states that the run does not deploy, so the parameter has no effect.

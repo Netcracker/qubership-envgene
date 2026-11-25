@@ -5,10 +5,9 @@ from pytest_bdd import given, then, parsers
 
 from cucumber_tests.framework.workspace import EnvGeneWorkspace
 from cucumber_tests.shared_steps.calculator_cli_steps import _MOCK_REGISTRY, _PRODUCTION_CLI
-from build_env.deployment_profile import GENERATED_MARKER, GENERATED_PROFILES_MAP_KEY, PROFILE_DOC, \
+from build_env.deployment_profile import GENERATED_KEY_COMMENT, GENERATED_MARKER, GENERATED_PROFILES_MAP_KEY, PROFILE_DOC, \
     PROFILE_OVERRIDE_SUFFIX, RESOURCE_PROFILES_DIR_NAME
 
-GENERATED_PROFILE_NAME = f"bss{PROFILE_OVERRIDE_SUFFIX}"
 GENERATED_MAP_KEY = GENERATED_PROFILES_MAP_KEY
 
 
@@ -20,8 +19,24 @@ def _env_definition(workspace: EnvGeneWorkspace) -> dict:
     return workspace.get_yaml(_env_dir(workspace) / "Inventory" / "env_definition.yml")
 
 
+def _generated_profile_files(workspace: EnvGeneWorkspace) -> list[Path]:
+    """The override files of the instance that carry the marker the PROFILE step writes."""
+    folder = _env_dir(workspace) / "Inventory" / RESOURCE_PROFILES_DIR_NAME
+    marker = f"# {GENERATED_MARKER}"
+    found = []
+    for path in sorted(folder.glob(f"*{PROFILE_OVERRIDE_SUFFIX}.y*ml")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        first = next((line for line in lines if line.strip()), "")
+        if first.strip() == marker:
+            found.append(path)
+    return found
+
+
 def _generated_profile_file(workspace: EnvGeneWorkspace) -> Path:
-    return _override_file(workspace, GENERATED_PROFILE_NAME)
+    """The one generated override of the run, found by its marker instead of by a hardcoded postfix."""
+    found = _generated_profile_files(workspace)
+    assert len(found) == 1, f"Expected one generated profile, found {found}"
+    return found[0]
 
 
 def _override_file(workspace: EnvGeneWorkspace, name: str) -> Path:
@@ -114,19 +129,19 @@ def run_writes_generated_profile(workspace: EnvGeneWorkspace, baseline: str):
     profile_file = _generated_profile_file(workspace)
     assert profile_file.is_file(), f"{profile_file} is not written by the run"
     profile = workspace.get_yaml(profile_file)
-    assert profile["name"] == GENERATED_PROFILE_NAME, profile
+    assert profile["name"] == profile_file.stem, profile
     assert {application["baseline"] for application in profile["applications"]} == {baseline}, profile
 
 
 @then("the run leaves no generated resource profile")
 def run_leaves_no_generated_profile(workspace: EnvGeneWorkspace):
-    assert not _generated_profile_file(workspace).is_file()
+    assert not _generated_profile_files(workspace), _generated_profile_files(workspace)
 
 
 @then(parsers.parse('the environment definition assigns the generated resource profile to "{key}"'))
 def definition_assigns_generated_profile(workspace: EnvGeneWorkspace, key: str):
     generated = _env_definition(workspace)["envTemplate"].get(GENERATED_MAP_KEY) or {}
-    assert generated.get(key) == GENERATED_PROFILE_NAME, generated
+    assert generated.get(key) == f"{key}{PROFILE_OVERRIDE_SUFFIX}", generated
 
 
 @then(parsers.parse('the environment definition has no generated resource profile for "{key}"'))
@@ -181,5 +196,21 @@ def sd_data_with_two_deploy_postfixes(workspace: EnvGeneWorkspace, app_version: 
 @then("the generated resource profile opens with the marker of EnvGene")
 def generated_profile_opens_with_marker(workspace: EnvGeneWorkspace):
     lines = _generated_profile_file(workspace).read_text(encoding="utf-8").splitlines()
-    assert lines[0] == f"# {GENERATED_MARKER}", lines[:3]
-    assert any(PROFILE_DOC in line for line in lines), lines[:6]
+    assert lines[0] == f"# {GENERATED_MARKER}", lines[:6]
+    header = []
+    for line in lines:
+        if not line.startswith("#"):
+            break
+        header.append(line)
+    assert any(PROFILE_DOC in line for line in header), header
+
+@then("the environment definition records the generated entry with the comment of EnvGene")
+def definition_records_generated_entry_with_comment(workspace: EnvGeneWorkspace):
+    lines = (_env_dir(workspace) / "Inventory" / "env_definition.yml").read_text(encoding="utf-8").splitlines()
+    start = next((i for i, line in enumerate(lines) if line.strip().startswith(f"{GENERATED_MAP_KEY}:")), None)
+    assert start is not None, lines
+    body = lines[start + 1:]
+    commented = [i for i, line in enumerate(body) if GENERATED_KEY_COMMENT in line]
+    assert commented, body
+    following = body[commented[0] + 1] if commented[0] + 1 < len(body) else ""
+    assert ":" in following and not following.strip().startswith("#"), body
