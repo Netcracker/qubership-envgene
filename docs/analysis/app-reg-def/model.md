@@ -13,7 +13,7 @@ and the RegDef v2 analysis linked below, not restated here. The behavior that us
   - [description](/docs/envgene-objects.md#registry-definition)
   - [regdef.schema.json](/schemas/regdef.schema.json)
   - [regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md)
-- **client** - the opened appregdef-client over a backend, returned by `open_defs` (git) or `connect`
+- **client** - the opened appregdef-client over a backend, returned by `open_defs` (Git) or `connect`
   (service). One object with the defs-store operations.
   See [library/interface-spec.md](library/interface-spec.md).
 - **Application** - the runtime join of an AppDef and its RegDef, reused from artifact-searcher's
@@ -30,7 +30,8 @@ and the RegDef v2 analysis linked below, not restated here. The behavior that us
 
 ## Repository layout
 
-A dedicated defs repo, separate from the instance repos, is the source of truth. The defs are flat, one
+A dedicated defs repository, separate from the instance repositories, is the source of truth. The defs are
+flat, one
 file per def, with the schemas alongside.
 
 ```text
@@ -46,17 +47,18 @@ RegDefs/
   <registry-name>.yaml      # one RegDef per file
 ```
 
-- the def folders are `AppDefs/` and `RegDefs/`, matching the existing central registry repo, so the
+- the def folders are `AppDefs/` and `RegDefs/`, matching the existing central registry repository, so the
   migration needs no folder move. This is a deliberate exception to the kebab-case path convention, kept
   for these two fixed folders.
 - one branch is the source of truth. Changes may optionally go through a manual merge-request workflow.
-- zero secrets in the repo, `credId` references only, no encryption.
+- zero secrets in the repository, `credId` references only, no encryption.
 - zone folders are deferred. There is one default zone today, and the layout stays flat until multizone
   lands.
 
 ## Schema and validation
 
-The schemas live in the repo, so validation is versioned with the data and decoupled from a code release.
+The schemas live in the repository, so validation is versioned with the data and decoupled from a code
+release.
 
 - each def carries a `kind` (`ApplicationDefinition`, `RegistryDefinition`), and a RegDef also carries its
   `version` (absent for v1, `"2.0"` for v2). The validator maps `(kind, version)` to
@@ -73,9 +75,9 @@ The schemas live in the repo, so validation is versioned with the data and decou
 
 Casing by role, so the same identity reads consistently across the file system and the object.
 
-- path identifiers, the def file names and the def `name`, are kebab-case and DNS-safe. The two container
+- path identifiers, the def filenames and the def `name`, are kebab-case and DNS-safe. The two container
   folders `AppDefs/` and `RegDefs/` are the inherited exception (see Repository layout).
 - object fields are camelCase.
 - a `kind`, where an object carries one, is PascalCase, for example `RegistryDefinition`.
-- the file name without the extension equals the def `name`, so `RegDefs/shared-platform.yaml` holds the
+- the filename without the extension equals the def `name`, so `RegDefs/shared-platform.yaml` holds the
   RegDef named `shared-platform`.
