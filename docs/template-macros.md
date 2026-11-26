@@ -483,7 +483,7 @@ For the Environment at `/environments/test-cluster-01/test-env-01/`, the rendere
 ---
 **Description:** HTTP/HTTPS protocol for cluster connection URL
 
-Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). If [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is used for Environment generation, the value will be overwritten from Cloud Passport file
+Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). If a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is used for environment generation and `clusterUrl` is not set, the value is taken from the Cloud Passport `CLOUD_PROTOCOL`
 
 **Type:** String
 
@@ -502,7 +502,7 @@ protocol: "{{current_env.cluster.cloud_api_protocol}}"
 ---
 **Description:** API URL of a cluster
 
-Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). If [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is used for Environment generation, the value will be overwritten from Cloud Passport file
+Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). If a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is used for environment generation and `clusterUrl` is not set, the value is taken from the Cloud Passport `CLOUD_API_HOST`
 
 **Type:** String
 
@@ -521,7 +521,7 @@ apiUrl: "{{current_env.cluster.cloud_api_url}}"
 ---
 **Description:** Port of a cluster API server
 
-Value is parsed from `inventory.clusterUrl` in in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). If [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is used for Environment generation, the value will be overwritten from Cloud Passport file
+Value is parsed from `inventory.clusterUrl` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). If a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is used for environment generation and `clusterUrl` is not set, the value is taken from the Cloud Passport `CLOUD_API_PORT`
 
 **Type:** String
 
@@ -540,7 +540,7 @@ apiPort: "{{current_env.cluster.cloud_api_port}}"
 ---
 **Description:** Public URL of a cluster.
 
-Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). If [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is used for Environment generation, the value will be overwritten from Cloud Passport file
+Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). If a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is used for environment generation and `clusterUrl` is not set, the value is taken from the Cloud Passport `CLOUD_PUBLIC_HOST`
 
 **Type:** String
 
@@ -548,7 +548,9 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 
 **Basic usage:**
 
-`apiPort: "{{current_env.cluster.cloud_api_port}}"`
+```yaml
+publicUrl: "{{current_env.cluster.cloud_public_url}}"
+```
 
 **Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
