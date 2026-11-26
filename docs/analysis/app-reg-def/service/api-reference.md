@@ -3,17 +3,17 @@
 - [Conventions](#conventions)
 - [GET /api/v1/resolve](#get-apiv1resolve)
 - [POST /api/v1/resolve](#post-apiv1resolve)
-- [GET /api/v1/registry-definitions/{name}](#get-apiv1registry-definitionsname)
-- [GET /api/v1/application-definitions/{name}](#get-apiv1application-definitionsname)
+- [GET /api/v1/registry-definitions/:name](#get-apiv1registry-definitionsname)
+- [GET /api/v1/application-definitions/:name](#get-apiv1application-definitionsname)
 - [POST /api/v1/registry-definitions](#post-apiv1registry-definitions)
-- [PUT /api/v1/registry-definitions/{name}](#put-apiv1registry-definitionsname)
+- [PUT /api/v1/registry-definitions/:name](#put-apiv1registry-definitionsname)
 - [POST /api/v1/application-definitions](#post-apiv1application-definitions)
-- [PUT /api/v1/application-definitions/{name}](#put-apiv1application-definitionsname)
+- [PUT /api/v1/application-definitions/:name](#put-apiv1application-definitionsname)
 - [Error model](#error-model)
 
 The appregdef service exposes a small HTTP API. `resolve` returns the joined defs as an `Application`, and
 the consumer adds the version and the credentials to build the artifact and the provider and download
-through artifacts_finder. The write interfaces create and update defs in git. This page is the
+through artifacts_finder. The write interfaces create and update defs in Git. This page is the
 human-readable companion to `openapi.yaml`. The objects in the payloads are in [model.md](../model.md).
 
 ## Conventions
@@ -111,7 +111,7 @@ Resolves a list of applications in one call, the batch form of `GET /api/v1/reso
 3. Return an Application or a per-entry error for each, in request order, so one bad entry does not fail
    the batch.
 
-## GET /api/v1/registry-definitions/{name}
+## GET /api/v1/registry-definitions/:name
 
 Returns a RegDef by name, with no application. The way to reach a registry directly, for publish and
 promote flows.
@@ -153,7 +153,7 @@ registries:
 1. Look up the RegDef by `name` in the cache. If it is absent, `404`.
 2. Return the RegDef as stored.
 
-## GET /api/v1/application-definitions/{name}
+## GET /api/v1/application-definitions/:name
 
 Returns an AppDef by name, without resolving its registry. The raw stored definition.
 
@@ -224,10 +224,10 @@ registries:
 1. Validate the body against the schema, and validate or normalize the name to the kebab DNS-safe
    convention.
 2. If a def with that name already exists, `409`.
-3. Commit and push the new file to the defs repo, with a fetch-rebase retry on a non-fast-forward.
+3. Commit and push the new file to the defs repository, with a fetch-rebase retry on a non-fast-forward.
 4. Return the written object. A following resolve sees it once the push-triggered resync lands.
 
-## PUT /api/v1/registry-definitions/{name}
+## PUT /api/v1/registry-definitions/:name
 
 Updates an existing RegDef. Parked (P1), the shape is settled.
 
@@ -258,7 +258,7 @@ the AppDef object. Parked (P1).
 As `POST /api/v1/registry-definitions`, validating the AppDef schema and writing to the
 `application-definitions/` folder.
 
-## PUT /api/v1/application-definitions/{name}
+## PUT /api/v1/application-definitions/:name
 
 Updates an existing AppDef. Parked (P1).
 
@@ -266,7 +266,7 @@ Updates an existing AppDef. Parked (P1).
 
 **Logic:**
 
-As `PUT /api/v1/registry-definitions/{name}`, over the AppDef object.
+As `PUT /api/v1/registry-definitions/:name`, over the AppDef object.
 
 ## Error model
 
@@ -292,9 +292,9 @@ The status codes across the interfaces:
 | `404` | the app, the def, or the addressed object is not found                           |
 | `409` | a create on an existing def, or a write overlap on the same def                  |
 | `422` | the def fails schema or name validation, or has a broken reference               |
-| `503` | git is unreachable on a write, reads keep serving the cache and do not 503       |
+| `503` | Git is unreachable on a write, reads keep serving the cache and do not 503       |
 | `500` | an unexpected internal error                                                     |
 
 > [!NOTE]
-> Reads stay available when git is unreachable. They serve the last cache and never return `503`. Only
-> writes, which must reach git, can.
+> Reads stay available when Git is unreachable. They serve the last cache and never return `503`. Only
+> writes, which must reach Git, can.
