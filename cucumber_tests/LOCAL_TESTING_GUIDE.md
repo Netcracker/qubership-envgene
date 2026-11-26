@@ -1,67 +1,55 @@
-# Local Testing Guide (end-to-end Tests)
+# Local Testing Guide (End-to-End BDD Tests)
 
-This guide provides step-by-step instructions on how to locally execute the End-to-End (BDD) tests for the EnvGene project and generate human-readable HTML reports.
+This guide describes the supported local workflow for running EnvGene's
+pytest-bdd tests in the same Docker setup used by GitHub Actions.
 
 ## Prerequisites
 
-1. **Docker Desktop** (or Docker Engine) installed and running on your local machine.
-2. **PowerShell** or **Bash** terminal.
+1. Docker Engine or Docker Desktop installed and running.
+2. Bash.
 
-## Step 1: Prepare the Docker Environment
+## Run the tests
 
-All tests execute in an isolated container that replicates the CI/CD environment. The EnvGene project directory is mounted inside the container, meaning any changes you make locally—and any reports generated—are instantly synced to your machine.
-
-1. Build the production image (this also compiles necessary Java tools like `effective-set-generator`):
-
-   ```bash
-   docker build -t local-envgene-main -f build_envgene/build/Dockerfile .
-   ```
-
-2. Start the testing container in the background:
-
-   ```bash
-   docker-compose -f devtools/docker-compose.yml up -d --build cucumber
-   ```
-
-3. Install required Python packages inside the container:
-
-   ```bash
-   docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "chmod +x /workspace/devtools/cucumber/up.sh && /workspace/devtools/cucumber/up.sh"
-   ```
-
-## Step 2: Run Tests with HTML Reporting
-
-To generate beautiful HTML reports, the `pytest-html` plugin is used. The output report will be saved inside the `cucumber_tests/reports` folder, which syncs directly to your local PC.
-
-### Run All Tests
+From the repository root, use the canonical runner:
 
 ```bash
-docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest cucumber_tests/ -v -s --html=cucumber_tests/reports/report.html --self-contained-html"
+./cucumber_tests/run_bdd_tests.sh
 ```
 
-### Run a Specific Scenario (by name)
+The runner rebuilds the production image, starts the cucumber container,
+installs the current repository modules, runs the BDD suites, writes JUnit
+results under `reports/`, and cleans up Docker on exit.
 
-You can filter tests by name using the `-k` parameter:
+To select scenarios by pytest-bdd test name:
 
 ```bash
-docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest cucumber_tests/ -k 'UC-SD-1' -v -s --html=cucumber_tests/reports/report.html --self-contained-html"
+./cucumber_tests/run_bdd_tests.sh "UC-SD-1"
 ```
 
-### Run a Specific Test File
+The argument is passed to pytest's `-k` filter. Use the suite runner directly
+when you need to run only one test file:
 
 ```bash
-docker-compose -f devtools/docker-compose.yml exec -T cucumber bash -c "export PYTHONPATH=/workspace && cd /workspace && pytest cucumber_tests/step_defs/test_sd_processing.py -v -s --html=cucumber_tests/reports/report.html --self-contained-html"
+docker compose -f devtools/docker-compose.yml exec -T cucumber \
+  bash -c "cd /workspace && pytest cucumber_tests/step_defs/test_sd_processing.py \
+  -c cucumber_tests/pytest.ini -v -s"
 ```
 
-## Step 3: View the Report
+## Results
 
-Once the tests finish running, navigate to the `cucumber_tests/reports` folder in your local project repository.
-Open the `report.html` file in any web browser by double-clicking it. The report will show detailed information about passed, failed, and skipped scenarios, along with the logs for each step.
+The runner writes:
 
-## Step 4: Cleanup (Optional)
+- `reports/eig.xml` — JUnit test results
+- `bdd_tests.log` — captured BDD output
 
-When you are finished working with the tests, you can stop and remove the containers:
+The Docker environment is removed automatically, including after failures.
+
+## Troubleshooting
+
+If the runner is interrupted or Docker was left running by another command:
 
 ```bash
-docker-compose -f devtools/docker-compose.yml down
+docker compose -f devtools/docker-compose.yml down --rmi local
 ```
+
+Use `docker compose`, not the legacy `docker-compose` command.
