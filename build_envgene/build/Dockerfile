@@ -70,19 +70,11 @@ COPY modules /modules
 COPY schemas /schemas
 COPY scripts/ /module/scripts/
 
-# jschon-sort is distributed as source; build its portable wheel alongside envgene-shared.
 RUN mkdir -p /module/metrics-collector-deps/wheels && \
     cp /build/metrics-collector-requirements.txt /module/metrics-collector-deps/requirements.txt && \
-    pip wheel --no-cache-dir --no-deps --wheel-dir /build/metrics-collector-wheels \
-        /modules/envgene-shared jschon-sort==0.2.0 && \
-    pip download --no-cache-dir --retries 10 --timeout 60 --only-binary=:all: \
-        --platform manylinux_2_28_x86_64 \
-        --platform manylinux_2_17_x86_64 \
-        --python-version 3.12 --implementation cp --abi cp312 \
-        --find-links /build/metrics-collector-wheels \
+    pip download --no-cache-dir --retries 10 --timeout 60 --only-binary=:all: --platform manylinux_2_28_x86_64 --python-version 3.12 --implementation cp --abi cp312 \
         --dest /module/metrics-collector-deps/wheels \
-        -r /module/metrics-collector-deps/requirements.txt \
-        /build/metrics-collector-wheels/envgene_shared-*.whl
+        -r /module/metrics-collector-deps/requirements.txt
 
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \
