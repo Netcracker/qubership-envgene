@@ -379,6 +379,22 @@ def _run_step(step: PipelineStep, ctx: PipelineParametersHandler, results: list[
                 banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
             logger.info(end_banner)
 
+class ArgoDpgExtensionStep(PipelineStep):
+    def __init__(self) -> None:
+        self.extension = PluginEngine(plugins_dir='/module/scripts/plugins/argo_dpg')
+
+    @property
+    def name(self) -> str:
+        return "argo_dpg_extension"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return bool(self.extension.modules) and ctx.is_gitlab_deploy() and (
+            ctx.is_deploy_or_clean() or ctx.is_bgd_warmup()
+        )
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        self.extension.run()
+
 
 @extra_creds_scope()
 def run_single_env_pipeline() -> None:
@@ -407,7 +423,7 @@ def run_single_env_pipeline() -> None:
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
     ]
-    final_steps: list[PipelineStep] = [GitCommitStep(), CMDB_import()]
+    final_steps: list[PipelineStep] = [GitCommitStep(), CMDB_import(), ArgoDpgExtensionStep()]
 
     results: list[StepResult] = []
     metrics = MetricsCollectorActivity(ctx)
@@ -503,9 +519,6 @@ def dispatch() -> int:
     if pipeline_status != 0:
         return pipeline_status
 
-    pipeline_extension = PluginEngine(plugins_dir='/module/scripts/plugins/after_orchestrator')
-    if pipeline_extension.modules:
-        pipeline_extension.run()
     return 0
 
 
