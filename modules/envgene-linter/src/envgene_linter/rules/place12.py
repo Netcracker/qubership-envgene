@@ -160,27 +160,54 @@ def _complete(
     )
     if env.full_name not in full or env.full_name not in catalogs.env:
         reason = "effective parameter or passport context is unavailable"
+    unavailable: list[str] = []
     for targets in env.bindings.values():
         for references in targets.values():
             for reference in references:
                 entries = resolve_reference(
                     index, env, reference, include_unavailable=True
                 )
-                if not entries or any(not _available(entry.file) for entry in entries):
-                    reason = "selected ParameterSet input is unavailable, invalid, or unrendered"
+                if (
+                    reference not in unavailable
+                    and (
+                        not entries
+                        or any(not _available(entry.file) for entry in entries)
+                    )
+                ):
+                    unavailable.append(reference)
+    if unavailable:
+        quoted = ", ".join(f"'{name}'" for name in unavailable)
+        if len(unavailable) == 1:
+            reason = (
+                f"selected ParameterSet input {quoted} is unavailable, invalid, or unrendered"
+            )
+        else:
+            reason = (
+                f"selected ParameterSet inputs {quoted} are unavailable, invalid, or unrendered"
+            )
     passport = resolve_passport(index, env)
     selected = passport.file
-    if passport.note or (
-        selected is not None
-        and (
-            selected.error
-            or selected.is_jinja
-            or selected.loaded is None
-            or not isinstance(selected.loaded.doc, dict)
-            or _tagged(selected.loaded.doc)
+    # A named passport that is simply absent does not block a template-default review.
+    # The standard contract-key table still applies. Ambiguous or unreadable input does.
+    missing_file = (
+        selected is None
+        and passport.note is not None
+        and "matched 0 file(s)" in passport.note
+    )
+    if not missing_file and (
+        passport.note
+        or (
+            selected is not None
+            and (
+                selected.error
+                or selected.is_jinja
+                or selected.loaded is None
+                or not isinstance(selected.loaded.doc, dict)
+                or _tagged(selected.loaded.doc)
+            )
         )
     ):
-        reason = "selected Cloud Passport input is missing, ambiguous, unavailable, or unrendered"
+        reason = "selected Cloud Passport input is ambiguous, unavailable, or unrendered"
     if reason:
         skip_check(index, RULE, env.path / "Inventory/env_definition.yml", reason)
     return reason is None

@@ -465,10 +465,40 @@ def test_incomplete_selected_input_blocks_other_readable_values(repo, kind):
         (directory / "extra.yml").write_text("parameters: [\n")
     index, full, catalogs = _inputs(repo)
     assert place12.check(index, full, catalogs) == []
-    assert any(check.rule == "PLACE-12" for check in index.skipped_checks)
+    checks = [check for check in index.skipped_checks if check.rule == "PLACE-12"]
+    assert [check.reason for check in checks] == [
+        "selected ParameterSet input 'extra' is unavailable, invalid, or unrendered"
+    ]
 
 
-@pytest.mark.parametrize("kind", ["missing", "ambiguous", "jinja", "malformed"])
+def test_incomplete_parameter_set_skip_names_every_missing_reference(repo):
+    _env(repo, "cluster-01")
+    _env(repo, "cluster-02")
+    _add_reference(repo, "cluster-02", "extra")
+    _add_reference(repo, "cluster-02", "other")
+    index, full, catalogs = _inputs(repo)
+    assert place12.check(index, full, catalogs) == []
+    checks = [check for check in index.skipped_checks if check.rule == "PLACE-12"]
+    assert [check.reason for check in checks] == [
+        "selected ParameterSet inputs 'extra', 'other' are unavailable, invalid, or unrendered"
+    ]
+
+
+def test_missing_passport_file_still_reviews_shared_parameters(repo):
+    _env(repo, "cluster-01")
+    _env(repo, "cluster-02")
+    definition = repo.root / "environments/cluster-01/env-01/Inventory/env_definition.yml"
+    data = json.loads(definition.read_text())
+    data["inventory"]["cloudPassport"] = "passport"
+    definition.write_text(json.dumps(data))
+    index, full, catalogs = _inputs(repo)
+    findings = place12.check(index, full, catalogs)
+    assert len(findings) == 1
+    assert findings[0].key == "SETTING"
+    assert not any(check.rule == "PLACE-12" for check in index.skipped_checks)
+
+
+@pytest.mark.parametrize("kind", ["ambiguous", "jinja", "malformed"])
 def test_unknown_selected_passport_does_not_reduce_to_standard_key_table(repo, kind):
     _env(repo, "cluster-01")
     _env(repo, "cluster-02")

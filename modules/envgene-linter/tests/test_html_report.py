@@ -58,6 +58,7 @@ def test_two_place1_findings_one_rule_heading():
     assert "open=" not in body
     assert "<summary" in body
     assert "PLACE-1: Same value belongs on a higher layer" in body
+    assert "Warnings 2, Review 0" in body
     assert "PLACE-2" not in body
     assert body.count('class="finding"') == 2
     assert "FILE" in body and "ISSUE" in body
@@ -66,6 +67,13 @@ def test_two_place1_findings_one_rule_heading():
     assert "environments/a.yml:4:3" in body
     assert "environments/b.yml:8:5" in body
     assert 'class="rule-section"' in body
+
+
+def test_rule_summary_counts_warnings_and_reviews():
+    warning = _finding(rule="SEC-1")
+    review = _finding(rule="SEC-1", action=Action.REVIEW, issue_type=IssueType.INFORMATION, line=8)
+    body = render_html([warning, review], Path("/repo"))
+    assert "Warnings 1, Review 1" in body
 
 
 def test_file_lists_all_locations():

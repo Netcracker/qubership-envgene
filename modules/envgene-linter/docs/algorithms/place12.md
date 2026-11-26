@@ -52,7 +52,9 @@ Unbound files and generated Cloud, Namespace, and Credential values do not suppl
    of literal string references. Unknown target or list membership blocks the group; absent fields and empty
    mappings or lists remain valid. Resolve the selected Cloud Passport separately.
    Its key catalog alone cannot prove completeness.
-   If any required input is unknown, record an incomplete check and withhold candidates for the whole group.
+   A named passport file that is absent does not block the group. The standard contract-key table is enough,
+   because the review asks whether repeated values can move into a template ParameterSet.
+   If any other required input is unknown, record an incomplete check and withhold candidates for the whole group.
 
 3. **Select participants for each scope.** Include every group environment with a nonempty binding list for
    the scope's target and category. An empty selected parameter bag still participates. For an application scope,
@@ -260,12 +262,15 @@ Independent rules continue. See the
 [input error algorithm](/modules/envgene-linter/docs/algorithms/input-errors.md).
 
 Within a comparable group, missing, invalid, unavailable, or unrendered selected ParameterSets block the group.
+The located skip names every selected ParameterSet reference that failed that read.
 Supported documents are untagged mappings with optional mapping `parameters` and optional list `applications`.
 Each application must be an untagged mapping with a literal nonempty identity and an untagged parameter mapping.
 Null or absent top-level bags follow the existing empty-bag interpretation.
 
-A missing or ambiguous explicit passport reference, unreadable selected passport, or selected Jinja passport
-also blocks the group. Record a located skip at the affected environment definition.
+An explicit passport reference that matches no file does not block the group. PLACE-12 still compares that
+environment and excludes only the standard contract keys.
+An ambiguous explicit passport reference, unreadable selected passport, or selected Jinja passport
+blocks the group. Record a located skip at the affected environment definition.
 When no passport is selected and resolution reports no error, the standard passport key table remains sufficient.
 An absent optional passport is not an error.
 

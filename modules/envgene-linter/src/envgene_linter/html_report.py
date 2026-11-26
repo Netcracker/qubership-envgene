@@ -6,7 +6,7 @@ import html
 from collections import defaultdict
 from pathlib import Path
 
-from .model import Action, Finding
+from .model import Action, Finding, IssueType
 from .report import RULE_ORDER, relative_path, rule_sort_key
 from .rulemeta import RULES
 
@@ -40,7 +40,11 @@ details.rule-section + details.rule-section { margin-top: 0.85rem; }
 summary.rule-id {
   font: 600 1.15rem/1.3 Georgia, "Times New Roman", serif;
   cursor: pointer;
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.35rem;
+}
+p.rule-summary {
+  margin: 0 0 0.75rem;
+  color: #444;
 }
 .finding {
   margin: 0 0 0.85rem;
@@ -140,6 +144,16 @@ def _card(item: Finding, root: Path) -> list[str]:
     return parts
 
 
+def _rule_summary(items: list[Finding]) -> str:
+    errors = sum(item.issue_type is IssueType.ERROR for item in items)
+    warnings = sum(item.action is Action.FIX and item.issue_type is not IssueType.ERROR for item in items)
+    reviews = sum(item.action is Action.REVIEW for item in items)
+    parts = [f"Warnings {warnings}", f"Review {reviews}"]
+    if errors:
+        parts.insert(0, f"Errors {errors}")
+    return ", ".join(parts)
+
+
 def render_html(
     findings: list[Finding], root: Path, *, disabled_rules: tuple[str, ...] = (),
     not_applicable_rules: tuple[str, ...] = (), skipped: list[str] | None = None,
@@ -189,6 +203,7 @@ def render_html(
             title = f"{rule}: {meta.description}" if meta is not None else rule
             parts.append('<details class="rule-section">')
             parts.append(f'<summary class="rule-id">{html.escape(title)}</summary>')
+            parts.append(f'<p class="rule-summary">{html.escape(_rule_summary(by_rule[rule]))}</p>')
             for item in by_rule[rule]:
                 parts.extend(_card(item, root))
             parts.append("</details>")

@@ -7,14 +7,12 @@ from pathlib import Path
 from ..connections import Connections, compute_connections
 from ..model import Finding, Layer, Location, ParamsetFile, RepoIndex, Severity
 from ..passport import TABLE
+from ..report import relative_path
 from ..rulemeta import RULES
 from ..yamlio import LoadedYaml, YamlReadError, leaves, load
 
 _MESSAGE = "{key} is a Cloud Passport contract key; do not store it in a ParameterSet."
-_HINT = (
-    "Move {key} to the cluster cloud-passport, or to this environment's "
-    "cloud-passport if the value is an override."
-)
+_HINT = "Move {key} from {source} to {destination}."
 
 
 def check(index: RepoIndex, connections: Connections | None = None) -> list[Finding]:
@@ -36,7 +34,7 @@ def check(index: RepoIndex, connections: Connections | None = None) -> list[Find
                 continue
             found.add(key)
             line, column = loaded.position(("parameters", key))
-            findings.append(_finding(file, key, line, column))
+            findings.append(_finding(index, connections, file, key, line, column))
     findings.sort(key=lambda item: (item.path.as_posix(), item.key, item.line))
     return findings
 
@@ -62,7 +60,32 @@ def _scope(file: ParamsetFile) -> str:
     return "repository"
 
 
-def _finding(file: ParamsetFile, key: str, line: int, column: int) -> Finding:
+def _passport_files(index: RepoIndex, cluster: str | None) -> list:
+    return [
+        item for item in index.passports
+        if item.env is None
+        and item.cluster == cluster
+        and not item.is_jinja
+        and item.path.parent.name == "cloud-passport"
+        and not item.stem.endswith("-creds")
+    ]
+
+
+def _destination(index: RepoIndex, connections: Connections, file: ParamsetFile) -> str:
+    if file.cluster and file.env:
+        selected = connections.environment_passports.get(f"{file.cluster}/{file.env}")
+        if selected is not None:
+            return relative_path(selected.path, index.root)
+    matches = _passport_files(index, file.cluster)
+    if len(matches) == 1:
+        return relative_path(matches[0].path, index.root)
+    folder = f"environments/{file.cluster}" if file.cluster else "environments"
+    return f"{folder}/cloud-passport/passport.yml"
+
+
+def _finding(
+    index: RepoIndex, connections: Connections, file: ParamsetFile, key: str, line: int, column: int,
+) -> Finding:
     meta = RULES["PLACE-4"]
     return Finding(
         rule="PLACE-4",
@@ -75,7 +98,11 @@ def _finding(file: ParamsetFile, key: str, line: int, column: int) -> Finding:
         key=key,
         scope=_scope(file),
         message=_MESSAGE.format(key=key),
-        hint=_HINT.format(key=key),
+        hint=_HINT.format(
+            key=key,
+            source=relative_path(file.path, index.root),
+            destination=_destination(index, connections, file),
+        ),
         related=(),
         locations=(Location(file.path, line, column),),
     )

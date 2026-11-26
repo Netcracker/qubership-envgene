@@ -27,6 +27,44 @@ _MESSAGES = {
     'ambiguous': 'The connected reference has an ambiguous target.',
     'unknown': 'The target of the connected reference is unknown to static inspection.',
 }
+_FIX_HINTS = {
+    'ParameterSet': (
+        'Create one ParameterSet file whose stem matches the reference at this location. '
+        'Search the environment Inventory, then the cluster directory, then environments/.'
+    ),
+    'Resource Profile': (
+        'Create one Resource Profile file whose stem matches the reference at this location. '
+        'Search the environment Inventory, then the cluster, then environments/, '
+        'in resource_profiles, rp_override, Profiles, then parameters. '
+        'Stop at the first directory that contains a match.'
+    ),
+    'Cloud Passport': (
+        'Create one Cloud Passport file for the reference at this location. '
+        'Search the environment Inventory, then the cluster, then environments/, '
+        'using cloud-passport before cloud-passports. Do not use a file from another cluster.'
+    ),
+    'Credential': (
+        'Add the missing Credential to the catalog selected for this environment. '
+        'If Credentials/credentials.yml exists, add the object there. '
+        'Otherwise add it to the Cloud Passport credentials file or a connected shared credentials file.'
+    ),
+}
+_AMBIGUOUS_HINT = (
+    'Keep one file for this reference and remove the other matches in the same lookup directory '
+    'so the reference at this location resolves to a single object.'
+)
+_REVIEW_HINT = (
+    'Do not add a file from this finding. Review the reference at this location: '
+    'the name is dynamic, the selected file is unreadable, or an earlier search directory could not be scanned.'
+)
+
+
+def _hint(kind: str, state: str) -> str:
+    if state == 'unknown':
+        return _REVIEW_HINT
+    if state == 'ambiguous':
+        return _AMBIGUOUS_HINT
+    return _FIX_HINTS[kind]
 
 
 def _at(value: Any, prefix: tuple) -> Any:
@@ -79,8 +117,7 @@ class _Checker:
             path=document.path, line=line, column=column,
             key=kind, scope=environment, locations=(Location(document.path, line, column),),
             message=_MESSAGES[state],
-            hint=('Review the connected source and rendering context without exposing secret values.' if review
-                  else 'Ensure the reference resolves to one object using the applicable source precedence.'),
+            hint=_hint(kind, state),
         ))
 
     def directory_files(self, directory: Path) -> tuple[list[Path], bool]:
