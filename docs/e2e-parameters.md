@@ -32,6 +32,8 @@
   - [`DCL_GIT_BRANCH`](#dcl_git_branch)
   - [`DCL_CONFIG_GITLAB_USER`](#dcl_config_gitlab_user)
   - [`DCL_CONFIG_GITLAB_TOKEN`](#dcl_config_gitlab_token)
+  - [`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`](#dcl_config_sops_dcl2argo_age_public_key)
+  - [`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY`](#dcl_config_sops_dcl2argo_age_private_key)
 
 These are the parameters EnvGene reads from a Cloud's `e2eParameters`/`pipeline` (the `e2eParameters` block of
 `cloud.yml`). Each entry names the EnvGene component that consumes it. For the RegDef v2 adapter parameters, how each
@@ -246,3 +248,37 @@ fails.
 **Description**: Token or password for the external GitLab repository credentials.
 
 **Consumer**: Effective Set external export (`argocd-dpg`)
+
+## `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`
+
+**Description**: Public key of the AGE key pair that Argo CD uses to decrypt the encrypted Effective Set data.
+EnvGene reads it from `effective-set/pipeline/parameters.yaml` after it generates the Effective Set
+and adds it to the recipients in `PUBLIC_AGE_KEYS` for the rest of the run. If the parameter is missing or empty,
+EnvGene logs a warning and encrypts with `PUBLIC_AGE_KEYS` only. EnvGene skips this step when `crypt` is `false`.
+
+**Why it is required**: EnvGene and Argo CD use different AGE key pairs. The EnvGene key pair stays in the
+instance pipeline, and `ENVGENE_AGE_PRIVATE_KEY` is never shared with Argo CD. Argo CD must still read the
+encrypted values of the Effective Set, so EnvGene must encrypt them for a key that Argo CD owns. This parameter
+delivers that public key to EnvGene. It is set per Cloud, so it does not add the Argo CD key to the
+instance-wide `PUBLIC_AGE_KEYS`.
+
+For the setup steps, see
+[How to configure a separate AGE key pair for Argo CD](/docs/how-to/credential-encryption.md#how-to-configure-a-separate-age-key-pair-for-argo-cd).
+
+**Consumer**: Effective Set encryption with SOPS
+
+**Example**: `age1abc123...`
+
+## `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY`
+
+**Description**: Private key of the AGE key pair that Argo CD owns. Argo CD uses it to decrypt the encrypted Effective Set data.
+EnvGene does not read or store this key. The page lists it as the counterpart of
+`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`. Store it in the secret store on the Argo CD side, not in plaintext in
+the instance repository.
+
+**Why it is required**: It is the decrypt half of the pair that
+`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY` encrypts for. As a separate secret on the Argo CD side, it keeps
+`ENVGENE_AGE_PRIVATE_KEY` out of Argo CD. A compromise of Argo CD then does not expose the credentials that
+`ENVGENE_AGE_PRIVATE_KEY` decrypts.
+
+**Consumer**: Argo CD
