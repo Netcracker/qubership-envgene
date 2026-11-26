@@ -1,0 +1,8 @@
+name: "sample-beta"
+registryName: "github-maven"
+artifactId: "sample-beta"
+groupId: "com.example"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false

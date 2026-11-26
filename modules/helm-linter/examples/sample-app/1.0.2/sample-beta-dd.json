@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "component": "sample-beta",
+    "descriptorFormat": "1.21",
+    "builderVersion": "sample-builder/1.0.2"
+  },
+  "include": [],
+  "infrastructures": [],
+  "services": [
+    {
+      "service_name": "sample-notes",
+      "image_type": "service",
+      "image_name": "sample-notes-image",
+      "docker_repository_name": "library",
+      "docker_registry": "registry.example",
+      "docker_tag": "1.0.2-r1",
+      "docker_digest": "sha256:abababababababababababababababababababababababababababababababab",
+      "version": "1.0.2",
+      "qualifier": "assembly",
+      "build_id_dtrust": "sample-build-sample-notes",
+      "promote_artifacts": false
+    }
+  ],
+  "configurations": [],
+  "frontends": [],
+  "smartplug": [],
+  "jobs": [],
+  "libraries": [],
+  "complexes": [],
+  "charts": [
+    {
+      "helm_chart_name": "sample-beta-chart",
+      "helm_chart_version": "1.0.2",
+      "type": "app-chart",
+      "qualifier": "assembly",
+      "version": "1.0.2",
+      "promote_artifacts": true,
+      "helm_registry": "example-registry",
+      "full_chart_name": "https://maven.pkg.github.com/Netcracker/qubership-envgene/com/example/sample-beta-chart/1.0.2/sample-beta-chart-1.0.2.tgz"
+    }
+  ],
+  "additionalArtifacts": {},
+  "descriptors": []
+}

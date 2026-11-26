@@ -1,0 +1,5 @@
+version: "2.1"
+type: solutionDeploy
+applications:
+  - version: sample-gamma:1.0.2
+    deployPostfix: notes

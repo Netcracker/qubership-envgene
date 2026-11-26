@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "deployKey": {
+      "type": "string"
+    },
+    "pathKey": {
+      "type": "string"
+    },
+    "endpointKey": {
+      "type": "string"
+    },
+    "messageKey": {
+      "type": "string"
+    },
+    "cloudAppKey": {
+      "type": "string"
+    },
+    "sharedKey": {
+      "type": "string"
+    },
+    "ownerKey": {
+      "type": "string"
+    },
+    "roleKey": {
+      "type": "string"
+    },
+    "siteKey": {
+      "type": "string"
+    },
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "traceToken": {
+      "type": "string",
+      "internal": true
+    }
+  }
+}

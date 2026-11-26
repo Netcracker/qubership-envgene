@@ -1,0 +1,8 @@
+name: "sample-gamma"
+registryName: "github-maven"
+artifactId: "sample-gamma"
+groupId: "com.example"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false

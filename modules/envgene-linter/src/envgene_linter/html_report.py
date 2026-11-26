@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -69,6 +70,7 @@ summary.rule-id {
 .source-locations { margin-top: 0.5rem; }
 .source-locations summary { cursor: pointer; }
 .file { font-family: ui-monospace, monospace; font-size: 0.88em; }
+.value em { font-style: italic; font-weight: 400; }
 .chip {
   display: inline-block;
   border-radius: 999px;
@@ -122,15 +124,22 @@ def _file_html(item: Finding, root: Path) -> str:
     return positions
 
 
+def _prose(text: str) -> str:
+    escaped = html.escape(text)
+    if "**" not in text:
+        if "\n" in text:
+            return f'<pre class="suggestion">{escaped}</pre>'
+        return escaped
+    marked = re.sub(r"\*\*(.+?)\*\*", r"<em>\1</em>", escaped, flags=re.DOTALL)
+    return marked.replace("\n", "<br>\n")
+
+
 def _card(item: Finding, root: Path) -> list[str]:
-    suggestion = html.escape(item.hint)
-    if "\n" in item.hint:
-        suggestion = f'<pre class="suggestion">{suggestion}</pre>'
     rows = (
         ("FILE", _file_html(item, root)),
-        ("ISSUE", html.escape(item.message)),
+        ("ISSUE", _prose(item.message)),
         ("ACTION", _chip(item.action.value)),
-        ("FIX SUGGESTION", suggestion),
+        ("FIX SUGGESTION", _prose(item.hint)),
     )
     parts = ['<div class="finding">']
     for label, value in rows:

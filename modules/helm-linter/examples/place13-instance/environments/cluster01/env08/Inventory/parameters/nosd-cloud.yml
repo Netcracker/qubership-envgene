@@ -1,0 +1,3 @@
+name: nosd-cloud
+parameters:
+  replicaCount: 1

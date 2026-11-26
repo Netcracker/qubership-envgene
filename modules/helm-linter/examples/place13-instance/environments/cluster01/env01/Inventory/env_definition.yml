@@ -1,0 +1,8 @@
+inventory:
+  environmentName: env01
+envTemplate:
+  name: composite
+  artifact: sample-templates:1.0.2
+  envSpecificParamsets:
+    cloud:
+      - split-deploy

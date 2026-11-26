@@ -1,0 +1,5 @@
+version: "2.1"
+type: solutionDeploy
+applications:
+  - version: sample-alpha:1.0.2
+    deployPostfix: solo

@@ -1,0 +1,8 @@
+name: "sample-delta"
+registryName: "github-maven"
+artifactId: "sample-delta"
+groupId: "com.example"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false

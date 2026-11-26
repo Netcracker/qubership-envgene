@@ -1,0 +1,15 @@
+name: wide-cloud
+parameters:
+  replicaCount: 1
+  pathKey: cloud-value
+  endpointKey: "{{ creds.get('sample').token }}"
+  roleKey: same
+  rejectedKey: true
+  traceToken: skip
+  extra.note: hello
+  alias.deployKey: prefixed
+  CLOUD_API_HOST: api.example
+applications:
+  - appName: sample-alpha
+    parameters:
+      cloudAppKey: cloud-app

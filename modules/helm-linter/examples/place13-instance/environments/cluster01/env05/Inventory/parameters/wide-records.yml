@@ -1,0 +1,10 @@
+name: wide-records
+parameters:
+  deployKey: wide
+  pathKey: ns-value
+  endpointKey: "{{ creds.get('other').token }}"
+  roleKey: same
+applications:
+  - appName: sample-alpha
+    parameters:
+      messageKey: notice

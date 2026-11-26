@@ -1,0 +1,3 @@
+name: site-deploy
+parameters:
+  siteKey: site

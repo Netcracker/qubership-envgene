@@ -1,0 +1,5 @@
+version: "2.0"
+name: "github-maven"
+mavenConfig:
+  repositoryDomainName: "https://maven.pkg.github.com"
+  targetRelease: "Netcracker/qubership-envgene"

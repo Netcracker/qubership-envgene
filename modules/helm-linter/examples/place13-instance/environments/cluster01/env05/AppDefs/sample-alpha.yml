@@ -1,0 +1,8 @@
+name: "sample-alpha"
+registryName: "github-maven"
+artifactId: "sample-alpha"
+groupId: "com.example"
+supportParallelDeploy: false
+deployParameters: {}
+technicalConfigurationParameters: {}
+solutionDescriptor: false

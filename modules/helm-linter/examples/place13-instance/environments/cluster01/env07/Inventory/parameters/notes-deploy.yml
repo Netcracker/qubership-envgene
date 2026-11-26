@@ -1,0 +1,6 @@
+name: notes-deploy
+parameters: {}
+applications:
+  - appName: sample-gamma
+    parameters:
+      unresolvedKey: pending
