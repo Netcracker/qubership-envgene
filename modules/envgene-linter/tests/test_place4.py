@@ -3,10 +3,7 @@ from envgene_linter.model import Action, IssueType, Severity
 from envgene_linter.rules.place4 import check
 
 _MESSAGE = "{key} is a Cloud Passport contract key; do not store it in a ParameterSet."
-_HINT = (
-    "Move {key} to the cluster cloud-passport, or to this environment's "
-    "cloud-passport if the value is an override."
-)
+_HINT = "Move {key} from {source} to {destination}."
 
 
 def _place4(repo):
@@ -26,10 +23,28 @@ def test_bound_cloud_deploy_with_table_key_is_a_finding(repo):
     assert item.key == "CLOUD_API_HOST"
     assert item.scope == "cluster-01/env-01"
     assert item.message == _MESSAGE.format(key="CLOUD_API_HOST")
-    assert item.hint == _HINT.format(key="CLOUD_API_HOST")
+    assert item.hint == _HINT.format(
+        key="CLOUD_API_HOST",
+        source="environments/cluster-01/env-01/Inventory/parameters/cloud-deploy.yml",
+        destination="environments/cluster-01/cloud-passport/passport.yml",
+    )
     assert item.related == ()
     assert item.path.name == "cloud-deploy.yml"
     assert item.locations == () or item.file_locations()[0].path == item.path
+
+
+def test_hint_names_the_selected_passport_file(repo):
+    repo.env(
+        "cluster-01", "env-01", deploy={"cloud": ["cloud-deploy"]}, cloud_passport="shared",
+    )
+    repo.passport("shared", {"cloud": {}}, cluster="cluster-01")
+    repo.env_paramset("cluster-01", "env-01", "cloud-deploy", {"CLOUD_API_HOST": "api.example"})
+    findings = _place4(repo)
+    assert findings[0].hint == _HINT.format(
+        key="CLOUD_API_HOST",
+        source="environments/cluster-01/env-01/Inventory/parameters/cloud-deploy.yml",
+        destination="environments/cluster-01/cloud-passport/shared.yml",
+    )
 
 
 def test_table_key_only_in_cluster_passport_is_silent(repo):

@@ -78,6 +78,9 @@ lookup blocks fallback and yields unknown.
 | Ambiguous target in the selected lookup bucket | Warning / Fix        |
 | Dynamic, unreadable or unavailable context     | Information / Review |
 
+A Fix hint names the object to create or the duplicate to remove, and the directories that lookup searches.
+A Review hint says not to add a file. Credential ids and Cloud Passport reference values stay out of the hint.
+
 The catalog description is `Every reference resolves`. INT-2 follows SEC-5 and precedes INT-3 in reports.
 HTML contains INT-2 only when findings exist. Findings preserve CLI exit code `0`. Fix is a manual recommendation.
 Cloud Passport findings use the generic key `Cloud Passport` and omit the explicit reference value.

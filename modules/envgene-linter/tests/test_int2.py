@@ -186,7 +186,9 @@ def test_missing_paramset_without_template_source_is_definite(repo):
     doc = YAML().load(path)
     del doc['envTemplate']['name']
     write(path, doc)
-    assert_kind(findings(repo), 'missing')
+    result = findings(repo)
+    assert_kind(result, 'missing')
+    assert result[0].hint.startswith('Create one ParameterSet file whose stem matches the reference')
 
 
 def test_resource_profile_ambiguity_at_selected_scope(repo):
@@ -197,7 +199,9 @@ def test_resource_profile_ambiguity_at_selected_scope(repo):
     write(path, doc)
     for name in ('selected.yml', 'selected.yaml'):
         write(repo.root / 'environments/resource_profiles' / name, {'name': 'selected'})
-    assert_kind(findings(repo), 'ambiguous')
+    result = findings(repo)
+    assert_kind(result, 'ambiguous')
+    assert result[0].hint.startswith('Keep one file for this reference')
 
 
 def test_resource_profile_alias_uses_reference_filename(repo):

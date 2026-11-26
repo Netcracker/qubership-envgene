@@ -63,7 +63,11 @@ is empty. Scope follows the file's layer: `repository`, `<cluster>`, or `<cluste
 
 Message: `{key} is a Cloud Passport contract key; do not store it in a ParameterSet.`
 
-Hint: `Move {key} to the cluster cloud-passport, or to this environment's cloud-passport if the value is an override.`
+Hint: `Move {key} from {source} to {destination}.` `{source}` is the ParameterSet path.
+`{destination}` is the Cloud Passport file selected for that environment when the ParameterSet is
+environment-scoped. Otherwise it is the single cluster `cloud-passport` file, or
+`environments/<cluster>/cloud-passport/passport.yml` when that cluster has no single passport file.
+A repository ParameterSet uses `environments/cloud-passport/passport.yml` on the same rule.
 
 The report catalog uses `Cloud Passport keys do not belong in ParameterSets`.
 Console and HTML place this rule after PLACE-3 and before PLACE-6, including an
