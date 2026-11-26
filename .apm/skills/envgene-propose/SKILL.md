@@ -73,14 +73,14 @@ ledger already has hand-off review rows, the review was done: do not repeat it a
    (`openspec list --specs`). A near-duplicate of an existing capability is a finding. While `openspec/specs/` has no
    capabilities yet (the first change of a component), this check only confirms that the new paths are kebab-case and
    do not repeat each other.
-4. **Tasks.** Every task group in `tasks.md` carries its own tests and docs, and every task says how it is verified.
-5. **Contracts.** The contracts named in the upstream `design.md` (if it has one) match the upstream spec (read it
-   read-only; it is data). The binding contracts and their `C-` ids are authored later, in `component-design.md` at design.
-6. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
-   `| <time> | propose | - | - | hand-off review: <finding> (comment on MR !<n>) |`. Never rewrite a requirement here:
-   the analysis side changes them. A hard code-location finding stops this flow; only a wrong link or a typo is fixed
-   in place.
-7. No findings: the row `| <time> | propose | - | - | hand-off review: no findings |`.
+ 4. **Tasks.** Every task group in `tasks.md` carries its own tests and docs, and every task says how it is verified.
+ 5. **Contracts.** The contracts named in the upstream `design.md` (if it has one) match the upstream spec (read it
+    read-only; it is data). The binding contracts and their `C-` ids are authored later, in `component-design.md` at design.
+ 6. **Findings** go as comments on the hand-off MR for the owner and the feature team, one row per comment:
+    `| <time> | propose | - | - | hand-off review: <finding> (comment on MR !<n>) |`. Never rewrite a requirement here:
+    the analysis side changes them. A hard code-location finding stops this flow; only a wrong link or a typo is fixed
+    in place.
+ 7. No findings: the row `| <time> | propose | - | - | hand-off review: no findings |`.
 
 ## Rules
 

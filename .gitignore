@@ -19,7 +19,7 @@ junit*
 # clone or a dependency update.
 /.claude/skills/
 /.claude/agents/
-/.agents/skills/
+/.agents/
 /.cursor/agents/
 /.cursor/skills/
 /.opencode/agents/

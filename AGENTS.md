@@ -84,6 +84,13 @@ Each module keeps its own `AGENTS.md` with the rules for that module. It loads w
 
 ## Change flow
 
+### Entry rule
+
+No code change without an open OpenSpec change. The behaviour of EnvGene is specified in
+`openspec/changes/<id>/` while a change is open, and in `openspec/specs/` once it is archived. A pull
+request that changes behaviour names the change folder it implements, and its code starts only after
+that change passed the propose and design gates.
+
 The stage order and its gates are defined in the `envgene-orchestration` skill. Two rules apply to every agent:
 
 - Implement does not start without the propose and design gate rows in `ledger.md`.

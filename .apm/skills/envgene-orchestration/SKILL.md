@@ -50,7 +50,7 @@ The class sizes the artifacts, not the gates: every class passes the gate of eve
 a skipped stage names who skipped it.
 
 | Class | Handed to propose | design | plan and implement |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | Feature | `proposal.md` (with the rationale of its decision), `specs/`, `design.md`, `tasks.md` | `component-design.md` with the work map, 2-3 approaches and the contracts | `plan.md` with a failing test per step; BDD scenarios of the delta specs |
 | Small change | `proposal.md`, `specs/`, `tasks.md`; `design.md` when the change needs it | `component-design.md`, short: the work map, one approach when there is one, the contracts | `plan.md` may be one screen, test first stays |
 | Bug fix | `proposal.md`, `specs/` (the one scenario that fails today), `tasks.md` | skipped when no contract is touched: `design: skipped, no contract change` | no `plan.md` for one to three tasks: the failing test is the plan; the fix goes red to green |
@@ -62,7 +62,7 @@ the class row is corrected, not re-approved.
 ## Stages
 
 | # | Stage | Skill | Gate to leave the stage |
-| --- | ------- | ------- | ------------------------- |
+|---|-------|-------|-------------------------|
 | 1 | propose | `envgene-propose` | **proposal MR approved by the component owner** (`gate: proposal approved by …` row) |
 | 2 | design | `envgene-design` | **developer accepted the approach** (`gate: approach … accepted by …` row) and `component-design.md` defines every contract id it lists. Runs for every change that touches a contract, including a hand-off: the stage writes `component-design.md`; the upstream `design.md` is a read-only HLD input it builds on. A bug fix that touches no contract closes the stage with `design: skipped, no contract change @ <sha>` |
 | 3 | plan | `envgene-plan` | `plan.md` written; every task has a test first; every contract of `component-design.md` covered in the plan |
@@ -89,7 +89,7 @@ slot, so `envgene-finish` runs both stages.
 ## Transitions
 
 | Event | Go to |
-| --- | --- |
+|---|---|
 | The developer changes the approach after design | design; update `component-design.md` and validate |
 | Re-arguing the upstream WHAT or the options a hand-off settled | back to the upstream workspace; the design stage builds on the upstream `design.md`, it does not re-argue it. A wrong link or a typo is fixed in place at propose |
 | The developer's scope change touches the proposal, specs or tasks | propose (back to the owner) |

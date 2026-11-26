@@ -1,5 +1,9 @@
 # EnvGene Documentation
 
+The index of what a user of EnvGene reads: tutorials, how-to guides, feature docs, use cases,
+samples, and the parameter and object reference. The documentation of how this repository is
+built and released has its own index in [docs/internal/](/docs/internal/README.md).
+
 - [EnvGene Documentation](#envgene-documentation)
   - [Getting Started](#getting-started)
   - [Tutorials](#tutorials)
@@ -110,4 +114,4 @@
 
 ## Development
 
-- [**Development Guides**](/docs/dev/) - Development setup and guidelines
+- [**Development documentation**](/docs/internal/README.md) - How this repository is built and released, its design records, analyses and test cases

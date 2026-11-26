@@ -347,7 +347,7 @@ one job disturbs the steps of another that happens to share the page.
 The repository has two parallel index readmes that mirror the same structure:
 
 - `/README.md` (root project readme, "Documentation" section)
-- `/docs/README.md` (docs hub readme)
+- `/docs/public/README.md` (the documentation index of the user-facing docs)
 
 When you add a tutorial, how-to, feature, or migration doc, add a link in both readmes under
 the matching section. When you rename or remove a doc, update both readmes to keep links live.
