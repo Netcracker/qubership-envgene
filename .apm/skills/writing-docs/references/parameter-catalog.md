@@ -113,12 +113,12 @@ the grouped form when the scope is itself a lookup axis.
 ## Distinct from a macro catalog and a feature doc
 
 A parameter catalog is keyed by a launch or pipeline parameter - a value the operator passes to a run. A
-[macro catalog](/.claude/skills/writing-docs/references/macro-catalog.md) is keyed by a template macro and
+[macro catalog](/.apm/skills/writing-docs/references/macro-catalog.md) is keyed by a template macro and
 carries a resolution scope, which a parameter catalog has no equivalent of. The entry templates differ too -
 the parameter catalog uses `**Default Value**` / `**Mandatory**`, the macro catalog uses `**Type:**` /
 `**Basic usage:**`. Keep them as separate documents.
 
-Against a [feature doc](/.claude/skills/writing-docs/references/feature.md) the border is the "why". A
+Against a [feature doc](/.apm/skills/writing-docs/references/feature.md) the border is the "why". A
 parameter catalog states a parameter's contract with no rationale narrative - it is a lookup register. When an
 entry starts explaining why the capability behind the parameter exists or how it behaves end to end, that
 explanation belongs in the feature doc, cross-linked.

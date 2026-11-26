@@ -70,7 +70,7 @@ An older feature-doc shape runs `## Problem Statement` -> `## Proposed Approach`
 in [`sbom.md`](/docs/features/sbom.md). Do not use it for new feature docs. It reads like a design or
 proposal doc - it argues for a decision rather than describing a capability - and "It is proposed to..."
 breaks the declarative-tone rule (see
-[Declarative tone](/.claude/skills/writing-docs/references/doc-structure.md#declarative-tone)). A new or
+[Declarative tone](/.apm/skills/writing-docs/references/doc-structure.md#declarative-tone)). A new or
 reworked feature doc uses the prose form above: state what the feature is, not what was once proposed.
 
 ## Validation rule sections
@@ -143,7 +143,7 @@ that is not load-bearing forces stale doc updates with every implementation chan
 ## Distinct from a technical-design doc
 
 The border between a feature doc and a
-[technical-design doc](/.claude/skills/writing-docs/references/technical-design.md) is a deterministic
+[technical-design doc](/.apm/skills/writing-docs/references/technical-design.md) is a deterministic
 test. A feature doc describes observable behavior and why, for someone who uses EnvGene, and is
 implementation-independent: a different internal implementation with the same observable outcome would
 not force a rewrite. If a different implementation would force a rewrite, the content is a technical-design
@@ -168,4 +168,4 @@ Mined from the real feature docs, the range is roughly 100 to 340 lines of Markd
 [`resource-profile.md`](/docs/features/resource-profile.md) about 340. A feature doc that grows well past
 this is usually fusing two jobs or absorbing a how-to, reference, or step contract that should be its own
 document and cross-linked. See
-[One document, one job](/.claude/skills/writing-docs/references/doc-structure.md#one-document-one-job).
+[One document, one job](/.apm/skills/writing-docs/references/doc-structure.md#one-document-one-job).

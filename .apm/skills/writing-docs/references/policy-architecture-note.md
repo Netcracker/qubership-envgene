@@ -78,10 +78,10 @@ precedence over `inventory.deployer`").
 ## Distinct from a feature doc
 
 A policy or architecture note states a standing rule or classifies a small domain, in a page, with no
-mechanism narrative. A [feature doc](/.claude/skills/writing-docs/references/feature.md) explains a capability
+mechanism narrative. A [feature doc](/.apm/skills/writing-docs/references/feature.md) explains a capability
 and why it exists at length, in the Explanation quadrant. The border is the "why" and the length: the moment
 the note starts explaining how the policy is enforced inside the pipeline, or how an architecture delivers its
 output step by step, that explanation belongs in the feature doc (or a technical-design doc for internal
 wiring), cross-linked, and the note keeps only the rule or the classification. If a note grows past roughly 50
 lines it is usually absorbing explanation that should be its own document. See
-[One document, one job](/.claude/skills/writing-docs/references/doc-structure.md#one-document-one-job).
+[One document, one job](/.apm/skills/writing-docs/references/doc-structure.md#one-document-one-job).

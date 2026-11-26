@@ -33,7 +33,7 @@ This is the cross-type map: one line per Diataxis quadrant, so a doc lands in th
 per-type detail - the canonical shape, line targets, and do/don't specifics - read that type's reference.
 
 1. **How-to Guides** (`/docs/how-to/`) - goal-oriented, terse recipes for a task the reader came to do.
-   See [`references/how-to.md`](/.claude/skills/writing-docs/references/how-to.md).
+   See [`references/how-to.md`](/.apm/skills/writing-docs/references/how-to.md).
 
 2. **Explanation** (`/docs/features/`)
    - Conceptual understanding
@@ -43,16 +43,16 @@ per-type detail - the canonical shape, line targets, and do/don't specifics - re
 
 3. **Reference** (`/docs/`) - factual, precise lookup registers with no "why" narrative. The catalog splits
    this quadrant into five per-type references: an object-model reference
-   ([`references/object-model-reference.md`](/.claude/skills/writing-docs/references/object-model-reference.md)),
-   a parameter catalog ([`references/parameter-catalog.md`](/.claude/skills/writing-docs/references/parameter-catalog.md)),
-   a macro catalog ([`references/macro-catalog.md`](/.claude/skills/writing-docs/references/macro-catalog.md)),
+   ([`references/object-model-reference.md`](/.apm/skills/writing-docs/references/object-model-reference.md)),
+   a parameter catalog ([`references/parameter-catalog.md`](/.apm/skills/writing-docs/references/parameter-catalog.md)),
+   a macro catalog ([`references/macro-catalog.md`](/.apm/skills/writing-docs/references/macro-catalog.md)),
    a policy or architecture note
-   ([`references/policy-architecture-note.md`](/.claude/skills/writing-docs/references/policy-architecture-note.md)),
-   and the glossary ([`references/glossary.md`](/.claude/skills/writing-docs/references/glossary.md)).
+   ([`references/policy-architecture-note.md`](/.apm/skills/writing-docs/references/policy-architecture-note.md)),
+   and the glossary ([`references/glossary.md`](/.apm/skills/writing-docs/references/glossary.md)).
 
 4. **Tutorials** (`/docs/tutorials/`) - learning-oriented, a complete worked example that teaches a
    beginner one capability end to end. See
-   [`references/tutorial.md`](/.claude/skills/writing-docs/references/tutorial.md).
+   [`references/tutorial.md`](/.apm/skills/writing-docs/references/tutorial.md).
 
 ### When creating documentation
 

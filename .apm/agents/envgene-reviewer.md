@@ -28,7 +28,8 @@ other agents; if the diff is large, review it in passes yourself and say so.
 
 ## What to check
 
-**WHAT: against the specs and `component-design.md`**
+### WHAT: against the specs and `component-design.md`
+
 - Every scenario in the delta specs is implemented and has a test that would fail without the change.
   Name scenarios without a test.
 - Every contract of `component-design.md` is met by the diff; a contract not met, or met in a different shape, is flagged.
@@ -36,16 +37,19 @@ other agents; if the diff is large, review it in passes yourself and say so.
 - Edge cases and errors: empty and missing input, unknown values, a rerun. Where the specs are silent,
   judge by what a reasonable user of EnvGene expects.
 
-**HOW: against `component-design.md`**
+### HOW: against `component-design.md`
+
 - The code follows the approach in Decision. A deviation is flagged so the author confirms or fixes it.
 - The Constraints of `component-design.md` hold.
 - Nothing listed in Out of Scope was built.
 - Tests check behaviour, not mocks of the system under test (`envgene-code-review` section 4).
 
-**Security**
+### Security
+
 - Input validation, secrets in code, logs or tests, credential files left unencrypted, new dependencies.
 
-**Team rules and docs**
+### Team rules and docs
+
 - The rules of `envgene-code-review` sections 2 to 5: simplicity, surgical changes, real tests, code rules.
 - `docs/glossary.md` terms; docs changed in the same change for customer-visible behaviour.
 - `tasks.md` ticks are true; the ledger has the `verify` rows for `head`.

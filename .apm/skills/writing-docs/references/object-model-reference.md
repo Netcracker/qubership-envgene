@@ -127,12 +127,12 @@ it states the rule, it does not narrate how the resolver walks the paths.
 
 ## Distinct from a feature doc
 
-An object-model reference states what an object's fields are. A [feature doc](/.claude/skills/writing-docs/references/feature.md)
+An object-model reference states what an object's fields are. A [feature doc](/.apm/skills/writing-docs/references/feature.md)
 explains what a capability does and why. The border is the "why": a reference carries no rationale narrative -
 it is a lookup register. When an entry starts explaining why the object exists or how a capability built on it
 behaves, that explanation belongs in the feature doc, cross-linked, and the reference keeps only the field
-definitions. The sibling confusion is with the [parameter catalog](/.claude/skills/writing-docs/references/parameter-catalog.md)
-and the [macro catalog](/.claude/skills/writing-docs/references/macro-catalog.md): those are keyed by a
+definitions. The sibling confusion is with the [parameter catalog](/.apm/skills/writing-docs/references/parameter-catalog.md)
+and the [macro catalog](/.apm/skills/writing-docs/references/macro-catalog.md): those are keyed by a
 launch parameter or a template macro and use a flat per-entry label template, while an object-model reference
 is keyed by an object or file and uses the annotated-YAML field dictionary.
 
@@ -143,4 +143,4 @@ These are among the largest docs in the repository, because they catalog the who
 [`envgene-configs.md`](/docs/envgene-configs.md) about 610. Length here comes from breadth of coverage, one
 entry per object, not from any single entry running long. A single entry that grows well past its siblings is
 usually absorbing a how-to or a feature explanation that should be its own document and cross-linked. See
-[One document, one job](/.claude/skills/writing-docs/references/doc-structure.md#one-document-one-job).
+[One document, one job](/.apm/skills/writing-docs/references/doc-structure.md#one-document-one-job).

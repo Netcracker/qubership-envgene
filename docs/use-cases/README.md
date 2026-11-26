@@ -51,7 +51,7 @@ does not control.
 These align with modern API documentation style. See the
 [Google API Design Guide](https://docs.cloud.google.com/apis/design), Stripe API docs, and GitHub
 REST API docs. For the house rules on observable wording and naming, see the
-[`writing-style` skill](/.claude/skills/writing-style/SKILL.md).
+[`writing-style` skill](/.apm/skills/writing-style/SKILL.md).
 
 ## Use Case Organization
 
@@ -198,7 +198,7 @@ Use format: `UC-<PREFIX>-<GROUP>-<NUMBER>: <Descriptive Title>`
 
 - **Title**: Concise, descriptive title
   - Should clearly indicate what the use case demonstrates
-  - Use sentence case (see [Heading case](/.claude/skills/writing-style/references/prose-style.md#heading-case))
+  - Use sentence case (see [Heading case](/.apm/skills/writing-style/references/prose-style.md#heading-case))
 
 ### Numbering Rules
 

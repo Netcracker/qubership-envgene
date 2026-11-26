@@ -66,7 +66,7 @@ but keep the Description-Prerequisites-Steps-Results-Related spine.
 - [`credential-encryption.md`](/docs/how-to/credential-encryption.md) runs two sibling procedures under one
   file (`## How to enable Credential encryption` and `## How to Migrate from Fernet to SOPS`), each with its
   own `### Step N:` sequence. Two procedures in one file is the exception, not the spine - prefer one job per
-  document (see [One document, one job](/.claude/skills/writing-docs/references/doc-structure.md#one-document-one-job)).
+  document (see [One document, one job](/.apm/skills/writing-docs/references/doc-structure.md#one-document-one-job)).
 
 `## Description` and `## Overview` are interchangeable openers, and `## Results` and `## Result` are the same
 closing section. Pick one and use it consistently within the doc.
@@ -115,7 +115,7 @@ keeps the guide within its target length.
 
 ## Distinct from a tutorial
 
-The border against a [tutorial](/.claude/skills/writing-docs/references/tutorial.md) is who the reader is
+The border against a [tutorial](/.apm/skills/writing-docs/references/tutorial.md) is who the reader is
 and what the document does. A how-to assumes competence: the reader knows the domain and wants the recipe
 for one task, so the steps are imperative and terse and carry no teaching. A tutorial teaches a newcomer
 on one fixed scenario and narrates the why as it goes - it explains while doing. If the steps stop to teach
@@ -124,7 +124,7 @@ cross-link.
 
 ## Distinct from a feature doc
 
-The border against a [feature doc](/.claude/skills/writing-docs/references/feature.md) is procedure versus
+The border against a [feature doc](/.apm/skills/writing-docs/references/feature.md) is procedure versus
 explanation. A how-to tells the reader to do steps, in imperative mood, to finish one task. A feature doc
 never tells the reader to do steps - it explains what the capability does, why it exists, and how it
 behaves. Rationale and trade-offs that creep into a how-to belong in the feature doc, cross-linked. A
@@ -142,4 +142,4 @@ multi-approach guide runs longer - [`configure-resource-profiles.md`](/docs/how-
 is about 330 lines across seven scenarios. The Diataxis target is `~200-400` lines. A how-to that grows well
 past this is usually fusing two jobs or absorbing a tutorial or feature doc that should be its own document
 and cross-linked. See
-[One document, one job](/.claude/skills/writing-docs/references/doc-structure.md#one-document-one-job).
+[One document, one job](/.apm/skills/writing-docs/references/doc-structure.md#one-document-one-job).
