@@ -403,6 +403,41 @@ def test_schema_backed_models_reject_invalid_payloads(monkeypatch):
         CredentialsMapModel.model_validate({"bad": {"type": "secret", "data": {}}})  # missing secret field
 
 
+NAMESPACE_BASE = ('name: ns\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\n'
+                  'mergeDeployParametersAndE2EParameters: false\n')
+
+
+def test_beautify_migrates_empty_parameter_set_mapping(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    warnings = []
+    monkeypatch.setattr(STORE_MODULE.logger, "warning", lambda message: warnings.append(message))
+    target = env_dir / "Namespaces" / "platform" / "namespace.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, readYaml(NAMESPACE_BASE + 'deployParameterSets: {}\ne2eParameterSets: {}\n'))
+
+    objects.beautify(target, "namespace.schema.json")
+    objects.flush()
+
+    namespace = objects.get(target)
+    assert isinstance(namespace, NamespaceModel)
+    assert namespace.deployParameterSets == []
+    assert namespace.e2eParameterSets == []
+    assert readYaml(target)["deployParameterSets"] == []
+    assert "{}" not in target.read_text()
+    assert len(warnings) == 2
+    assert "deployParameterSets is an empty mapping" in warnings[0]
+
+
+def test_beautify_rejects_non_empty_parameter_set_mapping(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Namespaces" / "platform" / "namespace.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, readYaml(NAMESPACE_BASE + 'deployParameterSets:\n  legacy: set\n'))
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        objects.beautify(target, "namespace.schema.json")
+
+
 def test_mutation_updates_model_before_flush(monkeypatch, env_dir):
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
     target = env_dir / "Applications" / "app.yml"
