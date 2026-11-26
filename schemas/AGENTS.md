@@ -35,6 +35,7 @@ All JSON schemas used for runtime validation of EnvGene objects. Validated via `
 | `template-descriptor.schema.json` | Template Descriptor |
 | `custom-params.schema.json` | `CUSTOM_PARAMS` pipeline variable |
 | `env-inventory-content.schema.json` | `ENV_INVENTORY_CONTENT` pipeline variable |
+| `env-prepare-report.schema.json` | `EnvPrepareReport` job artifact |
 
 ## Usage
 

@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from pathlib import Path
@@ -9,11 +10,12 @@ from envgenehelper.file_helper import writeToFile
 from publish_artifacts.scope import copy_scope
 
 NOT_PUBLISHED_FILE_NAME = "NOT-PUBLISHED.txt"
+ENV_PREPARE_REPORT_FILE_NAME = "env-prepare-report.json"
 LIMIT_MULTIPLIER = 3
 
 
 def artifacts_output_root(work_dir: Path) -> Path:
-    return Path(os.getenv("ARTIFACTS_OUTPUT_DIR", str(work_dir / "artifacts")))
+    return Path(os.getenv("ARTIFACTS_OUTPUT_DIR", str(Path(work_dir) / "artifacts")))
 
 
 def copy_env_artifact(ctx) -> None:
@@ -22,6 +24,20 @@ def copy_env_artifact(ctx) -> None:
     output_root = artifacts_output_root(ctx.work_dir)
     output_root.mkdir(parents=True, exist_ok=True)
     copy_scope(ctx.work_dir, output_root / ctx.cluster_name / ctx.env_name)
+
+
+def write_env_prepare_report(output_root: Path, steps: list[dict]) -> None:
+    try:
+        writeToFile(
+            output_root / ENV_PREPARE_REPORT_FILE_NAME,
+            json.dumps({
+                "kind": "EnvPrepareReport",
+                "apiVersion": "v1",
+                "steps": steps,
+            }, indent=2) + "\n",
+        )
+    except Exception:
+        logger.exception("Failed to write EnvPrepareReport artifact.")
 
 
 def finalize_artifacts(output_root: Path, limit_mb: int) -> None:
@@ -39,6 +55,6 @@ def finalize_artifacts(output_root: Path, limit_mb: int) -> None:
     if size > limit_bytes:
         logger.warning(f"Artifact is over the {effective_limit_mb}MB limit - republishing with logs only")
         for child in output_root.iterdir():
-            if child.name != "logs":
+            if child.name not in ("logs", ENV_PREPARE_REPORT_FILE_NAME):
                 shutil.rmtree(child) if child.is_dir() else child.unlink()
         writeToFile(output_root / NOT_PUBLISHED_FILE_NAME, f"combined artifact exceeded {effective_limit_mb}MB\n")
