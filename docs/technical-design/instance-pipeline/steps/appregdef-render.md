@@ -11,9 +11,9 @@
 
 ## Description
 
-The `appregdef_render` step writes Application Definition and Registry Definition files to
-`appdefs/` and `regdefs/` at the repository root and, when configured, to
-`environments/<cluster-name>/<env-name>/AppDefs/` and `RegDefs/`. The step also unpacks Environment
+The `appregdef_render` step writes Application Definition and Registry Definition files to the folders selected by
+`app_reg_defs_placement`: `appdefs/` and `regdefs/` at the repository root,
+`environments/<cluster-name>/<env-name>/AppDefs/` and `RegDefs/`, or both. The step also unpacks Environment
 Template artifacts into `tmp/templates/`, `tmp/origin/templates/`, and `tmp/peer/templates/`.
 
 ## Input parameters
@@ -79,13 +79,15 @@ Template artifacts into `tmp/templates/`, `tmp/origin/templates/`, and `tmp/peer
 5. **Publish App/Reg definitions**
 
    1. The step reads repository configuration field `app_reg_defs_placement`. Allowed values are
-      `root` and `dual`. Default is `dual`.
+      `root`, `env`, and `dual`. Default is `root`. The value is matched exactly.
 
-   2. The step copies rendered `AppDefs/` and `RegDefs/` from `tmp/render/<env-name>/` to
-      repository root directories `appdefs/` and `regdefs/`.
+   2. When `app_reg_defs_placement` is `root` or `dual`, the step copies rendered `AppDefs/` and
+      `RegDefs/` from `tmp/render/<env-name>/` to repository root directories `appdefs/` and
+      `regdefs/`. Files with the same name are overwritten. Other files are kept.
 
-   3. When `app_reg_defs_placement` is `dual`, the step copies the same trees to
-      `environments/<cluster-name>/<env-name>/AppDefs/` and `RegDefs/`.
+   3. The step removes an existing `environments/<cluster-name>/<env-name>/AppDefs/` and `RegDefs/`
+      pair. When `app_reg_defs_placement` is `env` or `dual`, the step writes the rendered trees to
+      those directories.
 
    4. The step applies file overrides from `configuration/appdefs/` and `configuration/regdefs/` to
       the published locations according to `app_reg_defs_placement`.
@@ -103,12 +105,13 @@ Template artifacts into `tmp/templates/`, `tmp/origin/templates/`, and `tmp/peer
 2. Directories `tmp/origin/templates/` and `tmp/peer/templates/` exist when corresponding
    `envTemplate.bgNsArtifacts` entries are present in Environment Inventory.
 
-3. Directories `appdefs/` and `regdefs/` at the repository root contain rendered Application and
-   Registry Definitions.
+3. When `app_reg_defs_placement` is `root` or `dual`, directories `appdefs/` and `regdefs/` at the
+   repository root contain rendered Application and Registry Definitions. When the value is `env`,
+   the root-level folders keep the content already committed to the instance repository.
 
-4. When `app_reg_defs_placement` is `dual`, directories
-   `environments/<cluster-name>/<env-name>/AppDefs/` and `RegDefs/` contain copies of the rendered
-   definitions.
+4. When `app_reg_defs_placement` is `env` or `dual`, directories
+   `environments/<cluster-name>/<env-name>/AppDefs/` and `RegDefs/` contain the rendered definitions
+   as an exact copy of the render output. In `root` mode those directories are removed.
 
 ## Error handling
 
@@ -121,6 +124,10 @@ download does not complete.
 
 **4a.** The step fails when a rendered App Definition or Registry Definition file fails schema
 validation. Published definition files are not updated.
+
+**5a.** The step fails when `app_reg_defs_placement` holds a value other than `root`, `env`, or
+`dual`. The configuration schema rejects the value when the pipeline reads
+`configuration/config.yml`, so no definition folder is changed.
 
 ## Example
 

@@ -381,12 +381,14 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # `regdef` - Always reconstruct the chart/image coordinates from the Registry Definition, ignoring the Deployment Descriptor embedded coordinates even when present
 # See /docs/features/sbom-generation.md#handling-dd-after-delivery for the canonical behavioral description
 artifact_coordinate_source: enum [`auto`, `regdef`]
-# Optional. Default value - `dual`
+# Optional. Default value - `root`
 # Controls where rendered Application and Registry Definitions are written
-# `dual` - written to both `/appdefs/`, `/regdefs/` AND per-environment compatibility folders `/environments/<cluster>/<env>/AppDefs|RegDefs/`
 # `root` - written only to `/appdefs/`, `/regdefs/`. Any pre-existing per-environment files are removed on each run
+# `env` - written only to the per-environment folders `/environments/<cluster>/<env>/AppDefs|RegDefs/`. The root-level folders are not written, so they keep the content committed to the repository
+# `dual` - written to both `/appdefs/`, `/regdefs/` AND per-environment compatibility folders `/environments/<cluster>/<env>/AppDefs|RegDefs/`. Retained for backward compatibility only, planned to be removed in a future release
+# The value is matched exactly, so use lowercase. Any other value fails configuration validation
 # See /docs/features/app-reg-defs.md#placement-modes for details
-app_reg_defs_placement: enum [`dual`, `root`]
+app_reg_defs_placement: enum [`root`, `env`, `dual`]
 # Optional
 # SBOM retention configuration
 # Runs during Effective Set generation when enabled

@@ -38,7 +38,8 @@ Effective definitions live in the root-level folders of the instance repository:
 
 Depending on the [placement mode](#placement-modes), EnvGene also maintains the per-environment folders
 `/environments/<cluster>/<env>/AppDefs/` and `/environments/<cluster>/<env>/RegDefs/`, which hold the
-definitions of the current build rather than a copy of the root-level content.
+definitions of the current build rather than a copy of the root-level content. The default `root` mode does not
+maintain them.
 
 EnvGene assembles effective definitions from two sources:
 
@@ -133,30 +134,45 @@ and definition override flow in the same repository.
 For each environment, the `app_reg_def_process` stage:
 
 1. Renders templates and validates the result (see [Templates](#templates)).
-2. Merges the render output into the root-level folders. Files with the same name are overwritten. Other files are
-   kept.
-3. Deletes the per-environment folders. In [`dual` placement mode](#placement-modes), recreates them as an exact copy
-   of the render output.
-4. Copies definition overrides into the root-level folders, and in `dual` mode also into the per-environment folders.
+2. Merges the render output into the root-level folders in `root` and `dual` mode. Files with the same name are
+   overwritten. Other files are kept.
+3. Deletes the per-environment folders. In `env` and `dual` mode, recreates them as an exact copy of the render
+   output.
+4. Copies definition overrides into the folders the mode writes: the root-level folders in `root` and `dual`, the
+   per-environment folders in `env` and `dual`.
 
 ## Output layout
 
 The root-level folders hold the effective definitions and are committed to the instance repository. Because they are
 merged into and never cleaned (see [Processing](#processing)), a definition whose template was removed persists at the
-root level until deleted manually. This applies in both placement modes.
+root level until deleted manually. This applies in every placement mode. In `env` mode the stage does not write the
+root-level folders at all, so they keep the content the repository already commits.
 
-In `dual` mode the per-environment folders always mirror the current render output plus definition overrides, so
-deletions are propagated there.
+In `env` and `dual` mode the per-environment folders always mirror the current render output plus definition
+overrides, so deletions are propagated there.
 
 ### Placement modes
 
 The `app_reg_defs_placement` attribute in [`config.yml`](/docs/envgene-configs.md#configyml) selects the placement
-mode. It is set at the repository level and applies to all environments.
+mode. It is set at the repository level and applies to all environments. The value is matched exactly, so use
+lowercase. Any other value fails configuration validation.
 
-- **`dual` (default)** - root-level folders plus per-environment compatibility copies. The mode exists for backward
+- **`root` (default)** - root-level folders only. No per-environment copies are maintained. Pre-existing
+  per-environment folders are removed on each run.
+- **`env`** - per-environment folders only. The root-level folders are not written, so they keep the content the
+  repository already commits.
+- **`dual`** - root-level folders plus per-environment compatibility copies. The mode exists for backward
   compatibility only and is planned to be removed in a future EnvGene release together with the per-environment
   folders. Migrate consumers to the root-level folders and switch to `root`.
-- **`root`** - root-level folders only. No per-environment copies are maintained.
+
+A repository whose consumers read the per-environment layout sets the attribute explicitly:
+
+```yaml
+app_reg_defs_placement: dual
+```
+
+Under any other mode those folders stay unwritten or are removed, and a consumer that reads definitions there stops
+finding them.
 
 ## Consumers
 
@@ -171,8 +187,10 @@ EnvGene resolves `application:version` references through the definitions in two
 For how EnvGene searches the registries and resolves the version to download an artifact, see
 [Artifact Resolution](/docs/features/artifact-resolution.md).
 
-Resolution reads the root-level folders first and falls back to the per-environment folders. The fallback exists for
-backward compatibility only: all consumers must migrate to the root-level folders.
+Resolution searches the folders the placement mode selects. The `root` and `env` modes search one location each: the
+root-level folders and the per-environment folders respectively. The `dual` mode searches the root-level folders
+first and falls back to the per-environment folders. The fallback exists for backward compatibility only: all
+consumers must migrate to the root-level folders.
 
 Under [`artifact_coordinate_source: regdef`](/docs/envgene-configs.md#configyml) the RegDef is the authoritative source
 of the deployed chart and image coordinates instead of the DD embedded ones. See
@@ -187,8 +205,9 @@ of the deployed chart and image coordinates instead of the DD embedded ones. See
 
 ### External systems
 
-External systems read the root-level folders from the instance repository, via Git API or repository checkout. Legacy
-consumers that depend on the per-environment layout are served by `dual` mode.
+External systems read the root-level folders from the instance repository, via Git API or repository checkout. A
+consumer that reads only the per-environment layout is served by `env` mode, and a consumer that reads both layouts
+is served by `dual` mode.
 
 ### Import into external CMDB systems
 
