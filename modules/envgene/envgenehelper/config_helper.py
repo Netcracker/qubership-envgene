@@ -41,6 +41,10 @@ def get_artifact_coordinate_source() -> ArtifactCoordinateSource:
     return ArtifactCoordinateSource(get_envgene_config_yaml().get("artifact_coordinate_source", "auto"))
 
 
+def get_sbom_cache_enabled() -> bool:
+    return get_envgene_config_yaml().get("sbom_cache", {}).get("enabled", True)
+
+
 def get_sbom_retention_size_limit_mb() -> int:
     env_override = getenv("SBOM_RETENTION_SIZE_LIMIT_MB")
     if env_override:

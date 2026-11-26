@@ -8,6 +8,7 @@ import requests
 
 from envgene_shared.utils.logger import logger
 from envgene_shared.utils.business_utils import getenv_with_error, to_bool
+from envgenehelper.config_helper import get_sbom_cache_enabled
 from envgenehelper.errors import IntegrationError
 from envgenehelper.file_helper import delete_dir_if_exists
 from envgenehelper.http_helper import ApiClient
@@ -120,11 +121,12 @@ class GitRepoManager:
             raise RuntimeError(f"Failed to prepare repository for '{ref}': {exc}") from exc
 
     def _get_excluded_paths(self) -> list[str]:
+        excluded_paths = ["sboms"] if not get_sbom_cache_enabled() else []
         full_env_name = os.getenv("FULL_ENV_NAME")
         if not full_env_name:
-            return []
+            return excluded_paths
 
-        return [f"environments/{full_env_name}/Inventory/delta-deploy-plan.yml",
+        return excluded_paths + [f"environments/{full_env_name}/Inventory/delta-deploy-plan.yml",
                 f"environments/{full_env_name}/Inventory/namespace-map.yml"]
 
     def _get_dcl_paths(self) -> list[str]:
@@ -196,6 +198,9 @@ class GitRepoManager:
         ]
         exclude_args = [f":(exclude){path}" for path in self._get_excluded_paths()]
         self.repo.git.add("--all", "--", *stageable_paths, *exclude_args)
+
+        if not get_sbom_cache_enabled():
+            self.repo.git.rm("--cached", "-r", "--ignore-unmatch", "--", "sboms")
 
         staged_files = self.repo.git.diff("--cached", "--name-only")
         for file in staged_files.splitlines():

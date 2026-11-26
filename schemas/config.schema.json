@@ -64,6 +64,23 @@
         false
       ]
     },
+    "sbom_cache": {
+      "type": "object",
+      "title": "SBOM Cache Configuration",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enable SBOM Cache",
+          "description": "Reuse and persist generated SBOMs in the Instance Repository",
+          "default": true,
+          "examples": [
+            true,
+            false
+          ]
+        }
+      }
+    },
     "sbom_retention": {
       "type": "object",
       "title": "SBOM Retention Configuration",

@@ -1,11 +1,14 @@
 from envgene_shared.utils.business_utils import getenv_with_error, get_envgene_config_yaml
 from envgene_shared.utils.logger import logger
 from envgenehelper import deleteFileIfExists, cleanup_dir_by_age, get_sboms_dir, is_over_size_limit
-from envgenehelper.config_helper import get_sbom_retention_size_limit_mb
+from envgenehelper.config_helper import get_sbom_retention_size_limit_mb, get_sbom_cache_enabled
 from envgenehelper.models import SbomRetentionConfig
 
 
 def sboms_retention_policy():
+    if not get_sbom_cache_enabled():
+        return
+
     work_dir = getenv_with_error('CI_PROJECT_DIR')
     sboms_dir = get_sboms_dir(work_dir)
 
