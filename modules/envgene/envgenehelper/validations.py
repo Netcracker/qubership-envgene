@@ -85,9 +85,12 @@ def check_environment(environment_name, cluster_name, get_passport, env_build, e
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
-        integration_schema_path = f"{get_schema_dir()}/integration.schema.json"
         if check_file_exists(integration_path):
-            validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
+            validate_yaml_by_scheme_or_fail(
+                integration_path,
+                schema_name="integration.schema.json",
+                schemas_dir=get_schema_dir(),
+            )
         else:
             logger.error(f'File configuration/integration.yml not exists in {integration_path}')
             raise ReferenceError("Execution is aborted as validation is not successful. See logs above.")

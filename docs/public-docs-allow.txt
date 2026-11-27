@@ -1,0 +1,8 @@
+# Approved exceptions to the public-docs check (docs_check of the component-documentation
+# skill), one per line: path:rule[:text]
+#   path  relative to docs/public, or * for every file
+#   rule  internal-url, internal-host, git-link, draft-marker, non-prod-host, email,
+#         broken-link, placeholder-image or version-mismatch
+#   text  optional; the finding's text must contain it
+# Add a line only for a finding a person approved; the merge request shows it.
+# Example: support.md:email:support@customer-portal.com

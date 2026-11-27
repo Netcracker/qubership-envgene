@@ -1,8 +1,13 @@
 import hashlib
 import importlib
 import json
+import copy
+from cProfile import Profile
 
 import pytest
+from pydantic import ValidationError as PydanticValidationError
+
+from pathlib import Path
 
 from envgene_shared.crypto.cred_store import CredStore
 from envgenehelper.business_helper import NamespaceRole, get_bgd_object, get_namespaces
@@ -11,13 +16,21 @@ from envgenehelper.current_env_instance_store import (
     CurrentEnvInstanceStore, current_env_instance_store,
     open_current_env_instance_store, profile_cache_dir,
 )
-from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml
+from envgenehelper.models import (
+    AppDefModel, ApplicationModel, BgDomainModel, CompositeStructureModel, CredentialsMapModel,
+    EnvDefinitionModel, NamespaceModel, ParamsetModel, RegDefV2Model,
+    ResourceProfileModel, TemplateDescriptorModel, TenantModel,
+)
+from envgenehelper.yaml_helper import dumpYamlToStr, normalize_comments, readYaml, sortYaml, store_value_to_yaml
+from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
+import jschon_tools
 
 STORE_MODULE = importlib.import_module("envgenehelper.current_env_instance_store")
 
 SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
+    "required": ["name"],
     "properties": {
         "name": {"type": "string"},
         "profile": {"type": "object", "properties": {"baseline": {"type": "string"}, "name": {"type": "string"}}},
@@ -122,6 +135,29 @@ def test_flush_sorts_quotes_and_adds_header(env_dir, schema_path):
     objects.flush()
 
     assert target.read_text() == '# first\n# second\nname: "a"\nprofile:\n  baseline: "b"\n  name: "n"\n'
+
+
+def test_flush_loads_schema_by_filename(monkeypatch, env_dir, schema_path):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schema_path.parent))
+    objects = CurrentEnvInstanceStore(env_dir)
+    target = env_dir / "Namespaces" / "a" / "namespace.yml"
+    objects.put(target, readYaml("profile:\n  name: n\n  baseline: b\nname: a\n"))
+    objects.beautify(target, schema_path.name)
+
+    objects.flush()
+
+    assert target.read_text() == 'name: "a"\nprofile:\n  baseline: "b"\n  name: "n"\n'
+
+
+def test_beautify_rejects_invalid_schema_backed_object_before_writing(env_dir, schema_path):
+    objects = CurrentEnvInstanceStore(env_dir)
+    target = env_dir / "Namespaces" / "a" / "namespace.yml"
+    objects.put(target, {"value": "missing_required_name"})
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        objects.beautify(target, schema_path)
+
+    assert not target.exists()
 
 
 def test_flush_normalizes_comment_spacing(env_dir):
@@ -250,6 +286,306 @@ def test_normalize_comments(source, expected):
     assert dumpYamlToStr(data) == expected
 
 
+def test_schema_backed_models_are_used_during_processing(monkeypatch, env_dir):
+    schemas_dir = Path(__file__).resolve().parents[3] / "schemas"
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schemas_dir))
+    monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", CredStore([]))
+
+    app_data = {
+        "name": "app1",
+        "deployParameters": {"p1": "v1"},
+        "technicalConfigurationParameters": {},
+    }
+    ns_data = {
+        "name": "ns1",
+        "isServerSideMerge": False,
+        "cleanInstallApprovalRequired": True,
+        "mergeDeployParametersAndE2EParameters": False,
+        "profile": {"name": "dev_override", "baseline": "dev"},
+    }
+    tenant_data = {"name": "tenant1", "registryName": "default"}
+    rp_data = {
+        "name": "dev_override",
+        "baseline": "dev",
+        "applications": [
+            {"name": "app1", "services": [{"name": "svc1", "parameters": [{"name": "cpu", "value": "100m"}]}]}
+        ],
+    }
+    comp_data = {
+        "name": "comp-1",
+        "baseline": {"name": "base-ns", "type": "namespace"},
+        "satellites": [{"name": "sat-ns", "type": "namespace"}],
+    }
+    creds_data = {
+        "secret-cred": {"type": "secret", "data": {"secret": "val"}},
+        "up-cred": {"type": "usernamePassword", "data": {"username": "u", "password": "p"}},
+    }
+
+    objects = CurrentEnvInstanceStore(env_dir)
+    app_path = env_dir / "Namespaces" / "ns1" / "Applications" / "app1.yml"
+    ns_path = env_dir / "Namespaces" / "ns1" / "namespace.yml"
+    tenant_path = env_dir / "tenant.yml"
+    rp_path = env_dir / " Profiles" / "dev_override.yml"
+    comp_path = env_dir / "composite_structure.yml"
+    creds_path = env_dir / "Credentials" / "credentials.yml"
+
+    objects.put(app_path, app_data)
+    objects.beautify(app_path, "application.schema.json")
+    objects.put(ns_path, ns_data)
+    objects.beautify(ns_path, "namespace.schema.json")
+    objects.put(tenant_path, tenant_data)
+    objects.beautify(tenant_path, "tenant.schema.json")
+    objects.put(rp_path, rp_data)
+    objects.beautify(rp_path, "resource-profile.schema.json")
+    objects.put(comp_path, comp_data)
+    objects.beautify(comp_path, "composite-structure.schema.json")
+    objects.put(creds_path, creds_data)
+    objects.beautify(creds_path, "credential.schema.json")
+
+    model_before_flush = objects.get(app_path)
+    assert isinstance(model_before_flush, ApplicationModel)
+    assert model_before_flush.name == "app1"
+
+    objects.flush()
+
+    assert objects.get(app_path) is model_before_flush
+    assert objects.get(app_path).name == "app1"
+    assert isinstance(objects.get(ns_path), NamespaceModel)
+    assert objects.get(ns_path).profile.baseline == "dev"
+    assert isinstance(objects.get(tenant_path), TenantModel)
+    assert isinstance(objects.get(rp_path), ResourceProfileModel)
+    assert isinstance(objects.get(comp_path), CompositeStructureModel)
+    assert isinstance(objects.get(creds_path), CredentialsMapModel)
+
+    assert app_path.exists()
+    assert ns_path.exists()
+    assert tenant_path.exists()
+    assert not creds_path.exists()
+
+
+def test_schema_backed_credentials_flush_through_cred_store(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    cred_store = CredStore([])
+    monkeypatch.setattr("envgene_shared.crypto.cred_store._open_store", cred_store)
+    objects = CurrentEnvInstanceStore(env_dir)
+    path = env_dir / "Credentials" / "credentials.yml"
+    objects.put(path, readYaml("cred:\n  type: secret\n  data:\n    secret: before\n"))
+    objects.beautify(path, "credential.schema.json")
+
+    credentials = objects.get(path)
+    assert isinstance(credentials, CredentialsMapModel)
+    with pytest.raises(PydanticValidationError):
+        credentials["cred"].data["secret"] = 1
+    credentials["cred"].data["secret"] = "after"
+    objects.flush()
+
+    assert cred_store.load_decrypted(path)["cred"]["data"]["secret"] == "after"
+    assert not path.exists()
+
+
+def test_schema_backed_models_reject_invalid_payloads(monkeypatch):
+    schemas_dir = Path(__file__).resolve().parents[3] / "schemas"
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(schemas_dir))
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        ApplicationModel.model_validate({"name": "app1"})  # missing deployParameters & technicalConfigurationParameters
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        NamespaceModel.model_validate({"name": "ns1"})  # missing required boolean flags
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        TenantModel.model_validate({"name": "tenant1"})  # missing registryName
+
+    with pytest.raises(ValueError, match="parameters or applications"):
+        ParamsetModel.model_validate({"name": "ps1"})  # requires parameters or applications
+
+    with pytest.raises(ValueError, match="Validation failed"):
+        CredentialsMapModel.model_validate({"bad": {"type": "secret", "data": {}}})  # missing secret field
+
+
+def test_mutation_updates_model_before_flush(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Applications" / "app.yml"
+    data = readYaml('name: app\ndeployParameters:\n  param: before # keep\ntechnicalConfigurationParameters: {}\n')
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, data)
+    objects.beautify(target, "application.schema.json")
+    data = objects.get(target)
+    data["deployParameters"]["param"] = "after"
+    assert isinstance(data, ApplicationModel)
+    assert data.deployParameters == {"param": "after"}
+
+    profile = Profile()
+    profile.runcall(objects.flush)
+
+    calls = {entry.code: entry.callcount for entry in profile.getstats()}
+    assert calls.get(validate_yaml_by_scheme_or_fail.__code__, 0) == 0
+    assert calls.get(jschon_tools.process_json_doc.__code__, 0) == 0
+    assert objects.get(target) is data
+    assert target.read_text() == 'name: "app"\ndeployParameters:\n  param: "after" # keep\ntechnicalConfigurationParameters: {}\n'
+
+
+def test_invalid_mutation_fails_at_assignment(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Applications" / "app.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, {"name": "app", "deployParameters": {}, "technicalConfigurationParameters": {}})
+    objects.beautify(target, "application.schema.json")
+    data = objects.get(target)
+
+    with pytest.raises(PydanticValidationError):
+        data["name"] = 123
+
+    assert data["name"] == "app"
+    with pytest.raises(ValueError, match="Validation failed"):
+        objects.put(target, {"name": 123, "deployParameters": {}, "technicalConfigurationParameters": {}})
+    assert objects.get(target)["name"] == "app"
+
+    objects.flush()
+    assert 'name: "app"' in target.read_text()
+    assert "123" not in target.read_text()
+
+
+def test_replacing_bound_object_preserves_validation(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Profiles" / "profile.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, {"name": "profile", "applications": []})
+    original = objects.bind(target, "resource-profile.schema.json")
+
+    with pytest.raises(ValueError):
+        objects.put(target, {"applications": [{"name": "broken"}]})
+
+    assert objects.get(target) is original
+    replacement = objects.put(target, {"name": "replacement", "applications": []})
+    assert isinstance(replacement, ResourceProfileModel)
+    assert objects.get(target) is replacement
+
+
+def test_nested_mutation_is_checked_by_model_without_schema_runs(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Namespaces" / "ns" / "namespace.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, readYaml("name: ns\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\n"
+                                 "mergeDeployParametersAndE2EParameters: false\nprofile:\n  name: p # keep\n"))
+    objects.beautify(target, "namespace.schema.json")
+    data = objects.get(target)
+
+    profile = Profile()
+    profile.runcall(store_value_to_yaml, data["profile"], "baseline", "dev", "set")
+    calls = {entry.code: entry.callcount for entry in profile.getstats()}
+    assert calls.get(validate_yaml_by_scheme_or_fail.__code__, 0) == 0
+    assert calls.get(jschon_tools.process_json_doc.__code__, 0) == 0
+    with pytest.raises(PydanticValidationError):
+        data["profile"]["baseline"] = 1
+    assert data.profile.baseline == "dev"
+
+    objects.flush()
+    assert target.read_text() == (
+        'name: "ns"\nisServerSideMerge: false\ncleanInstallApprovalRequired: false\n'
+        'mergeDeployParametersAndE2EParameters: false\nprofile:\n  name: "p" # keep\n  baseline: "dev" # set\n'
+    )
+
+
+def test_list_item_mutation_is_checked_by_model(monkeypatch, env_dir):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    target = env_dir / "Profiles" / "p.yml"
+    objects = CurrentEnvInstanceStore(env_dir)
+    objects.put(target, readYaml("name: p\napplications:\n  - name: app\n    services:\n      - name: svc\n"
+                                 "        parameters:\n          - name: cpu\n            value: 100m # keep\n"))
+    objects.beautify(target, "resource-profile.schema.json")
+    parameter = objects.get(target)["applications"][0]["services"][0]["parameters"][0]
+
+    with pytest.raises(PydanticValidationError):
+        parameter["value"] = {"nested": 1}
+    parameter["value"] = "200m"
+
+    objects.flush()
+    assert target.read_text() == (
+        'name: "p"\napplications:\n  - name: "app"\n    services:\n      - name: "svc"\n'
+        '        parameters:\n          - name: "cpu"\n            value: "200m"\n'
+    )
+
+
+def test_container_mutations_are_checked_by_model():
+    profile = ResourceProfileModel.model_validate(
+        {"name": "p", "applications": []},
+    )
+    with pytest.raises(PydanticValidationError):
+        profile.applications.append({"name": "app"})
+    assert profile.applications == []
+    profile.applications.append({"name": "app", "services": []})
+    copied = copy.deepcopy(profile.applications[0])
+    profile.applications.append(copied)
+    with pytest.raises(PydanticValidationError):
+        copied.services.append({"name": "svc"})
+    assert copied.services == []
+
+    definition = AppDefModel.model_validate({
+        "name": "app", "registryName": "reg", "artifactId": "artifact", "groupId": "group",
+        "supportParallelDeploy": False, "deployParameters": {}, "technicalConfigurationParameters": {},
+    })
+    with pytest.raises(PydanticValidationError):
+        definition.deployParameters["replicas"] = 1
+    assert "replicas" not in definition.deployParameters
+
+    credentials = CredentialsMapModel.model_validate({})
+    with pytest.raises(PydanticValidationError):
+        credentials.root["bad"] = {"type": "secret", "data": {"secret": 1}}
+    assert "bad" not in credentials
+    credentials.root["ok"] = {"type": "secret", "data": {"secret": "value"}}
+    with pytest.raises(PydanticValidationError):
+        credentials.root["ok"].data["secret"] = 1
+    assert credentials["ok"]["data"]["secret"] == "value"
+
+
+@pytest.mark.parametrize("model_cls, payload, path, key, value", [
+    (CredentialsMapModel, {"cred": {"type": "secret", "data": {"secret": "value"}}},
+     ("cred",), "data", {"username": "u", "password": "p"}),
+    (RegDefV2Model, {"version": "2.0", "name": "reg", "mavenConfig": {"authConfig": "auth", "repositoryDomainName": "url"},
+                     "authConfig": {"auth": {"provider": "aws", "authMethod": "anonymous"}}},
+     ("authConfig", "auth"), "authMethod", "secret"),
+    (EnvDefinitionModel, {"envTemplate": {"name": "env", "artifact": "env:1"}, "inventory": {"noCmdbVersion": "v1"}},
+     ("inventory",), "noCmdbVersion", "v3"),
+    (ParamsetModel, {"name": "params", "parameters": {}}, (), "parameters", None),
+    (TemplateDescriptorModel, {"tenant": "tenant.j2", "cloud": "cloud.j2", "namespaces": []},
+     (), "cloud", {"template_override": {}}),
+    (NamespaceModel, {"name": "ns", "isServerSideMerge": False, "cleanInstallApprovalRequired": False,
+                      "mergeDeployParametersAndE2EParameters": False}, (), "credentialsId", None),
+    (NamespaceModel, {"name": "ns", "isServerSideMerge": False, "cleanInstallApprovalRequired": False,
+                      "mergeDeployParametersAndE2EParameters": False}, (), "version", None),
+    (BgDomainModel, {"name": "bgd", "type": "bgdomain", "originNamespace": {"name": "origin", "type": "namespace"},
+                     "peerNamespace": {"name": "peer", "type": "namespace"},
+                     "controllerNamespace": {"name": "controller", "type": "namespace", "credentials": "cred"}},
+     ("controllerNamespace",), "credentials", 1),
+])
+def test_schema_rules_protect_mutations_without_revalidating_schema(monkeypatch, model_cls, payload, path, key, value):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    model = model_cls.model_validate(payload)
+    node = model
+    for part in path:
+        node = node[part]
+    profile = Profile()
+    with pytest.raises(PydanticValidationError):
+        profile.runcall(store_value_to_yaml, node, key, value)
+    assert model.to_yaml() == payload
+    calls = {entry.code: entry.callcount for entry in profile.getstats()}
+    assert calls.get(validate_yaml_by_scheme_or_fail.__code__, 0) == 0
+
+
+def test_schema_sort_does_not_validate_document(monkeypatch):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    invalid = {"name": 1, "deployParameters": {"b": "2", "a": "1"}, "technicalConfigurationParameters": {}}
+    assert list(sortYaml(invalid, "application.schema.json", False, validate=False))[:3] == [
+        "name", "deployParameters", "technicalConfigurationParameters",
+    ]
+    with pytest.raises(ValueError, match="Validation failed"):
+        sortYaml(invalid, "application.schema.json", False, validate=True)
+
+    valid = {"technicalConfigurationParameters": {"z": "1", "a": "2"}, "name": "app", "deployParameters": {}}
+    assert sortYaml(valid, "application.schema.json", False, validate=False) == sortYaml(
+        valid, "application.schema.json", False, validate=True,
+    )
 def _profile_path(tmp_path, content):
     profile = tmp_path / "resource_profiles" / "dev_bss_override.yml"
     profile.parent.mkdir(parents=True, exist_ok=True)
@@ -304,6 +640,21 @@ def test_profile_cache_miss_parses_and_hit_reads_pickle(tmp_path, env_dir, share
 
     assert second == first
     assert cache_file.read_bytes() == cached_bytes
+
+
+def test_cached_profiles_keep_schema_validation(tmp_path, env_dir, shared_root, monkeypatch):
+    monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
+    profile = _profile_path(tmp_path, b"name: dev\napplications: []\n")
+    for _ in range(2):
+        store = CurrentEnvInstanceStore(env_dir)
+        store.put(profile, store.load_profile_from_cache(profile))
+        bound = store.bind(profile, "resource-profile.schema.json")
+
+        assert isinstance(bound, ResourceProfileModel)
+        assert bound.applications == []
+        with pytest.raises(PydanticValidationError):
+            bound.applications.append({"name": "app"})
+        bound.applications.append({"name": "app", "services": []})
 
 
 def test_profile_cache_disabled_without_ci_project_dir(tmp_path, env_dir, monkeypatch):

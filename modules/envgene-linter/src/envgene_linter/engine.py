@@ -1,0 +1,122 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from . import rule_config
+from .connections import compute_connections
+from .discovery import build_index
+from .diagnostics import attach_discovery_problems, skip_read
+from .jinja_analysis import analyze
+from .effective import ALL_LAYERS, LOWER_LAYERS, SITE_LAYERS, compute
+from .model import Finding, SkippedCheck
+from .passport import build_catalogs
+from .read_errors import ReadProblem, collect_read_errors
+from .source_scope import finding_in_scope
+from .rules.place1 import check as check_place1
+from .rules.place2 import check as check_place2
+from .rules.place3 import check as check_place3
+from .rules.place4 import check as check_place4
+from .rules.place6 import check as check_place6
+from .rules.place7 import check as check_place7
+from .rules.place8 import check as check_place8
+from .rules.place9 import check as check_place9
+from .rules.place10 import check as check_place10
+from .rules.place12 import check as check_place12
+from .rules.sec1 import check as check_sec1
+from .rules.sec3 import check as check_sec3
+from .rules.sec4 import check as check_sec4
+from .rules.sec5 import check as check_sec5
+from .rules.int2 import check as check_int2
+from .rules.int3 import check as check_int3
+from .rules.int4 import check as check_int4
+from .rules.name1 import check as check_name1
+from .rules.name2 import check as check_name2
+from .rules.name3 import check as check_name3
+from .rules.name4 import check as check_name4
+from .rules.name8 import check as check_name8
+from .rules.val4 import check as check_val4
+from .rules.tpl1 import check as check_tpl1
+from .rules.tpl4 import check as check_tpl4
+from .rules.tpl6 import check as check_tpl6
+
+
+@dataclass
+class CheckResult:
+    findings: list[Finding]
+    skipped: list[str]
+    disabled_rules: tuple[str, ...] = ()
+    not_applicable_rules: tuple[str, ...] = ()
+    skipped_checks: list[SkippedCheck] = field(default_factory=list)
+
+
+def run_check(root: Path, *, template_repo: Path | None = None) -> CheckResult:
+    with collect_read_errors() as problems:
+        return _run_check(root, problems, template_repo)
+
+
+def _run_check(root: Path, problems: list[ReadProblem], template_repo: Path | None = None) -> CheckResult:
+    disabled = rule_config.disabled_rules()
+    if len(disabled) == len(rule_config.RULES):
+        return CheckResult(findings=[], skipped=[], disabled_rules=disabled)
+    index = build_index(root)
+
+    def run(rule, check, args):
+        start = len(problems)
+        findings = check(*args)
+        for problem in problems[start:]:
+            skip_read(index, rule, problem)
+        return [finding for finding in findings if finding_in_scope(index, finding)]
+
+    template_rules = tuple(rule for rule in ('TPL-4', 'TPL-6') if rule not in disabled)
+    sources = analyze(index, template_rules)
+    template_checks = [('TPL-1', check_tpl1, (index,)),
+                       ('TPL-4', check_tpl4, (index, sources)),
+                       ('TPL-6', check_tpl6, (index, sources))]
+    if not (index.root / "environments").is_dir():
+        findings = [finding for rule, check, args in template_checks if rule not in disabled
+                    for finding in run(rule, check, args)]
+        inactive = tuple(rule for rule in rule_config.RULES
+                         if rule not in ('TPL-1', 'TPL-4', 'TPL-6') and rule not in disabled)
+        return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
+                           not_applicable_rules=inactive, skipped_checks=index.skipped_checks)
+    connections = compute_connections(index)
+    incomplete_merge = attach_discovery_problems(index, connections, set(rule_config.RULES) - set(disabled))
+    catalogs = build_catalogs(index, connections)
+    full = {env.full_name: compute(index, env, ALL_LAYERS) for env in index.environments}
+    lower = {env.full_name: compute(index, env, LOWER_LAYERS) for env in index.environments}
+    site = {env.full_name: compute(index, env, SITE_LAYERS) for env in index.environments}
+    checks = [
+        ("PLACE-1", check_place1, (index, full, lower, site, catalogs)),
+        ("PLACE-2", check_place2, (index, full, lower, site)),
+        ("PLACE-3", check_place3, (index, full, lower, site, catalogs, connections)),
+        ("PLACE-4", check_place4, (index, connections)),
+        ("PLACE-6", check_place6, (index, connections)),
+        ("PLACE-7", check_place7, (index, connections)),
+        ("PLACE-8", check_place8, (index, connections)),
+        ("PLACE-9", check_place9, (index, connections)),
+        ("PLACE-10", check_place10, (index, connections)),
+        ("PLACE-12", check_place12, (index, full, catalogs, template_repo)),
+        ("SEC-1", check_sec1, (index, connections)),
+        ("SEC-3", check_sec3, (index, connections)),
+        ("SEC-4", check_sec4, (index, connections)),
+        ("SEC-5", check_sec5, (index, connections)),
+        ("INT-2", check_int2, (index, connections)),
+        ("INT-3", check_int3, (index, connections)),
+        ("INT-4", check_int4, (index, connections)),
+        ("NAME-1", check_name1, (index, connections)),
+        ("NAME-2", check_name2, (index, connections)),
+        ("NAME-3", check_name3, (index, connections)),
+        ("NAME-4", check_name4, (index, connections)),
+        ("NAME-8", check_name8, (index, connections)),
+        ("VAL-4", check_val4, (index, connections)),
+        *template_checks,
+    ]
+    findings = []
+    for rule, check, args in checks:
+        if rule not in disabled:
+            if rule == 'PLACE-1' and incomplete_merge:
+                continue
+            findings.extend(run(rule, check, args))
+    return CheckResult(findings=findings, skipped=index.skipped, disabled_rules=disabled,
+                       skipped_checks=index.skipped_checks)

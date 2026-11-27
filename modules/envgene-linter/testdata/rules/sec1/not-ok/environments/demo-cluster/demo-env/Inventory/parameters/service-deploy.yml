@@ -1,0 +1,3 @@
+name: service-deploy
+parameters:
+  DB_PASSWORD: SYNTHETIC-NOT-A-REAL-SECRET

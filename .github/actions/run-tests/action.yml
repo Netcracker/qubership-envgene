@@ -50,6 +50,7 @@ runs:
       shell: bash
       run: |
         echo "PYTHONPATH=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}/scripts" >> "${GITHUB_ENV}"
+        echo "JSON_SCHEMAS_DIR=${GITHUB_WORKSPACE}/schemas" >> "${GITHUB_ENV}"
 
     - name: ENVGENE SHARED test
       shell: bash

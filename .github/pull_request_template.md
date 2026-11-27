@@ -31,6 +31,18 @@ Describe how the changes were verified, including:
 - Manual testing steps or results
 - Screenshots, logs, or other evidence (if applicable)
 
+## Public documentation
+
+Fill this section only when the pull request changes anything under `docs/public/`.
+
+- [ ] The added and removed pages are reflected in `docs/public/README.md`
+- [ ] No internal URLs, internal hosts, or links to internal repositories
+- [ ] No employee names, personal contacts, or screenshots of internal environments
+- [ ] No draft notes, TODO markers, roadmap promises, stack traces, or debug output
+- [ ] No non-production or test endpoints
+- [ ] Every line added to `docs/public-docs-allow.txt` is an exception a person approved in this pull request
+- [ ] Links and image paths resolve, the link checker and the linters are green
+
 ## Additional Notes
 
 Include any extra information, such as:

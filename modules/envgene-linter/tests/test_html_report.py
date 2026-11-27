@@ -1,0 +1,225 @@
+from pathlib import Path
+
+from envgene_linter.html_report import REPORT_FILENAME, ensure_report_ignored, render_html, report_path
+from envgene_linter.model import Action, Finding, IssueType, Location, Severity
+
+
+def _finding(**overrides) -> Finding:
+    data = dict(
+        rule="PLACE-2",
+        severity=Severity.WARNING,
+        path=Path("environments/c/e/Inventory/parameters/p.yml"),
+        line=4,
+        column=3,
+        key="K",
+        scope="s",
+        message="problem text",
+        hint="fix it",
+    )
+    data.update(overrides)
+    return Finding(**data)
+
+
+def test_report_path_is_visible_file_in_repo_root(tmp_path):
+    assert report_path(tmp_path) == tmp_path / "envgene-linter-report.html"
+    assert REPORT_FILENAME == "envgene-linter-report.html"
+
+
+def test_repository_name_in_header_and_tab_title():
+    for findings in ([], [_finding()]):
+        body = render_html(findings, Path("/workspace/my-instance-repo"))
+        assert "<title>my-instance-repo — Envgene Linter Report</title>" in body
+        assert '<p class="repository">Repository: <strong>my-instance-repo</strong></p>' in body
+        assert "/workspace/" not in body
+
+
+def test_repository_name_is_escaped():
+    body = render_html([], Path('/workspace/demo<&"repo'))
+    assert '<title>demo&lt;&amp;&quot;repo — Envgene Linter Report</title>' in body
+    assert '<strong>demo&lt;&amp;&quot;repo</strong>' in body
+    assert 'demo<&"repo' not in body
+
+
+def test_repository_name_for_current_directory(tmp_path, monkeypatch):
+    root = tmp_path / "instance-repo"
+    root.mkdir()
+    monkeypatch.chdir(root)
+    body = render_html([], Path("."))
+    assert '<strong>instance-repo</strong>' in body
+
+
+def test_two_place1_findings_one_rule_heading():
+    a = _finding(rule="PLACE-1", path=Path("environments/a.yml"), message="ma", hint="ha")
+    b = _finding(rule="PLACE-1", path=Path("environments/b.yml"), line=8, column=5, message="mb", hint="hb")
+    body = render_html([a, b], Path("/repo"))
+    assert body.count("<details") == 1
+    assert "<details open" not in body
+    assert '<details class="rule-section">' in body
+    assert "open=" not in body
+    assert "<summary" in body
+    assert "PLACE-1: Same value belongs on a higher layer" in body
+    assert "Warnings 2, Review 0" in body
+    assert "PLACE-2" not in body
+    assert body.count('class="finding"') == 2
+    assert "FILE" in body and "ISSUE" in body
+    assert '<div class="label">TYPE</div>' not in body
+    assert "ACTION" in body and "FIX SUGGESTION" in body
+    assert "environments/a.yml:4:3" in body
+    assert "environments/b.yml:8:5" in body
+    assert 'class="rule-section"' in body
+
+
+def test_rule_summary_counts_warnings_and_reviews():
+    warning = _finding(rule="SEC-1")
+    review = _finding(rule="SEC-1", action=Action.REVIEW, issue_type=IssueType.INFORMATION, line=8)
+    body = render_html([warning, review], Path("/repo"))
+    assert "Warnings 1, Review 1" in body
+
+
+def test_file_lists_all_locations():
+    finding = _finding(
+        rule="PLACE-1",
+        path=Path("environments/a.yml"),
+        locations=(
+            Location(Path("environments/a.yml"), 4, 3),
+            Location(Path("environments/b.yml"), 8, 5),
+        ),
+    )
+    body = render_html([finding], Path("/repo"))
+    assert "environments/a.yml:4:3" in body
+    assert "environments/b.yml:8:5" in body
+
+
+def test_rule_order_place1_then_place3():
+    a = _finding(rule="PLACE-3", path=Path("environments/z.yml"))
+    b = _finding(rule="PLACE-1", path=Path("environments/a.yml"))
+    body = render_html([a, b], Path("/repo"))
+    assert body.index("PLACE-1") < body.index("PLACE-3")
+    assert "PLACE-2" not in body
+
+
+def test_unknown_rule_has_heading_without_catalog_blurb():
+    body = render_html([_finding(rule="OTHER")], Path("/repo"))
+    assert "<summary" in body
+    assert "OTHER" in body
+    assert "OTHER:" not in body
+    assert "Same value belongs on a higher layer" not in body
+
+
+def test_zero_findings_says_no_findings():
+    body = render_html([], Path("/repo"))
+    assert "No findings" in body
+    assert "<details" not in body
+    assert "<h2" not in body
+
+
+def test_angle_brackets_are_escaped():
+    body = render_html([_finding(message="x < y & z")], Path("/repo"))
+    assert "x &lt; y &amp; z" in body
+    assert "x < y" not in body
+
+
+def test_no_script_tags():
+    body = render_html([_finding()], Path("/repo"))
+    assert "<script" not in body
+    assert "Do not commit this file" not in body
+    assert "Envgene Linter Report" in body
+    assert "chip-warning" not in body
+    assert "chip-fix" in body
+
+
+def test_review_action_uses_gray_chip_without_type():
+    body = render_html(
+        [_finding(issue_type=IssueType.INFORMATION, action=Action.REVIEW)],
+        Path("/repo"),
+    )
+    assert ">Information</span>" not in body
+    assert "Review" in body
+    assert "chip-information" not in body
+    assert "chip-review" in body
+
+
+def test_place8_uses_catalog_heading_and_review_chip():
+    body = render_html(
+        [
+            _finding(
+                rule="PLACE-8",
+                severity=Severity.INFORMATION,
+                issue_type=IssueType.INFORMATION,
+                action=Action.REVIEW,
+            )
+        ],
+        Path("/repo"),
+    )
+    assert "PLACE-8: Referenced or used entities are empty" in body
+    assert "chip-information" not in body
+    assert "chip-review" in body
+
+
+def test_place9_uses_catalog_heading_and_fix_chip():
+    body = render_html([_finding(rule="PLACE-9")], Path("/repo"))
+    assert "PLACE-9: One Cloud Passport per cluster" in body
+    assert "chip-warning" not in body
+    assert "chip-fix" in body
+
+
+def test_ensure_report_ignored_creates_gitignore(tmp_path):
+    ensure_report_ignored(tmp_path)
+    assert (tmp_path / ".gitignore").read_text(encoding="utf-8") == "envgene-linter-report.html\n"
+
+
+def test_ensure_report_ignored_appends(tmp_path):
+    gitignore = tmp_path / ".gitignore"
+    gitignore.write_text("*.pyc\n", encoding="utf-8")
+    ensure_report_ignored(tmp_path)
+    assert gitignore.read_text(encoding="utf-8") == "*.pyc\nenvgene-linter-report.html\n"
+
+
+def test_ensure_report_ignored_skips_when_present(tmp_path):
+    gitignore = tmp_path / ".gitignore"
+    gitignore.write_text("/envgene-linter-report.html\n", encoding="utf-8")
+    before = gitignore.read_bytes()
+    ensure_report_ignored(tmp_path)
+    assert gitignore.read_bytes() == before
+
+
+def test_multiline_guidance_preserves_yaml_indentation_and_escapes_content():
+    hint = 'ParameterSet YAML:\nname: "example"\nparameters:\n  SETTING: "<script>example</script>"'
+    body = render_html([_finding(hint=hint)], Path("/repo"))
+    assert "<pre" in body
+    assert (
+        "parameters:\n  SETTING: &quot;&lt;script&gt;example&lt;/script&gt;&quot;"
+        in body
+    )
+    assert "<script>example</script>" not in body
+    assert "white-space: pre-wrap" in body
+
+
+def test_place12_group_shows_unique_files_and_expandable_exact_positions():
+    finding = _finding(rule="PLACE-12", locations=tuple(
+        Location(Path("environments/" + file + ".yml"), line, 3)
+        for file in ("a", "b") for line in (4, 8)
+    ))
+    body = render_html([finding], Path("/repo"))
+    assert '<details class="source-locations">' in body
+    assert '<summary>All 4 source positions</summary>' in body
+    prefix = body.split('<details class="source-locations">', 1)[0]
+    assert 'environments/a.yml</span>' in prefix and 'environments/b.yml</span>' in prefix
+    for file in ("a", "b"):
+        for line in (4, 8):
+            assert f'environments/{file}.yml:{line}:3' in body
+
+
+def test_place12_only_without_findings_does_not_claim_all_rules_are_disabled():
+    from envgene_linter.rulemeta import RULES
+    from envgene_linter.report import render
+
+    disabled = tuple(rule for rule in RULES if rule != "PLACE-12")
+    body = render_html([], Path("/repo"), disabled_rules=disabled)
+    assert 'No findings' in body and 'No rules enabled' not in body
+    assert render([], disabled_rules=disabled) == 'PLACE-12\nNo findings\n'
+
+
+def test_place12_follows_other_placement_rules_in_report_order():
+    body = render_html([_finding(rule="SEC-1"), _finding(rule="PLACE-12"), _finding(rule="PLACE-10")], Path("/repo"))
+    assert body.index('PLACE-10') < body.index('PLACE-12') < body.index('SEC-1')

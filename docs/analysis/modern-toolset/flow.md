@@ -67,7 +67,6 @@ for the target flow. The per-component docs in this directory elaborate individu
 3. Crossing a following function in the same job:
    - `generate_deployment_plan`
    - `argocd_repo_generator`
-   - `es-pusher`
    - effective-set calculator
    exchange:
    - structured data via contracted files
@@ -275,16 +274,15 @@ Cache DD and SBOMs using GitLab features.
 
 ## To deprecate
 
-1. Fernet
-2. GAV notation
-3. Template testing
-4. `ENV_INVENTORY_INIT: true`
-5. `ENV_TEMPLATE_NAME`
-6. `registry_discovery`
-7. `SD_SOURCE_TYPE: artifact`
-8. `BG_MANAGE`
-9. extended merge (removed)
-10. `NS_BUILD_FILTER`
+1. GAV notation
+2. Template testing
+3. `ENV_INVENTORY_INIT: true`
+4. `ENV_TEMPLATE_NAME`
+5. `registry_discovery`
+6. `SD_SOURCE_TYPE: artifact`
+7. `BG_MANAGE`
+8. extended merge (removed)
+9. `NS_BUILD_FILTER`
 
 ## Flow
 

@@ -1,0 +1,4 @@
+name: service-deploy
+parameters:
+  DB_USERNAME: ${creds.get("demo-db").username}
+  DB_PASSWORD: ${creds.get("other-demo-db").password}

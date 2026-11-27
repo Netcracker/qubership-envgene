@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from build_env.render_config_env import EnvGenerator
@@ -5,18 +7,24 @@ from envgenehelper import open_current_env_instance_store
 
 BGD = {
     "name": "bgd",
-    "originNamespace": {"name": "env-origin"},
-    "peerNamespace": {"name": "env-peer"},
-    "controllerNamespace": {"name": "env-controller"},
+    "type": "bgdomain",
+    "originNamespace": {"name": "env-origin", "type": "namespace"},
+    "peerNamespace": {"name": "env-peer", "type": "namespace"},
+    "controllerNamespace": {"name": "env-controller", "type": "namespace", "credentials": "controller-cred"},
 }
 
 
 def _validate_bgd(env_dir, namespace_names):
+    bgd_template = env_dir.parent / "bg_domain.yml.j2"
+    bgd_template.write_text(json.dumps(BGD))
+    generator = EnvGenerator()
+    generator.ctx.current_env_dir = str(env_dir)
+    generator.ctx.current_env_template = {"bg_domain": str(bgd_template)}
     with open_current_env_instance_store(env_dir) as env_instance_store:
-        env_instance_store.put(env_dir / "bg_domain.yml", dict(BGD))
+        generator.generate_bgd_file()
         for name in namespace_names:
             env_instance_store.put(env_dir / "Namespaces" / name / "namespace.yml", {"name": name})
-        EnvGenerator().validate_bgd()
+        generator.validate_bgd()
 
 
 class TestValidateBgd:
@@ -26,6 +34,24 @@ class TestValidateBgd:
     def test_mismatched_name_fails(self, tmp_path):
         with pytest.raises(ValueError, match="env-controller"):
             _validate_bgd(tmp_path / "env", ["env-origin", "env-peer", "controller"])
+
+    @pytest.mark.parametrize("field, value", [
+        ("peerNamespace", {}),
+        ("type", "namespace"),
+        ("controllerNamespace", {"name": "controller", "type": "namespace", "credentials": 1}),
+    ])
+    def test_invalid_structure_fails_during_rendering(self, tmp_path, field, value):
+        bgd_template = tmp_path / "bg_domain.yml.j2"
+        bgd_template.write_text(json.dumps(dict(BGD, **{field: value})))
+        generator = EnvGenerator()
+        generator.ctx.current_env_dir = str(tmp_path / "env")
+        generator.ctx.current_env_template = {"bg_domain": str(bgd_template)}
+
+        with open_current_env_instance_store(tmp_path / "env"):
+            with pytest.raises(ValueError):
+                generator.generate_bgd_file()
+
+        assert not (tmp_path / "env" / "bg_domain.yml").exists()
 
     def test_ignores_namespaces_on_disk(self, tmp_path):
         env_dir = tmp_path / "env"

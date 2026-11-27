@@ -15,6 +15,7 @@
     - [No-SD Mode](#no-sd-mode)
   - [Cleanup context](#cleanup-context)
   - [Configuration](#configuration)
+  - [Publishing in the GitLab-deploy flow](#publishing-in-the-gitlab-deploy-flow)
   - [See also](#see-also)
 
 ## Overview
@@ -86,7 +87,7 @@ Application and Registry Definitions for every application in the Full SD must b
 
 The `topology`, `pipeline`, `deployment`, and `runtime` contexts remain present in the persistent ES, exactly as in full generation. The `cleanup` context follows [Cleanup context](#cleanup-context). The difference is in *how* they are produced: the calculator is invoked with the Delta SD instead of the Full SD, and its output is recursively merged into the persistent ES — only slices affected by the SD change are recomputed. Applications unchanged in the current run keep their existing slices and their SBOMs are not requested.
 
-Applied when SD processing produces a Delta SD — that is, `SD_REPO_MERGE_MODE` is `basic-merge`, `extended-merge`, or `basic-exclusion-merge`, and a Full SD already exists.
+Applied when SD processing produces a Delta SD, that is, `SD_REPO_MERGE_MODE` is `basic-merge` or `basic-exclusion-merge`, and a Full SD already exists.
 
 Application and Registry Definitions for every application in the Delta SD must be available.
 
@@ -94,7 +95,7 @@ This mode is available only when `effective_set_generation_strategy=partial` or 
 
 #### Forward merge
 
-Applies to `SD_REPO_MERGE_MODE` values `basic-merge` and `extended-merge`. The Delta SD lists the applications being added or updated.
+Applies to `SD_REPO_MERGE_MODE: basic-merge`. The Delta SD lists the applications being added or updated.
 
 - The calculator is invoked with the Delta SD as input. It produces output across all five contexts, scoped to the Delta SD.
 - The output is merged into the persistent ES recursively: per-application slices under `deployment/` and `runtime/` are replaced for the applications in the Delta SD; `topology/` and `pipeline/` are replaced in full, and `cleanup/` is replaced in full for all namespaces regardless of the Delta SD scope; `mapping.yml` entries are upserted (added or updated, without removing entries for namespaces outside the Delta SD).
@@ -153,7 +154,25 @@ Key pipeline parameters that affect ES generation:
 - `EFFECTIVE_SET_CONFIG` — effective-set version selection and related options.
 - `CUSTOM_PARAMS` — optional overrides injected into `deployment`, `runtime`, and `cleanup` contexts.
 
+The `config.yml` key [`artifact_coordinate_source`](/docs/envgene-configs.md#configyml) reshapes the chart and
+image coordinates in the SBOMs the calculator consumes, so it also affects ES generation. See
+[Handling DD After Delivery](/docs/features/sbom-generation.md#handling-dd-after-delivery).
+
 See [Instance pipeline parameters](/docs/instance-pipeline-parameters.md) for the full list.
+
+## Publishing in the GitLab-deploy flow
+
+By default, Effective Set generation commits its output to the Instance repository under [Location](#location). In the
+GitLab-deploy flow ([`PIPELINE_TYPE: GITLAB_DEPLOY`](/docs/instance-pipeline-parameters.md#pipeline_type)), the
+`deployment`, `runtime`, and `cleanup` contexts are published to an external GitLab repository instead. The
+`argocd-dpg` step runs after generation and pushes them there as part of building the ArgoCD deployment structure, so
+they are not committed to the Instance repository. The `topology` and `pipeline` contexts are committed to the
+Instance repository as usual.
+
+The target repository and its credentials come from the DCL parameters carried in the `pipeline/` context of the
+Effective Set: `DCL_GIT_URL` and `DCL_GIT_BRANCH` for the repository, and the `DCL_CONFIG_GITLAB_*` credentials. These
+are supplied as end-to-end parameters. To configure them, see
+[How to configure DCL parameters in EnvGene](/docs/how-to/how-to-configure-dcl-parameters-in-envgene.md).
 
 ## See also
 

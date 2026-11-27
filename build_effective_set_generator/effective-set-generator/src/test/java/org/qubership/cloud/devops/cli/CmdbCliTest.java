@@ -112,7 +112,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@config.json"
         );
 
@@ -147,7 +146,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@namespace-custom-param/namespace-custom-param.json"
         );
 
@@ -196,7 +194,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@namespace-custom-param/namespace-custom-param-invalid.json"
         );
 
@@ -226,7 +223,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@namespace-custom-param/namespace-custom-param-mixed.json"
         );
 
@@ -258,7 +254,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d",
-                "--app_chart_validation", "false",
                 "--pipeline-consumer-specific-schema-path", consumerSchemaPath.toString()
         );
 
@@ -283,7 +278,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@config.json");
 
         assertEquals(0, exitCode);
@@ -316,7 +310,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d",
-                "--app_chart_validation", "false",
                 "--pipeline-consumer-specific-schema-path",
                 FileTestUtils.resource("environments/cluster-01/pl-02/consumer/consumer-v1.0.schema.json").toString());
 
@@ -352,7 +345,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@config.json");
 
         assertEquals(0, exitCode);
@@ -387,8 +379,7 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--generate-cleanup-context",
-                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false");
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c");
 
         assertEquals(0, exitCode);
         assertTrue(Files.exists(outputPath.resolve("cleanup/pg/parameters.yaml")));
@@ -509,7 +500,48 @@ public class CmdbCliTest {
         assertNotEquals(0, exitCode);
     }
 
-    private static final String NS_FILE = "cluster-01/pl-02/Namespaces/ns-test/namespace.yml";
+    @Test
+    void testSbomWithoutAppChartFails(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        ObjectMapper json = new ObjectMapper();
+        Path sbom = tempDir.resolve("sboms").resolve(VALS_APP_SBOM);
+        ObjectNode root = (ObjectNode) json.readTree(sbom.toFile());
+        ArrayNode components = (ArrayNode) root.path("components");
+        for (int i = components.size() - 1; i >= 0; i--) {
+            if ("application/vnd.qubership.app.chart".equals(components.get(i).path("mime-type").asText())) {
+                components.remove(i);
+            }
+        }
+        json.writerWithDefaultPrettyPrinter().writeValue(sbom.toFile(), root);
+
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), tempDir.resolve("effective-set"),
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertNotEquals(0, exitCode);
+    }
+
+    @Test
+    void testSbomWithBlankAppChartNameFails(@TempDir Path tempDir) throws Exception {
+        Path envsPath = prepareProfileEnv(tempDir);
+        ObjectMapper json = new ObjectMapper();
+        Path sbom = tempDir.resolve("sboms").resolve(VALS_APP_SBOM);
+        ObjectNode root = (ObjectNode) json.readTree(sbom.toFile());
+        for (var component : root.path("components")) {
+            if ("application/vnd.qubership.app.chart".equals(component.path("mime-type").asText())) {
+                ((ObjectNode) component).put("name", "");
+            }
+        }
+        json.writerWithDefaultPrettyPrinter().writeValue(sbom.toFile(), root);
+
+        int exitCode = executeGenerate(envsPath, tempDir.resolve("sboms"),
+                envsPath.resolve("cluster-01/pl-02/Inventory/deploy-plan.yml"),
+                FileTestUtils.resource("configuration/registry.yml"), tempDir.resolve("effective-set"),
+                "d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d");
+        assertNotEquals(0, exitCode);
+    }
+
+    private static final String NS_FILE ="cluster-01/pl-02/Namespaces/ns-test/namespace.yml";
     private static final String CLOUD_FILE = "cluster-01/pl-02/cloud.yml";
     private static final String VALS_APP_SBOM = "vals-app/vals-app-0.1.0-20261215.141230-3-RELEASE.sbom.json";
     private static final Set<String> BASE_SERVICE_KEYS = Set.of("ARTIFACT_DESCRIPTOR_VERSION", "DEPLOYMENT_RESOURCE_NAME",
@@ -585,10 +617,11 @@ public class CmdbCliTest {
 
     private static Map<String, Object> profileParams(Path outputPath) throws Exception {
         Path params = outputPath.resolve(
-                "deployment/ns-test/vals-app/values/per-service-parameters/alertmanager/deployment-parameters.yaml");
-        Map<String, Object> values = new ObjectMapper(new YAMLFactory()).readValue(params.toFile(),
-                new TypeReference<Map<String, Object>>() {
+                "deployment/ns-test/vals-app/values/per-service-parameters/vals-app/deployment-parameters.yaml");
+        Map<String, Map<String, Object>> services = new ObjectMapper(new YAMLFactory()).readValue(params.toFile(),
+                new TypeReference<Map<String, Map<String, Object>>>() {
                 });
+        Map<String, Object> values = services.get("alertmanager");
         values.keySet().removeAll(BASE_SERVICE_KEYS);
         return values;
     }
@@ -606,8 +639,7 @@ public class CmdbCliTest {
                 "--registries", registriesPath.toString(),
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
-                "--extra_params", "DEPLOYMENT_SESSION_ID=" + deploymentSessionId,
-                "--app_chart_validation", "false"
+                "--extra_params", "DEPLOYMENT_SESSION_ID=" + deploymentSessionId
         );
     }
 
@@ -630,7 +662,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@config.json");
 
         assertEquals(0, exitCode);
@@ -658,7 +689,6 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false",
                 "--custom-params", "@config.json",
                 "--creds-output", credsOutput.toString());
 

@@ -135,7 +135,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**Create Simple Template**](/docs/how-to/create-simple-template.md) - Create your first environment template
 - [**Create Cluster**](/docs/how-to/create-cluster.md) - Set up a new cluster
-- [**Create Environment Inventory**](/docs/how-to/create-environment-inventory.md) - Define environment inventory
+- [**Create Environment Inventory**](/docs/how-to/create-environment-inventory.md) - Create an environment with `ENV_INVENTORY_CONTENT` or by hand
 - [**Initialize and Upgrade Instance Repository**](/docs/how-to/envgene-maitanance.md) - Set up or upgrade Instance Repository using GSF
 
 **Configuration Management:**
@@ -151,8 +151,10 @@ After the pipeline finishes, the Environment configuration will be generated and
 **Advanced Configuration:**
 
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
-- [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+- [**Configure local Credentials**](/docs/how-to/configure-local-credentials.md) - Set and update the credentials of an environment stored encrypted in the Instance repository
+- [**Configure a Secret Store**](/docs/how-to/configure-secret-store.md) - Describe a Secret Store and give the Instance pipeline access to it
+- [**Configure external Credentials**](/docs/how-to/configure-external-credentials.md) - Set a sensitive parameter through a Credential kept in a Secret Store
 - [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
 - [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
 - [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configure.md) - Set up a BGD environment (BG Domain, Composite Structure, inventory), or convert a non-BG one
@@ -162,6 +164,8 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
 - [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
+- [**Migrate a template repository to external Credentials**](/docs/how-to/migrate-template-repository-to-external-credentials.md) - Move Environment Templates from local credential macros to a Credential Template and `credRef`
+- [**Migrate an instance repository to external Credentials**](/docs/how-to/migrate-instance-repository-to-external-credentials.md) - Move Cloud Passport, Shared, and System Credentials of an Instance repository to a Secret Store
 
 ### Advanced Features
 
@@ -177,7 +181,6 @@ After the pipeline finishes, the Environment configuration will be generated and
   Credential sources, auto-generation, precedence ladder, and mode-dependent merging
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO, and External Credential Context
-- [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure

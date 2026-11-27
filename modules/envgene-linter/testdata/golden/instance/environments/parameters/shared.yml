@@ -1,0 +1,4 @@
+name: shared
+parameters:
+  KEEP_SITE: site
+  WIN: site

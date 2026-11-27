@@ -1,0 +1,9 @@
+name: prjct-cloud-deploy
+version: 1
+parameters:
+  IDP_ADMIN_USER_PASSWORD: "${creds.get('idp-admin-creds').password}"
+  IDP_ADMIN_USER_USERNAME: "${creds.get('idp-admin-creds').username}"
+  KMS_CERT_IN_BASE64: "${creds.get('kms-cert').secret}"
+  IDP_EXTERNAL_TOKEN_URL: "${IDP_EXTERNAL_URL}/connect/token"
+  IDP_EXTERNAL_URL: "CLOUDPROTOCOL://public-gateway-${NAMESPACE}.${SERVER_HOSTNAME}"
+applications: []

@@ -36,10 +36,15 @@ from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from git_commit.git_commit import git_commit
 from inventory.env_inventory_generation import run_inventory_generation
 from pipeline.multi_env_runner import run_multi_env_pipeline
-from pipeline.metrics_collector_activity import MetricsCollectorActivity, resolve_trace_id
+from pipeline.metrics_collector_activity import MetricsCollectorActivity, resolve_trace_id, serialize_step_results
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from pipeline.resolve_env_names import build_resolved_variables, resolve_env_names
-from publish_artifacts.publish_artifacts import copy_env_artifact, finalize_artifacts, artifacts_output_root
+from publish_artifacts.publish_artifacts import (
+    artifacts_output_root,
+    copy_env_artifact,
+    finalize_artifacts,
+    write_env_prepare_report,
+)
 from envgenehelper.deploy_plan_adapter import adapt_sd_to_deploy_plan, EnvgeneDeployPlan
 from sd.process_sd import handle_sd
 from utils.handle_certs import configure_git_server_trust, install_certificates
@@ -282,9 +287,9 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        if ctx.params.get('ENV_BUILDER'):
-            return True
-        return ctx.is_gitlab_deploy() and ctx.is_deploy_or_clean()
+        if ctx.is_gitlab_deploy():
+            return ctx.is_deploy_or_clean()
+        return bool(ctx.params.get('ENV_BUILDER'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         env_dir = get_current_env_dir_from_env_vars()
@@ -441,6 +446,11 @@ def run_single_env_pipeline() -> None:
             recorded = {result.name: result for result in results}
             metrics_results = [recorded.get(step.name, StepResult(step.name, StepStatus.SKIPPED)) for step in steps + final_steps]
             metrics_results.append(recorded["copy_env_artifact"])
+            if not os.getenv("ENVGENE_FAN_OUT_CHILD"):
+                write_env_prepare_report(
+                    artifacts_output_root(ctx.work_dir),
+                    serialize_step_results(metrics_results),
+                )
             metrics.record_completion(str(terminal_status), metrics_results)
             if os.getenv("ENVGENE_FAN_OUT_CHILD"):
                 metrics.send_running(str(terminal_status), results=metrics_results)

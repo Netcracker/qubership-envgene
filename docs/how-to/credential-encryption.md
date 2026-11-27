@@ -13,6 +13,7 @@ This guide shows you how to protect sensitive credentials in your instance repos
     - [Step 4: Install Encryption Tools](#step-4-install-encryption-tools)
     - [Step 5: Test the Setup](#step-5-test-the-setup)
     - [Verify Your Encryption is Working](#verify-your-encryption-is-working)
+    - [Let Argo CD decrypt the Effective Set](#let-argo-cd-decrypt-the-effective-set)
     - [Troubleshooting Common Issues](#troubleshooting-common-issues)
   - [How to Migrate from Fernet to SOPS](#how-to-migrate-from-fernet-to-sops)
     - [Step 1: Prepare for Migration](#step-1-prepare-for-migration)
@@ -139,6 +140,30 @@ Use this guide when you need to enable [Credential](/docs/envgene-objects.md#cre
 ### Verify Your Encryption is Working
 
 After setting up SOPS, test that everything works correctly:
+
+### Let Argo CD decrypt the Effective Set
+
+Configure EnvGene to encrypt the Effective Set for Argo CD's own key, so Argo CD can decrypt it without the
+EnvGene private key. For how this works and why EnvGene uses a separate key pair, see
+[Letting Argo CD decrypt the Effective Set](/docs/features/credential-encryption.md#letting-argo-cd-decrypt-the-effective-set).
+
+1. Obtain the public key of the Argo CD key pair. Argo CD owns this pair; its private half,
+   `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY`, stays on the Argo CD side and is never added to the instance
+   repository.
+2. Set the public key per Cloud in the `e2eParameters` of `cloud.yml` as
+   [`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`](/docs/e2e-parameters.md#dcl_config_sops_dcl2argo_age_public_key):
+
+   ```yaml
+   e2eParameters:
+     DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY: "age1abc123..."
+   ```
+
+3. Leave `PUBLIC_AGE_KEYS` and `ENVGENE_AGE_PRIVATE_KEY` unchanged.
+4. Run the instance pipeline.
+
+Confirm the result: `effective-set/pipeline/parameters.yaml` contains `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`,
+and the `credentials.yaml` files of the Effective Set carry a `sops:` block. If the key is absent, confirm you
+set it in the Cloud's `e2eParameters`.
 
 ### Troubleshooting Common Issues
 

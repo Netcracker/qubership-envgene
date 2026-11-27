@@ -13,7 +13,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 # In the cucumber container PYTHONPATH is normally unset; scripts/ is not a package and is resolved
-# purely through PYTHONPATH (see CLAUDE.md).
+# purely through PYTHONPATH (see AGENTS.md).
 export PYTHONPATH="${PYTHONPATH:-${REPO_ROOT}:${REPO_ROOT}/scripts}"
 
 LOG_FILE="e2e_tests.log"

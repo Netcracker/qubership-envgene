@@ -68,14 +68,20 @@ This object is a describes the structure of a solution, links to solution's comp
 
 The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
-**Location:** Any YAML or Jinja file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+**Location:** Any YAML file located directly in the `/templates/env_templates/` folder is considered a Template
+Descriptor. Files in its subfolders are the templates that the Template Descriptor references, such as Tenant, Cloud,
+and Namespace templates.
 
 **Supported file extensions:**
 
 - `.yml` / `.yaml` — Static Template Descriptor
-- `.yml.j2` / `.yaml.j2` — Jinja Template Descriptor (rendered before Environment Instance generation)
 
-When multiple Template Descriptors with the same base name but different extensions exist, EnvGene selects them in descending priority order: `yml.j2` > `yaml.j2` > `yml` > `yaml`. Jinja Template Descriptors enable conditional namespace inclusion. See [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) for details.
+When multiple Template Descriptors with the same base name but different extensions exist, EnvGene selects them in
+descending priority order: `yml` > `yaml`.
+
+A Template Descriptor does not support Jinja. The template build fails if the `/templates/env_templates/` folder
+contains a `.yml.j2` or `.yaml.j2` Template Descriptor. The templates that the Template Descriptor references support
+Jinja.
 
 It has the following structure:
 
@@ -85,7 +91,7 @@ It has the following structure:
 description: string
 # Optional
 # Template Composition configuration
-# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+# See details in /docs/features/template-composition.md
 parent-templates:
   # Optional
   # Value must be in `application:version` notation
@@ -96,7 +102,7 @@ tenant: string
 # or
 tenant:
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # See details in /docs/features/template-composition.md
   parent: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
@@ -107,30 +113,83 @@ cloud:
   template_path: string
   # Optional
   # Template Override configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+  # See details in /docs/features/template-override.md
   template_override:
-    <yaml or jinja expression>
+    # Any part of the Cloud object can be set below. The attributes listed here are the ones that `overrides-parent` generates
+    # Optional
+    # Name of the Cloud that replaces the name rendered from the template
+    name: string
+    # Optional
+    # Resource Profile Override of the Cloud
+    profile:
+      # Optional
+      # Name of the Resource Profile Override
+      name: <resource-profile-override-name>
+      # Optional
+      # Name of the baseline Resource Profile
+      baseline: <resource-profile-baseline-name>
+    # Optional
+    # Overrides the Cloud's deployParameters
+    deployParameters: <hashmap-with-parameters>
+    # Optional
+    # Overrides the Cloud's e2eParameters
+    e2eParameters: <hashmap-with-parameters>
+    # Optional
+    # Overrides the Cloud's technicalConfigurationParameters
+    technicalConfigurationParameters: <hashmap-with-parameters>
+    # Optional
+    # ParameterSets added to the Cloud's deployParameterSets
+    deployParameterSets: <list-with-parameter-sets>
+    # Optional
+    # ParameterSets added to the Cloud's e2eParameterSets
+    e2eParameterSets: <list-with-parameter-sets>
+    # Optional
+    # ParameterSets added to the Cloud's technicalConfigurationParameterSets
+    technicalConfigurationParameterSets: <list-with-parameter-sets>
   # Optional
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # See details in /docs/features/template-composition.md
   parent: string
   # Optional
   # Template Composition configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+  # Overrides applied to the Cloud inherited from the parent template. Requires `parent`
+  # See details in /docs/features/template-composition.md
   overrides-parent:
     # Optional
     # Override the name of the cloud in rendering result
     name: string
+    # Optional
+    # Resource Profile Override of the Cloud
     profile:
+      # Optional
+      # Resource Profile Override from this template repository. Mandatory if `merge-with-parent` is `true`
       override-profile-name: <resource-profile-override-name>
+      # Optional
+      # Resource Profile Override from the parent template. Mandatory if `merge-with-parent` is `true`
       parent-profile-name: <resource-profile-override-name>
+      # Optional
+      # Baseline Resource Profile of the resulting profile
       baseline-profile-name: <resource-profile-baseline-name>
+      # Optional. Default value - `false`
+      # Merge the override profile into the parent profile
       merge-with-parent: <boolean>
+    # Optional
+    # Overrides the inherited deployParameters
     deployParameters: <hashmap-with-parameters>
+    # Optional
+    # Overrides the inherited e2eParameters
     e2eParameters: <hashmap-with-parameters>
+    # Optional
+    # Overrides the inherited technicalConfigurationParameters
     technicalConfigurationParameters: <hashmap-with-parameters>
+    # Optional
+    # ParameterSets added to the inherited deployParameterSets
     deployParameterSets: <list-with-parameter-sets>
+    # Optional
+    # ParameterSets added to the inherited e2eParameterSets
     e2eParameterSets: <list-with-parameter-sets>
+    # Optional
+    # ParameterSets added to the inherited technicalConfigurationParameterSets
     technicalConfigurationParameterSets: <list-with-parameter-sets>
 # Optional
 composite_structure: <path-to-the-composite-structure-template-file>
@@ -158,16 +217,46 @@ namespaces:
     # If the value is not specified, the name of the namespace template file (without extension) is used
     deploy_postfix: <deploy-postfix>
     # Optional
-    # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+    # See details /docs/features/template-override.md
     template_override:
-      <yaml or jinja expression>
+      # Any part of the Namespace object can be set below. The attributes listed here are the ones that `overrides-parent` generates
+      # Optional
+      # Name of the Namespace that replaces the name rendered from the template
+      name: string
+      # Optional
+      # Resource Profile Override of the Namespace
+      profile:
+        # Optional
+        # Name of the Resource Profile Override
+        name: <resource-profile-override-name>
+        # Optional
+        # Name of the baseline Resource Profile
+        baseline: <resource-profile-baseline-name>
+      # Optional
+      # Overrides the Namespace's deployParameters
+      deployParameters: <hashmap-with-parameters>
+      # Optional
+      # Overrides the Namespace's e2eParameters
+      e2eParameters: <hashmap-with-parameters>
+      # Optional
+      # Overrides the Namespace's technicalConfigurationParameters
+      technicalConfigurationParameters: <hashmap-with-parameters>
+      # Optional
+      # ParameterSets added to the Namespace's deployParameterSets
+      deployParameterSets: <list-with-parameter-sets>
+      # Optional
+      # ParameterSets added to the Namespace's e2eParameterSets
+      e2eParameterSets: <list-with-parameter-sets>
+      # Optional
+      # ParameterSets added to the Namespace's technicalConfigurationParameterSets
+      technicalConfigurationParameterSets: <list-with-parameter-sets>
     # Optional
     # Name of Namespace in Parent Template
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # See details in /docs/features/template-composition.md
     name: string
     # Optional
     # Parent template name
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # See details in /docs/features/template-composition.md
     parent: string
     # Optional
     # Selects the parent namespace when the parent template has several namespaces
@@ -178,21 +267,44 @@ namespaces:
     parent_namespace_template_name: string
     # Optional
     # Template Composition configuration
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
+    # Overrides applied to the Namespace inherited from the parent template. Requires `parent` and `name`
+    # See details in /docs/features/template-composition.md
     overrides-parent:
       # Optional
       # Override the name of the namespace in rendering result
       name: string
+      # Optional
+      # Resource Profile Override of the Namespace
       profile:
+        # Optional
+        # Resource Profile Override from this template repository. Mandatory if `merge-with-parent` is `true`
         override-profile-name: string
+        # Optional
+        # Resource Profile Override from the parent template. Mandatory if `merge-with-parent` is `true`
         parent-profile-name: string
+        # Optional
+        # Baseline Resource Profile of the resulting profile
         baseline-profile-name: string
+        # Optional. Default value - `false`
+        # Merge the override profile into the parent profile
         merge-with-parent: boolean
+      # Optional
+      # Overrides the inherited deployParameters
       deployParameters: hashmap
+      # Optional
+      # Overrides the inherited e2eParameters
       e2eParameters: hashmap
+      # Optional
+      # Overrides the inherited technicalConfigurationParameters
       technicalConfigurationParameters: hashmap
+      # Optional
+      # ParameterSets added to the inherited deployParameterSets
       deployParameterSets: list
+      # Optional
+      # ParameterSets added to the inherited e2eParameterSets
       e2eParameterSets: list
+      # Optional
+      # ParameterSets added to the inherited technicalConfigurationParameterSets
       technicalConfigurationParameterSets: list
       template_path: string
 ```
@@ -663,14 +775,14 @@ streaming-cred:
   type: external
   create: true
   secretStore: default_store
-  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
+  remoteRefPath: "{{ current_env.cluster.name }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
   properties:
     - name: username
     - name: password
 consul-creds:
   type: external
   secretStore: default_store
-  remoteRefPath: "{{ current_env.cloud }}"
+  remoteRefPath: "{{ current_env.cluster.name }}"
 ```
 
 ### System Credentials File (in Template repository)
@@ -2534,6 +2646,11 @@ dockerConfig:
 
 #### Registry Definition v2.0
 
+Registry Definition v2.0 is EnvGene's internal authentication format for AWS CodeArtifact and GCP Artifact Registry.
+Most users do not author it: for these registries, create a [Registry Definition v1.0](#registry-definition-v10) and
+set the registry auth parameters in Cloud `e2eParameters`. See
+[Configuring cloud artifact registries for AWS and GCP](/docs/how-to/configure-cloud-artifact-registries.md).
+
 ```yaml
 # Mandatory
 # Registry Definition object version
@@ -2945,7 +3062,7 @@ rawConfig:
   rawTargetProxy: https://proxy.raw.local/
 ```
 
-**[Registry Definition v2.0](/modules/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `modules/envgene/envgenehelper/schemas/regdef-v2.schema.json`
+**[Registry Definition v2.0](/schemas/regdef-v2.schema.json) JSON schema**
 
 ### Application Definition
 

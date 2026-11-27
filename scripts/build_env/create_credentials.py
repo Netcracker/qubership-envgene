@@ -3,7 +3,7 @@ from typing import Optional
 from pathlib import Path
 from ruyaml import CommentedMap
 from envgene_shared.crypto.cred_store import current_cred_store
-from envgenehelper import CRED_MACRO_PATTERN, CRED_MACRO_PROPERTY_TYPES, CredentialMode, ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, get_cred_list_from_param, get_schema_dir, logger, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
+from envgenehelper import CRED_MACRO_PATTERN, CRED_MACRO_PROPERTY_TYPES, CredentialMode, ValidationError, check_is_cred, current_env_instance_store, dump_as_yaml_format, extract_namespace_from_application_path, extract_namespace_from_namespace_path, get_cred_list_from_param, logger, store_value_to_yaml, validate_cred_types, validate_yaml_by_scheme_or_fail, yaml, extract_external_cred
 
 #const
 CRED_TYPE_SECRET="secret"
@@ -322,7 +322,7 @@ def create_credentials(envDir, instancesDir, inventoryYaml, credential_sources, 
     env_instance_store = current_env_instance_store()
     credential_mode = env_instance_store.credential_mode
     logger.info(f"Start to create credentials: envDir={envDir}, instancesDir={instancesDir}, mode={credential_mode}")
-    credsSchema = f"{get_schema_dir()}/credential.schema.json"
+    credsSchema = "credential.schema.json"
     collector = CredentialCollector(credential_mode)
     #tenant
     envDir = Path(envDir)
@@ -383,5 +383,5 @@ def create_credentials(envDir, instancesDir, inventoryYaml, credential_sources, 
         add_local_placeholders(env_creds_map, collector)
     validate_cred_types(env_creds_map, credential_mode, credYamlPath)
     warn_unused_external_creds(env_creds_map, collector)
-    validate_yaml_by_scheme_or_fail(input_yaml_content=env_creds_map, schema_file_path=credsSchema)
+    validate_yaml_by_scheme_or_fail(input_yaml_content=env_creds_map, schema_name=credsSchema)
     env_instance_store.put(credYamlPath, env_creds_map)

@@ -1,0 +1,117 @@
+# EnvGene Documentation
+
+The index of what a user of EnvGene reads: tutorials, how-to guides, feature docs, use cases,
+samples, and the parameter and object reference. The documentation of how this repository is
+built and released has its own index in [docs/internal/](/docs/internal/README.md).
+
+- [EnvGene Documentation](#envgene-documentation)
+  - [Getting Started](#getting-started)
+  - [Tutorials](#tutorials)
+  - [Core Concepts](#core-concepts)
+  - [How-To Guides](#how-to-guides)
+  - [Migrations](#migrations)
+  - [Advanced Features](#advanced-features)
+  - [Examples \& Samples](#examples--samples)
+  - [Development](#development)
+
+## Getting Started
+
+- [**Quick Start Guide**](/README.md#getting-started) - Create your first Environment
+
+## Tutorials
+
+- [**Understanding the Effective Set**](/docs/tutorials/effective-set.md) - Trace how parameters from Tenant, Cloud, Namespace, Application, and SBOM sources are merged into the final Effective Set; learn to read traceability comments and debug wrong values
+- [**Managing Resource Profiles**](/docs/tutorials/resource-profiles.md) - End-to-end walkthrough: from Baseline to Template Override to Environment-Specific Override, including `template_override`, `overrides-parent`, and result verification
+
+## Core Concepts
+
+- [**EnvGene Objects**](/docs/envgene-objects.md) - What are EnvGene objects and how they work
+- [**Configuration Files**](/docs/envgene-configs.md) - File formats and config options
+- [**Deployment Architecture**](/docs/deployment-architecture.md) - CMDB and No-CMDB (v1, v2) toolset architectures and how to determine them
+- [**Pipeline Configuration**](/docs/envgene-pipelines.md) - How EnvGene pipelines work
+- [**Repository Variables**](/docs/envgene-repository-variables.md) - CI/CD variables used in EnvGene repositories
+- [**Template Macros**](/docs/template-macros.md) - How to use EnvGene macros in templates
+- [**Instance Pipeline Parameters**](/docs/instance-pipeline-parameters.md) - Reference for Instance pipeline inputs
+- [**`e2eParameters`**](/docs/e2e-parameters.md) - Cloud `e2eParameters` that EnvGene reads
+
+## How-To Guides
+
+**Repository Setup:**
+
+- [**Create Simple Template**](/docs/how-to/create-simple-template.md) - Create your first environment template
+- [**Create Cluster**](/docs/how-to/create-cluster.md) - Set up a new cluster
+- [**Create Environment Inventory**](/docs/how-to/create-environment-inventory.md) - Create an environment with `ENV_INVENTORY_CONTENT` or by hand
+- [**Initialize and Upgrade Instance Repository**](/docs/how-to/envgene-maitanance.md) - Set up or upgrade Instance Repository using GSF
+
+**Configuration Management:**
+
+- [**Update Template Version**](/docs/how-to/update-template-version.md) - Update environment template version
+- [**Override Template Parameters**](/docs/how-to/environment-specific-parameters.md) - Override template parameters for specific environments
+- [**Configure Resource Profiles**](/docs/how-to/configure-resource-profiles.md) - Configure performance parameters for different environment types
+
+**Effective Set:**
+
+- [**Generate an Effective Set**](/docs/how-to/generate-effective-set.md) - Trigger Effective Set generation from a Solution Descriptor artifact and template version
+- [**Enable the Compact `deploy-descriptor.yaml` Layout**](/docs/how-to/enable-compact-deploy-descriptor.md) - Reduce the size of `deploy-descriptor.yaml` for an application with many services
+
+**Advanced Configuration:**
+
+- [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
+- [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+- [**Configure local Credentials**](/docs/how-to/configure-local-credentials.md) - Set and update the credentials of an environment stored encrypted in the Instance repository
+- [**Configure a Secret Store**](/docs/how-to/configure-secret-store.md) - Describe a Secret Store and give the Instance pipeline access to it
+- [**Configure external Credentials**](/docs/how-to/configure-external-credentials.md) - Set a sensitive parameter through a Credential kept in a Secret Store
+- [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
+- [**Configure System Certificates**](/docs/how-to/configure-system-certificates.md) - Add CA certificates so EnvGene trusts internal registries and TLS services
+- [**Configure Cloud Artifact Registries**](/docs/how-to/configure-cloud-artifact-registries.md) - Set up AWS CodeArtifact and GCP Artifact Registry for Maven artifact downloads
+- [**Configure Blue-Green Deployment**](/docs/how-to/blue-green-deployment-configure.md) - Set up a BGD environment (BG Domain, Composite Structure, inventory), or convert a non-BG one
+- [**Blue-Green Deployment Deploy Operations**](/docs/how-to/blue-green-deployment-deploy-operations.md) - Select artifact settings and pipeline parameters for each deploy operation
+
+## Migrations
+
+- [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
+- [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
+- [**Migrate a template repository to external Credentials**](/docs/how-to/migrate-template-repository-to-external-credentials.md) - Move Environment Templates from local credential macros to a Credential Template and `credRef`
+- [**Migrate an instance repository to external Credentials**](/docs/how-to/migrate-instance-repository-to-external-credentials.md) - Move Cloud Passport, Shared, and System Credentials of an Instance repository to a Secret Store
+
+## Advanced Features
+
+- [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
+- [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
+- [**Effective Set Generation**](/docs/features/effective-set-generation.md) - Generate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20) for an environment; covers full and [partial](/docs/features/effective-set-generation.md#partial-generation) modes
+- [**Cleanup**](/docs/features/clean.md) - What cleanup is in EnvGene, the `CLEAN` operation, and the cleanup output each deployment architecture produces
+- [**Custom Params**](/docs/instance-pipeline-parameters.md#custom_params) for session-scoped overrides
+- [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
+- [**Artifact Resolution**](/docs/features/artifact-resolution.md) - Describe how EnvGene searches registries and resolves versions to download artifacts
+- [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
+- [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories (including BG support)
+- [**Credential Processing**](/docs/features/credential-processing.md) -
+  Credential sources, auto-generation, precedence ladder, and mode-dependent merging
+- [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
+- [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO in the Effective Set, and External Credential Context
+- [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
+- [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
+- [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
+- [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
+- [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - What BGD is in EnvGene, lifecycle and deploy modes, and where to read next
+- [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
+- [**Resource Profile Cache**](/docs/features/resource-profile-cache.md) - Reuse parsed Resource Profiles between instance pipeline runs
+- [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
+- [**SBOM Generation**](/docs/features/sbom-generation.md) - How Application and Environment Template SBOMs are generated from the Solution and Deployment Descriptors
+- [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
+- [**Troubleshooting Artifacts**](/docs/features/troubleshooting-artifacts.md) - Save the run work directory as a job artifact for troubleshooting
+- [**Metrics Collector events**](/docs/features/metrics-collector-events.md) - Instance pipeline activity
+   events sent to Metrics Collector Service
+
+## Examples & Samples
+
+- [**Sample Configurations**](/docs/samples/README.md) - Complete example configurations
+- [**Template Examples**](/docs/samples/template-repository/) - Ready-to-use template examples
+- [**Environment Examples**](/docs/samples/instance-repository/) - Sample environment configurations
+- [**Blue-Green Deployment Samples**](/docs/samples/blue-green-deployment/) - Template and inventory examples for non-BG to BGD migration
+- [**Cloud Artifact Registry Samples**](/docs/samples/cloud-artifact-registries/) - RegDef v1.0, registry auth parameters,
+  and ArtDef samples for AWS CodeArtifact and GCP Artifact Registry
+
+## Development
+
+- [**Development documentation**](/docs/internal/README.md) - How this repository is built and released, its design records, analyses and test cases

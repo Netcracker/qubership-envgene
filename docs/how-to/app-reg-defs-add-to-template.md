@@ -111,6 +111,10 @@ Then create the on-site RegDef as a definition override at `/configuration/regde
 see [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md)
 for the procedure.
 
+When the on-site registry is AWS CodeArtifact or GCP Artifact Registry, create the on-site RegDef as a Registry
+Definition v1.0 and set the registry auth parameters (`MAVEN_PROVIDER`, `PUB_REG_*`) in Cloud `e2eParameters`. See
+[Configuring cloud artifact registries for AWS and GCP](/docs/how-to/configure-cloud-artifact-registries.md).
+
 ### 6. Verify
 
 After committing the templates and the instance config:

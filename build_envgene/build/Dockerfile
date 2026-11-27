@@ -46,10 +46,12 @@ ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    'libffi=3.8.1-r0' \
-    'libffi-dev=3.8.1-r0' \
+    'libcrypto3=3.5.9-r1' \
+    'libssl3=3.5.9-r1' \
     'openssl=3.5.9-r1' \
     'openssl-dev=3.5.9-r1' \
+    'libffi=3.8.1-r0' \
+    'libffi-dev=3.8.1-r0' \
     'python3-dev=3.12.16-r0' \
     'cargo=1.91.1-r2' \
     'rust=1.91.1-r2' \
@@ -60,6 +62,11 @@ COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
 COPY build_envgene/build/metrics-collector-requirements.txt /build/metrics-collector-requirements.txt
+
+ENV PATH="/module/venv/bin:${PATH}"
+
+RUN python3 -m venv /module/venv && \
+    pip install --no-cache-dir pip==26.0.1
 
 ENV PATH="/module/venv/bin:${PATH}"
 
@@ -130,9 +137,11 @@ ENV LANG='en_US.UTF-8' \
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    'libffi=3.8.1-r0' \
+    'libcrypto3=3.5.9-r1' \
+    'libssl3=3.5.9-r1' \
     'openssl=3.5.9-r1' \
-    libgcc=15.2.0-r2
+    'libffi=3.8.1-r0' \
+    'libgcc=15.2.0-r2'
 
 COPY --from=jre-build /opt/jre /opt/jre
 COPY --from=build --chown=ci:ci /module /module
