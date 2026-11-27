@@ -379,6 +379,22 @@ def _run_step(step: PipelineStep, ctx: PipelineParametersHandler, results: list[
                 banner(end_text), step.name, CustomFormatter.BLUE, _STATUS_COLOR.get(status, ""))
             logger.info(end_banner)
 
+class ArgoDpgExtensionStep(PipelineStep):
+    def __init__(self) -> None:
+        self.extension = PluginEngine(plugins_dir='/module/scripts/plugins/argo_dpg')
+
+    @property
+    def name(self) -> str:
+        return "argo_dpg_extension"
+
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
+        return bool(self.extension.modules) and ctx.is_gitlab_deploy() and (
+            ctx.is_deploy_or_clean() or ctx.is_bgd_warmup()
+        )
+
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        self.extension.run()
+
 
 @extra_creds_scope()
 def run_single_env_pipeline() -> None:
@@ -407,7 +423,7 @@ def run_single_env_pipeline() -> None:
         EnvBuildStep(),
         GenerateEffectiveSetStep(),
     ]
-    final_steps: list[PipelineStep] = [GitCommitStep(), CMDB_import()]
+    final_steps: list[PipelineStep] = [GitCommitStep(), CMDB_import(), ArgoDpgExtensionStep()]
 
     results: list[StepResult] = []
     metrics = MetricsCollectorActivity(ctx)
@@ -485,21 +501,25 @@ def dispatch() -> int:
 
     # main process
     env_names = prepare_job()
+    pipeline_status = 0
     try:
         if len(env_names) == 1:
             run_single_env_pipeline()
-            return 0
-
-        os.environ["ENV_NAMES"] = env_names[0]
-        if os.getenv("METRICS_COLLECTOR_URL", "").strip():
-            resolve_trace_id()
-        handler = PipelineParametersHandler.from_env()
-        handler.write_dotenv(exclude_keys={"ENV_NAMES"})
-
-        return run_multi_env_pipeline(env_names)
+        else:
+            os.environ["ENV_NAMES"] = env_names[0]
+            if os.getenv("METRICS_COLLECTOR_URL", "").strip():
+                resolve_trace_id()
+            handler = PipelineParametersHandler.from_env()
+            handler.write_dotenv(exclude_keys={"ENV_NAMES"})
+            pipeline_status = run_multi_env_pipeline(env_names)
     finally:
         work_dir = Path(getenv("CI_PROJECT_DIR"))
         finalize_artifacts(artifacts_output_root(work_dir), get_artifact_size_limit_mb())
+
+    if pipeline_status != 0:
+        return pipeline_status
+
+    return 0
 
 
 def _format_duration(duration_ms: int | None) -> str:

@@ -10,6 +10,7 @@ import pytest
 from envgenehelper.models import PipelineType
 
 from pipeline.orchestrator import (
+    ArgoDpgExtensionStep,
     AppregdefRenderStep,
     DeployPostfixNamespaceMapStep,
     EnvBuildStep,
@@ -40,6 +41,73 @@ def _ctx(**overrides) -> PipelineParametersHandler:
 
 
 class TestStepGating:
+    @pytest.mark.unit
+    def test_argo_dpg_extension_skips_when_plugin_is_unavailable(self, monkeypatch):
+        plugin_paths: list[str] = []
+
+        class Plugin:
+            def __init__(self, **kwargs):
+                plugin_paths.append(kwargs["plugins_dir"])
+                self.modules = []
+
+            def run(self):
+                pass
+
+        monkeypatch.setattr("pipeline.orchestrator.PluginEngine", Plugin)
+
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="DEPLOY")
+
+        assert not ArgoDpgExtensionStep().should_run(ctx)
+        assert plugin_paths[-1] == "/module/scripts/plugins/argo_dpg"
+
+    @pytest.mark.unit
+    @pytest.mark.parametrize("operation, bgd_operation, expected", [
+        ("DEPLOY", "", True),
+        ("CLEAN", "", True),
+        ("BGD", "warmup", True),
+        ("BGD", "promote", False),
+    ])
+    def test_argo_dpg_extension_gates_supported_operations(
+        self, monkeypatch, operation, bgd_operation, expected
+    ):
+        class Plugin:
+            modules = [object()]
+
+            def __init__(self, **kwargs):
+                pass
+
+            def run(self):
+                pass
+
+        monkeypatch.setattr("pipeline.orchestrator.PluginEngine", Plugin)
+        ctx = _ctx(
+            PIPELINE_TYPE=GITLAB_DEPLOY,
+            OPERATION_TYPE=operation,
+            BGD_OPERATION=bgd_operation,
+        )
+
+        assert ArgoDpgExtensionStep().should_run(ctx) == expected
+
+    @pytest.mark.unit
+    def test_argo_dpg_extension_invokes_plugin(self, monkeypatch):
+        calls: list[str] = []
+
+        class Plugin:
+            modules = [object()]
+
+            def __init__(self, **kwargs):
+                pass
+
+            def run(self):
+                calls.append("run")
+
+        monkeypatch.setattr("pipeline.orchestrator.PluginEngine", Plugin)
+        step = ArgoDpgExtensionStep()
+
+        step.execute(None)
+
+        assert calls == ["run"]
+
     @pytest.mark.unit
     def test_gitlab_deploy_runs_appregdef_render_and_deploy_plan(self):
         ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY)
