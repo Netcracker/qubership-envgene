@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from envgenehelper.deploy_plan_adapter import DeployPlanEntity, EnvgeneDeployPlan
 from envgenehelper.models import ArtifactCoordinateSource
+from sbom_generator import generate_bom
 
 from effective_set import generate_sboms as module
 from effective_set.generate_sboms import generate_sboms
@@ -130,3 +131,40 @@ def test_non_gitlab_deploy_downloads_only_missing_apps(sboms_dir):
 
     download.assert_called_once_with([MISSING], HELM_MAP, SOURCE, ctx=ctx)
     assert generate.call_args.kwargs["dd_artifacts"] == dd_artifacts
+
+
+@pytest.mark.parametrize("gitlab_deploy", [True, False])
+def test_disabled_cache_regenerates_every_run_for_each_zone(sboms_dir, monkeypatch, gitlab_deploy):
+    monkeypatch.setattr(module, "get_sbom_cache_enabled", lambda: False)
+    write_sbom(sboms_dir, RESOLVED)
+    write_sbom(sboms_dir, "obsolete:1.0")
+    ctx = make_ctx([RESOLVED, MISSING], gitlab_deploy=gitlab_deploy)
+    versions = [RESOLVED, MISSING]
+
+    for zone in ("zone-a", "zone-b"):
+        fresh_sboms = {app: {"image": f"registry-{zone}/{app}"} for app in versions}
+        with patch.object(module, "download_dd_and_chart_artifacts", return_value=[]) as download, \
+                patch.object(generate_bom, "generate_boms",
+                             return_value=MagicMock(sboms=fresh_sboms, registries={})) as generate:
+            generate_sboms(ctx)
+
+        assert download.call_args.args[0] == versions
+        assert [app.version for app in generate.call_args.kwargs["sd_content"].entities] == versions
+        assert not (sboms_dir / "obsolete").exists()
+        for app, sbom in fresh_sboms.items():
+            app_name = app.split(":")[0]
+            assert module.openYaml(sboms_dir / app_name / f'{app.replace(":", "-")}.sbom.json') == sbom
+
+
+@pytest.mark.parametrize("deploy_plan", [None, EnvgeneDeployPlan(entities=[])])
+def test_disabled_cache_removes_old_sboms_without_deploy_plan(sboms_dir, monkeypatch, deploy_plan):
+    monkeypatch.setattr(module, "get_sbom_cache_enabled", lambda: False)
+    write_sbom(sboms_dir, RESOLVED)
+    ctx = make_ctx([])
+    ctx.resolve_source_dp.return_value = deploy_plan
+
+    with patch.object(module, "download_dd_and_chart_artifacts") as download:
+        generate_sboms(ctx)
+
+    assert not sboms_dir.exists()
+    download.assert_not_called()

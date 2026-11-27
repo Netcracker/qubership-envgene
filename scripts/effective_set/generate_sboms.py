@@ -2,8 +2,8 @@ from os import path, makedirs
 from pathlib import Path
 
 from effective_set.dd_downloading import download_dd_and_chart_artifacts, resolve_dd_artifacts
-from envgenehelper import getenv_with_error, openYaml, get_sboms_dir, logger
-from envgenehelper.config_helper import get_artifact_coordinate_source
+from envgenehelper import getenv_with_error, openYaml, get_sboms_dir, logger, delete_dir_if_exists
+from envgenehelper.config_helper import get_artifact_coordinate_source, get_sbom_cache_enabled
 from envgenehelper.deploy_plan_adapter import EnvgeneDeployPlan
 from envgenehelper.json_helper import writeJsonToFile
 from envgenehelper.yaml_helper import writeYamlToFile
@@ -16,6 +16,9 @@ def generate_sboms(ctx: PipelineParametersHandler) -> None:
     deploy_plan = ctx.resolve_source_dp()
     work_dir = getenv_with_error('CI_PROJECT_DIR')
     app_sboms_path = get_sboms_dir(work_dir)
+
+    if not get_sbom_cache_enabled():
+        delete_dir_if_exists(app_sboms_path)
 
     if deploy_plan is None or not deploy_plan.entities:
         logger.info('No deploy plan found, skipping SBOM generation')

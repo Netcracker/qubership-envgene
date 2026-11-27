@@ -1,8 +1,9 @@
 import os
+import shutil
 from unittest.mock import MagicMock, patch
 
 import pytest
-from git import GitCommandError
+from git import GitCommandError, Repo
 
 from .git_helper import GitContext, GitRepoManager
 from envgenehelper.models import PipelineType
@@ -119,6 +120,50 @@ class TestResolveRemoteUrl:
 
 
 class TestStageChanges:
+    @pytest.mark.parametrize("enabled", [None, True, False])
+    @pytest.mark.parametrize("cached", [True, False])
+    @pytest.mark.parametrize("regenerated", [True, False])
+    def test_sbom_cache_committed_state_and_working_files(self, tmp_path, monkeypatch, enabled, cached, regenerated):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("FULL_ENV_NAME", "cluster/env")
+        configuration = tmp_path / "configuration"
+        configuration.mkdir()
+        config = "crypt: false\n" if enabled is None else f"sbom_cache:\n  enabled: {str(enabled).lower()}\n"
+        (configuration / "config.yml").write_text(config)
+        sboms = tmp_path / "sboms"
+        if cached:
+            (sboms / "app").mkdir(parents=True)
+            (sboms / "app" / "app-1.0.sbom.json").write_text("old")
+            (sboms / "legacy.sbom.json").write_text("old")
+
+        repo = Repo.init(tmp_path)
+        with repo.config_writer() as config_writer:
+            config_writer.set_value("user", "name", "Test")
+            config_writer.set_value("user", "email", "test@example.com")
+        repo.git.add("--all")
+        repo.index.commit("Initial state")
+
+        if enabled is False and sboms.exists():
+            shutil.rmtree(sboms)
+        if regenerated:
+            (sboms / "app").mkdir(parents=True, exist_ok=True)
+            (sboms / "app" / "app-1.0.sbom.json").write_text("fresh")
+
+        manager = make_manager()
+        manager.repo = repo
+        manager.stage_changes(["configuration", "sboms"])
+        sha = manager.create_detached_commit("Generated environment")
+        committed_paths = {item.path for item in repo.commit(sha).tree.traverse()}
+        assert ("sboms" in committed_paths) is (enabled is not False and (cached or regenerated))
+
+        snapshot = manager.snapshot_excluded_paths()
+        repo.git.checkout("--force", "--detach", sha)
+        manager.restore_excluded_paths(snapshot)
+        if regenerated:
+            assert (sboms / "app" / "app-1.0.sbom.json").read_text() == "fresh"
+        elif enabled is False:
+            assert not sboms.exists()
+
     def test_filters_nonexistent_paths(self, tmp_path):
         existing = tmp_path / "environments" / "cluster" / "env"
         existing.mkdir(parents=True)

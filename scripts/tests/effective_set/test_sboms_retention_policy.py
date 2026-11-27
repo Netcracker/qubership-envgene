@@ -1,8 +1,28 @@
 import time
 import pytest
+from unittest.mock import patch
 
 from envgenehelper import cleanup_dir_by_age, is_over_size_limit
 from envgenehelper.test_helpers import TestHelpers
+from effective_set import sboms_retention_policy as module
+
+
+def test_retention_does_nothing_when_sbom_cache_is_disabled(tmp_path, monkeypatch):
+    monkeypatch.setenv("CI_PROJECT_DIR", str(tmp_path))
+    (tmp_path / "configuration").mkdir()
+    (tmp_path / "configuration" / "config.yml").write_text(
+        "sbom_cache:\n  enabled: false\nsbom_retention:\n  enabled: true\n  keep_versions_per_app: 1\n"
+    )
+    app_dir = tmp_path / "sboms" / "app"
+    app_dir.mkdir(parents=True)
+    for version in ("old", "new"):
+        (app_dir / f"{version}.sbom.json").write_text("{}")
+
+    with patch.object(module, "cleanup_dir_by_age") as cleanup:
+        module.sboms_retention_policy()
+
+    cleanup.assert_not_called()
+    assert {path.name for path in app_dir.iterdir()} == {"old.sbom.json", "new.sbom.json"}
 
 
 class TestSBOMSRetentionPolicy:
