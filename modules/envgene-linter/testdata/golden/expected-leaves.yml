@@ -1,0 +1,9 @@
+- key: WIN
+  value: cluster
+  layer: cluster
+- key: FROM_CLUSTER
+  value: 1
+  layer: cluster
+- key: FROM_ENV
+  value: 2
+  layer: environment

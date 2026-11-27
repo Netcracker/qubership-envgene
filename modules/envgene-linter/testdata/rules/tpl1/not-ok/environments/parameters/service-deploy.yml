@@ -1,0 +1,3 @@
+name: "service-deploy"
+parameters:
+  MY_NAMESPACE: "{{ current_env.name }}-core"

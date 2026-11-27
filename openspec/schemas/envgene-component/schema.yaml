@@ -1,0 +1,105 @@
+name: envgene-component
+version: 1
+description: EnvGene component flow - proposal → specs → tasks (propose gate) → design (design gate) → implement; component-design.md is the one design artifact the component writes
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: Initial proposal document outlining the change
+    template: proposal.md
+    instruction: |
+      Create the proposal that establishes WHY this change is needed and WHAT it covers, rendered from the
+      exploration brief's Problem and Why and the decided scope.
+
+      Sections:
+      - **Why**: one or two sentences on the problem and why now.
+      - **What Changes**: the implementation slice as a work-map. Group items by the component or pipeline
+        step they touch, each item atomic to one change, naming only the documented surface a reader can look
+        up in the docs, never code internals (no file paths, no private function names). Mark a breaking change
+        with **BREAKING**.
+      - **Capabilities**: New Capabilities (each becomes specs/<capability-path>/spec.md, named for a durable
+        behavior not the work in this change, kebab-case) and Modified Capabilities (exact existing paths
+        under openspec/specs/, left empty if no requirement changes).
+      - **Impact**: affected objects, parameters, pipeline steps, and docs.
+
+      Keep it to one or two pages. References point to the change's own siblings - the delta specs under
+      specs/ and the ADR under docs/adr/ - not to an external design doc. Acceptance conditions do NOT go
+      here, they live in the specs as scenarios. Honor the `writing-style` voice and the analyst voice.
+    requires: []
+
+  - id: specs
+    generates: "specs/**/*.md"
+    description: Detailed specifications for the change
+    template: spec.md
+    instruction: |
+      Create the delta spec files that define WHAT the system must do, one per capability the proposal names,
+      rendered from the exploration brief's Intended-behavior cases. Fill each per the writing-gherkin OpenSpec
+      delta-spec projection:
+
+      - Group requirements under a delta header: ## ADDED Requirements, ## MODIFIED Requirements,
+        ## REMOVED Requirements, or ## RENAMED Requirements.
+      - Each requirement is ### Requirement: <name> followed by one SHALL statement naming the behavior.
+      - Each scenario is #### Scenario: <name> with a - **WHEN** line (trigger and discriminating fixture) and
+        a - **THEN** line (observable outcome on the grounded channel). Use exactly four hashtags for Scenario.
+      - Every requirement has at least one scenario. One scenario per independently-failing case.
+      - A new capability's file opens with ## Purpose (one or two sentences, 50 or more characters). A delta to
+        an existing capability has no Purpose section.
+
+      Enumerate observable cases, one per distinct outcome, the discriminating precondition in the WHEN, every
+      THEN on an observable channel. Honor the writing-gherkin grounding and the `writing-style` voice.
+    requires:
+      - proposal
+
+  - id: tasks
+    generates: tasks.md
+    description: Implementation checklist with trackable tasks
+    template: tasks.md
+    instruction: |
+      Create the task list that breaks down the implementation work for this component.
+
+      Tasks are approved at the propose gate together with the proposal and the specs. If the design
+      later changes the scope or the set of tasks, the change goes back to the propose gate; a change
+      that only refines the implementation may update the tasks without a new approval.
+
+      **IMPORTANT: Follow the template below for tracked tasks.** Each tracked task MUST be a
+      checkbox: `- [ ] X.Y Task description`, and states how to verify completion.
+
+      Reference specs for what needs to be built.
+    requires:
+      - specs
+
+  - id: design
+    generates: component-design.md
+    description: The one design artifact - approaches, the chosen one, contracts, constraints. Written after the propose gate and before plan, from the proposal, the specs and the ADR.
+    template: design.md
+    instruction: |
+      Create the design: the component team's decision on HOW this change is implemented. It is the
+      only design artifact of the change. It is written after the propose gate, so the owner has already
+      approved WHAT is changed. Render it from proposal.md, the delta specs and the ADR under docs/adr/.
+
+      Sections:
+      - **Work map**: one row per requirement or spec scenario, with its file or function in this repository,
+        its status (`tracked`, `new-in-repo` or `not-in-repo`) and evidence from the repository. A
+        `not-in-repo` row is a scope finding and blocks the design until the work is moved to the owning
+        component or scoped out.
+      - **Approaches**: 2-3 approaches with trade-offs and a recommendation. Component-level; the ADR
+        holds the system-level options and is not re-argued here.
+      - **Decision**: The chosen approach and who accepted it (the ledger row of the design gate).
+      - **Contracts**: One line per interface the change exposes or consumes, with an id (C-1, C-2, ...).
+        Every id is covered by the plan. A contract without a line here blocks plan.
+      - **Constraints**: Constraints specific to this change (limits, formats, compatibility, values the
+        code must keep), one line each. The team rules of envgene-code-review apply to every change and
+        are not copied here.
+      - **Out of scope**: What is deliberately not done.
+      - **Open Questions**: Only items that do not change the specs, the approach or the tasks.
+        If an open question would change them, resolve it with the developer first.
+
+      If the decision changes scope or the set of tasks, say so: the change returns to the propose gate.
+    requires:
+      - specs
+
+apply:
+  requires: [tasks, design]
+  tracks: tasks.md
+  instruction: |
+    Read context files, work through pending tasks, mark complete as you go.
+    Pause if you hit blockers or need clarification.

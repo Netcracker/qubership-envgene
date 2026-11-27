@@ -86,6 +86,10 @@ and the deletion of the source branch. Use one of:
   `https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md`. The
   SHA freezes the design version the CR was scoped to.
 - A previous design issue whose body contains the spec.
+- An OpenSpec change authored through the analyst flow. The design is its change folder (the proposal
+  and delta specs under `openspec/changes/<id>/`) and its ADR under `docs/adr/`. Link the hand-off PR
+  that commits them, or a commit-SHA permalink to each file. Each In scope item links the spec
+  requirement it implements.
 
 Avoid branch-pinned URLs (`.../blob/<branch>/...`). They break when the branch is deleted.
 
@@ -334,5 +338,6 @@ template above. The design can come from a doc PR, a feature doc, or the working
 drafts the body, you review and fill any sections it cannot derive, and it files the issue on your
 go-ahead.
 
-The skill lives in the repository at `.claude/skills/design-to-cr/`, so Claude Code picks it up
-automatically when working in this repository.
+The skill source is `.apm/skills/design-to-cr/`. `apm install` deploys it to `.claude/skills/design-to-cr/`,
+so Claude Code picks it up automatically when you work in this repository. Run the install once after a
+fresh clone, as `AGENTS.md` describes.

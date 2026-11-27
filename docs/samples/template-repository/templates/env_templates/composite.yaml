@@ -1,0 +1,22 @@
+---
+parent-templates:
+  saas-basic-cloud: saas-basic-product-template:1.22.2-20261030044650
+  saas-default-core: saas-core-product-templates:1.18.4-20261005043958
+
+tenant:
+  parent: saas-basic-cloud
+cloud:
+  parent: saas-basic-cloud
+namespaces:
+  - name: "{env}-core"
+    deploy_postfix: core
+    parent: saas-default-core
+    overrides-parent:
+      deployParameterSets:
+        - "prjct-cloud-core-deploy"
+  - template_path: "{{ templates_dir }}/env_templates/composite/bss.yml.j2"
+    template_override:
+      deployParameters:
+        oss_ns: "{{ current_env.solution_structure['oss-app']['oss'].namespace }}"
+  - template_path: "{{ templates_dir }}/env_templates/composite/oss.yml.j2"
+composite_structure: "{{ templates_dir }}/env_templates/composite/composite-structure.yml.j2"

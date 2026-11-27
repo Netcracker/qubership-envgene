@@ -1,0 +1,78 @@
+# Specifications
+
+- [Reading order](#reading-order)
+- [Catalog](#catalog)
+- [Language versions](#language-versions)
+
+This directory contains 43 development specifications in English: 26 rule specifications and seventeen shared designs.
+Each rule's `*-design.md` combines its requirements specification and implementation design.
+The catalog links each rule to a separate algorithm reference. Coverage includes rules disabled by default.
+
+## Reading order
+
+The [authored configuration design](/modules/envgene-linter/docs/superpowers/specs/2026-10-28-source-scope-design.md)
+defines source eligibility for every default check, including rules with historical generated-object inputs.
+The [source-scope algorithm](/modules/envgene-linter/docs/algorithms/source-scope.md) lists exact paths.
+
+1. Start with the [common connected-only scope](2026-09-11-connected-only-design.md). It applies to connected instance checks, including NAME-3. INT-4 and template rules define their own scope.
+2. Read the relevant rule specification. A notice at the start of each historical document identifies replaced decisions. Its remaining text preserves that development stage.
+3. For the current processing flow, use the [algorithm documentation](../../algorithms/connections.md) and rule links below.
+4. Read the same-day HTML specs in order: initial design → redesign → usability. Each later stage replaces only the requirements it explicitly changes.
+
+Specifications record requirements and their history. Algorithms describe the current implementation. Editorial clarification does not introduce new checks.
+
+## Catalog
+
+| Specification                                                                                                                   | Date       | Algorithm / purpose                                                                         |
+|---------------------------------------------------------------------------------------------------------------------------------|------------|---------------------------------------------------------------------------------------------|
+| [PLACE-1](2026-09-01-place1-design.md)                                                                                          | 2026-09-01 | [Algorithm](../../algorithms/place1.md)                                                     |
+| [PLACE-2](2026-09-02-place2-design.md)                                                                                          | 2026-09-02 | [Algorithm](../../algorithms/place2.md)                                                     |
+| [PLACE-3](2026-09-04-place3-design.md)                                                                                          | 2026-09-04 | [Algorithm](../../algorithms/place3.md)                                                     |
+| [HTML report: initial design](2026-09-05-html-report-design.md)                                                                 | 2026-09-05 | Report interface history                                                                    |
+| [HTML report: rule grouping and navigation](2026-09-05-html-report-redesign-design.md)                                          | 2026-09-05 | Report interface history                                                                    |
+| [HTML report: usability and finding locations](2026-09-05-html-report-usability-design.md)                                      | 2026-09-05 | Report interface history                                                                    |
+| [NAME-1](2026-09-05-name1-design.md)                                                                                            | 2026-09-05 | [Algorithm](../../algorithms/name1.md)                                                      |
+| [NAME-2](2026-09-07-name2-design.md)                                                                                            | 2026-09-07 | [Algorithm](../../algorithms/name2.md)                                                      |
+| [NAME-3](2026-09-07-name3-design.md)                                                                                            | 2026-09-07 | [Algorithm](../../algorithms/name3.md)                                                      |
+| [NAME-4](2026-09-07-name4-design.md)                                                                                            | 2026-09-07 | [Algorithm](../../algorithms/name4.md)                                                      |
+| [PLACE-4](2026-09-07-place4-design.md)                                                                                          | 2026-09-07 | [Algorithm](../../algorithms/place4.md)                                                     |
+| [PLACE-6](2026-09-09-place6-design.md)                                                                                          | 2026-09-09 | [Algorithm](../../algorithms/place6.md)                                                     |
+| [Common scope: connected entities only](2026-09-11-connected-only-design.md)                                                    | 2026-09-11 | Shared scope                                                                                |
+| [PLACE-10](2026-09-11-place10-design.md)                                                                                        | 2026-09-11 | [Algorithm](../../algorithms/place10.md)                                                    |
+| [PLACE-7](2026-09-11-place7-design.md)                                                                                          | 2026-09-11 | [Algorithm](../../algorithms/place7.md)                                                     |
+| [PLACE-8](2026-09-11-place8-design.md)                                                                                          | 2026-09-11 | [Algorithm](../../algorithms/place8.md)                                                     |
+| [PLACE-9](2026-09-11-place9-design.md)                                                                                          | 2026-09-11 | [Algorithm](../../algorithms/place9.md)                                                     |
+| [SEC-1](2026-09-16-sec1-design.md)                                                                                              | 2026-09-16 | [Algorithm](../../algorithms/sec1.md)                                                       |
+| [SEC-3](2026-09-16-sec3-design.md)                                                                                              | 2026-09-16 | [Algorithm](../../algorithms/sec3.md)                                                       |
+| [SEC-4](2026-09-16-sec4-design.md)                                                                                              | 2026-09-16 | [Algorithm](../../algorithms/sec4.md)                                                       |
+| [SEC-5](2026-09-18-sec5-design.md)                                                                                              | 2026-09-18 | Implemented · [Algorithm](../../algorithms/sec5.md)                                         |
+| [INT-2](2026-09-18-int2-design.md)                                                                                              | 2026-09-18 | [Algorithm](../../algorithms/int2.md)                                                       |
+| [INT-3](/modules/envgene-linter/docs/superpowers/specs/2026-09-24-int3-design.md)                                               | 2026-09-24 | [Algorithm](/modules/envgene-linter/docs/algorithms/int3.md)                                |
+| [INT-4](/modules/envgene-linter/docs/superpowers/specs/2026-09-24-int4-design.md)                                               | 2026-09-24 | [Algorithm](/modules/envgene-linter/docs/algorithms/int4.md)                                |
+| [NAME-8](/modules/envgene-linter/docs/superpowers/specs/2026-09-25-name8-design.md)                                             | 2026-09-25 | [Algorithm](/modules/envgene-linter/docs/algorithms/name8.md)                               |
+| [VAL-4](/modules/envgene-linter/docs/superpowers/specs/2026-09-28-val4-design.md)                                               | 2026-09-28 | [Algorithm](/modules/envgene-linter/docs/algorithms/val4.md)                                |
+| [TPL-1](/modules/envgene-linter/docs/superpowers/specs/2026-09-28-tpl1-design.md)                                               | 2026-09-28 | [Algorithm](/modules/envgene-linter/docs/algorithms/tpl1.md)                                |
+| [TPL-4](/modules/envgene-linter/docs/superpowers/specs/2026-09-29-tpl4-design.md)                                               | 2026-09-29 | [Algorithm](/modules/envgene-linter/docs/algorithms/tpl4.md)                                |
+| [TPL-6](/modules/envgene-linter/docs/superpowers/specs/2026-09-29-tpl6-design.md)                                               | 2026-09-29 | [Algorithm](/modules/envgene-linter/docs/algorithms/tpl6.md)                                |
+| [PLACE-12](/modules/envgene-linter/docs/superpowers/specs/2026-11-05-place12-design.md)                                         | 2026-11-05 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md)                             |
+| [PLACE-12 grouped template report](/modules/envgene-linter/docs/superpowers/specs/2026-11-06-place12-template-report-design.md) | 2026-11-06 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
+| [PLACE-12 artifact name grouping](/modules/envgene-linter/docs/superpowers/specs/2026-11-09-place12-artifact-name-design.md)    | 2026-11-09 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md)                             |
+| [PLACE-12 relocation](/modules/envgene-linter/docs/superpowers/specs/2026-11-11-place12-paramset-relocation-design.md)          | 2026-11-11 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
+| [CLI repository paths](/modules/envgene-linter/docs/superpowers/specs/2026-11-11-cli-repository-options-design.md)              | 2026-11-11 | [Report algorithm](/modules/envgene-linter/docs/algorithms/reports.md)                      |
+| [PLACE-12 edits](/modules/envgene-linter/docs/superpowers/specs/2026-11-11-place12-template-edit-instructions-design.md)        | 2026-11-11 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
+| [PLACE-12 modes](/modules/envgene-linter/docs/superpowers/specs/2026-11-12-place12-guidance-modes-design.md)                    | 2026-11-12 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
+| [PLACE-12 merge](/modules/envgene-linter/docs/superpowers/specs/2026-11-13-place12-merge-cleanup-design.md)                     | 2026-11-13 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
+| [PLACE-12 refs](/modules/envgene-linter/docs/superpowers/specs/2026-11-13-place12-reference-resolution-design.md)               | 2026-11-13 | [Algorithm](/modules/envgene-linter/docs/algorithms/place12.md#template-guidance)           |
+| [Skipped checks](/modules/envgene-linter/docs/superpowers/specs/2026-10-12-skipped-checks-design.md)                            | 2026-10-12 | [Report algorithm](/modules/envgene-linter/docs/algorithms/reports.md)                      |
+| [Ansible compatibility](/modules/envgene-linter/docs/superpowers/specs/2026-10-15-ansible-compatibility-design.md)              | 2026-10-15 | [Algorithm](/modules/envgene-linter/docs/algorithms/ansible-compatibility.md)               |
+| [Shared ParameterSet sources](/modules/envgene-linter/docs/superpowers/specs/2026-10-16-paramset-sources-design.md)             | 2026-10-16 | [Selection and merging](/modules/envgene-linter/docs/algorithms/effective-set.md#3-staging) |
+| [Input error handling](/modules/envgene-linter/docs/superpowers/specs/2026-10-20-input-error-handling-design.md)                | 2026-10-20 | [Algorithm](/modules/envgene-linter/docs/algorithms/input-errors.md)                        |
+
+Shared source eligibility: [design](/modules/envgene-linter/docs/superpowers/specs/2026-10-28-source-scope-design.md)
+and [algorithm](/modules/envgene-linter/docs/algorithms/source-scope.md).
+
+## Language versions
+
+Rule specifications, designs, and algorithm references are maintained in English.
+Historical specifications can mention earlier translation deliverables. Those mentions do not identify maintained
+language versions. Follow the algorithm links in this catalog for current behavior.

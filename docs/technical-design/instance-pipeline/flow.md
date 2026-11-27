@@ -19,8 +19,7 @@
       - [1.15 step `env_build`](#115-step-env_build)
       - [1.16 step `generate_effective_set`](#116-step-generate_effective_set)
       - [1.17 step `git_commit`](#117-step-git_commit)
-      - [1.18 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET](#118-step-generate_argocd_repo-to-be-implemented-not-implemented-yet)
-      - [1.19 step `es_pusher`](#119-step-es_pusher)
+      - [1.18 step `generate_argocd_repo`](#118-step-generate_argocd_repo)
       - [1.20 step `cmdb_import`](#120-step-cmdb_import)
       - [1.21 step `postprocess`](#121-step-postprocess)
     - [2 job `sync`](#2-job-sync)
@@ -204,8 +203,6 @@ Functions:
       - updated env_definition
     - actions:
       - set template version
-    - AI[bgd] support template version change base on `BG_NS_TARGET` + `ENV_TEMPLATE_VERSION`, `ENV_TEMPLATE_VERSION_UPDATE_MODE`.
-    - AI[bgd] remove `ENV_TEMPLATE_VERSION_PEER`/`ENV_TEMPLATE_VERSION_ORIGIN`
 
 #### 1.9 step `process_env_template` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
 
@@ -576,14 +573,15 @@ Functions:
       - `delta-deploy-plan.yml` for `DEPLOY` and warmup (produced in 1.14); no plan for `CLEAN` (marker-driven)
       - `APP_ARTIFACTS_DIR`
     - output:
-      - DD and ZIP at `${APP_ARTIFACTS_DIR}`, sboms
+      - DD and app chart at `${APP_ARTIFACTS_DIR}`, sboms
     - actions:
       - resolve DD per app with appreg defs
-      - download DD+ZIP, unzip
-      - generate SBOM from local DD + ZIP
-    - AI[techDebt-PERF]: Optimize DD and ZIP downloads and SBOM generation.
+      - coordinate resolution uses `artifact_coordinate_source` from `config.yml`, per
+        [Handling DD After Delivery](/docs/features/sbom-generation.md#handling-dd-after-delivery)
+      - download DD and app chart, unpack
+      - generate SBOM from local DD and app chart
+    - AI[techDebt-PERF]: Optimize DD and app chart downloads and SBOM generation.
       <https://docs.gitlab.com/ci/caching/>
-      - (??) Do not download ZIP for `generate_argocd_repo`.
       - (??) Cache DD.json in the same way as SBOM.
 4. `effective_set_entrypoint`
     - input:
@@ -624,68 +622,40 @@ Functions:
       - `ENVIRONMENT_NAME`
     - AI[phase1]: If `PIPELINE_TYPE: GITLAB_DEPLOY` then do not commit into inventory repository:
       - env instance
-      - effective set
+      - effective set: only the `deployment`, `runtime`, and `cleanup` contexts (the DCL contexts, removed from the
+        index by `remove_dcl_paths_from_index`). `topology` and `pipeline` are committed as usual
     - AI[phase2]: depending on `SAVE_ARTIFACTS_STRATEGY`, save env_instance/ES/deploy-plan.yaml to artifacts or not
-    - AI[phase2]: unify with `es-pusher`
 
-#### 1.18 step `generate_argocd_repo` TO BE IMPLEMENTED. NOT IMPLEMENTED YET
+#### 1.18 step `generate_argocd_repo`
 
 Triggers:
 
-- (`OPERATION_TYPE: DEPLOY` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`)) and
 - `PIPELINE_TYPE: GITLAB_DEPLOY`
 
 Functions:
 
-1. `generate_argocd_repo` argo dpg generate structure
+1. `generate_argocd_repo` (`argocd-dpg`). This step absorbed the former `es_pusher` step: es-pusher is unified with
+   argocd-dpg, so argocd-dpg both generates the ArgoCD structure and pushes the result to the deploy target repository.
     - input:
       - `delta-deploy-plan.yml`
       - effective set
       - local DD (from `dd_downloading`)
       - `APP_ARTIFACTS_DIR`
       - params.environment_id -> `build.env.FULL_ENV_NAME`
-      - TBD
+      - params.commit_message -> `DEPLOYMENT_TICKET_ID`
+      - `artifact_coordinate_source` injected from `config.yml` by the orchestrator. Deploy-side resolution uses it
+        the same way
+      - for the push to the deploy target repository: `DCL_GIT_URL`, `DCL_GIT_BRANCH` (defaults on the orchestrator
+        side), `DCL_CONFIG_GITLAB_USER`, `DCL_CONFIG_GITLAB_TOKEN`, `GITLAB_USER_NAME`, `GITLAB_USER_EMAIL`
     - output:
-      - appset CR, app CR, TBD
-      - encrypted by `ENVGENE_AGE_PUBLIC_KEY` dotenv ARGO_DPG_CONTEXT.env
+      - appset CR, app CR, encrypted by `ENVGENE_AGE_PUBLIC_KEY` dotenv `ARGO_DPG_CONTEXT.env`
+      - effective set and appsets pushed to the deploy target repository
     - actions:
-      - TBD
+      - on `OPERATION_TYPE: DEPLOY` or (`OPERATION_TYPE: BGD` and `BGD_OPERATION: warmup`): `argo generate structure`
+        with `push_to_repo: true` - generates the ArgoCD structure and pushes the effective set and appsets
+      - on `OPERATION_TYPE: CLEAN`: `argo cleanup structure` - updates the deploy target repository for the cleanup
     - AI[phase2]: move into the orchestrator as a PipelineStep
     - AI[phase3]: move to GitHub
-
-#### 1.19 step `es_pusher`
-
-Triggers:
-
-- `PIPELINE_TYPE: GITLAB_DEPLOY`
-
-Functions:
-
-1. `es-pusher`
-    - input:
-      - if `OPERATION_TYPE: CLEAN` then set env var: `ESPUSHER_OVERWRITE: true` else `ESPUSHER_OVERWRITE: false`
-      - instance files
-        - effective set
-        - appset
-      - effective set
-        - `DCL_GIT_URL`
-        - `DCL_GIT_BRANCH` defaults on the orchestrator side
-        - `DCL_CONFIG_GITLAB_USER`
-        - `DCL_CONFIG_GITLAB_TOKEN`
-        - `GITLAB_USER_NAME`
-        - `GITLAB_USER_EMAIL`
-        - ...
-      - COMMIT_FILTER
-      - params.environment_id -> `build.env.FULL_ENV_NAME`
-      - params.commit_message -> `DEPLOYMENT_TICKET_ID`
-      - params.rootdir -> x
-      - path filter
-    - output:
-      - instance repository commit
-    - actions:
-      - push effective set and appsets to the deploy target repository
-    - AI[phase3]: move to GitHub
-    - AI[phase3]: unify with `git_commit`
 
 #### 1.20 step `cmdb_import`
 

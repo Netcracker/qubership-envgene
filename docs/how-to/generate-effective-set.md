@@ -11,6 +11,7 @@
   - [Other Common Scenarios](#other-common-scenarios)
     - [Generate Without a Solution Descriptor](#generate-without-a-solution-descriptor)
     - [Inject High-Priority Parameters at Runtime](#inject-high-priority-parameters-at-runtime)
+    - [Publish to an External GitLab Repository](#publish-to-an-external-gitlab-repository)
 
 ## Description
 
@@ -234,3 +235,25 @@ To target only specific namespaces instead of all, use the `namespaces` key. Nam
 
 > [!WARNING]
 > Custom Params override all other parameter sources. Use them only for temporary, session-specific values. Do not use Custom Params to replace permanent configuration - use Environment Specific ParameterSets instead.
+
+### Publish to an External GitLab Repository
+
+By default the pipeline commits the Effective Set to the Instance repository. To publish the `deployment`, `runtime`,
+and `cleanup` contexts to an external GitLab repository instead, run the pipeline in the GitLab-deploy flow. Follow the
+[Steps](#steps) above and set:
+
+```text
+PIPELINE_TYPE: GITLAB_DEPLOY
+```
+
+The GitLab-deploy flow processes one environment per run and builds its deploy plan from `APPLICATION_VERSIONS` rather
+than a Solution Descriptor, so `APPLICATION_VERSIONS` is required. See
+[`PIPELINE_TYPE`](/docs/instance-pipeline-parameters.md#pipeline_type) for its allowed values and constraints.
+
+Before you trigger the pipeline, configure the external repository connection. Its URL, branch, and credentials are the
+DCL parameters (`DCL_GIT_URL`, `DCL_GIT_BRANCH`, `DCL_CONFIG_GITLAB_*`), supplied as end-to-end parameters. See
+[How to configure DCL parameters in EnvGene](/docs/how-to/how-to-configure-dcl-parameters-in-envgene.md).
+
+When the pipeline completes, confirm that the external repository contains the `deployment`, `runtime`, and `cleanup`
+contexts under `environments/<cluster-name>/<env-name>/effective-set/`, and that they are absent from the Instance
+repository.

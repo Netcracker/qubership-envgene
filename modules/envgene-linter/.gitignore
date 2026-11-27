@@ -1,0 +1,16 @@
+.worktrees/
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+.superpowers/
+build/
+dist/
+.release-venv/
+
+# Russian-language documentation (tracked files remain tracked).
+/docs/**/ru/
+/docs/code/
+/docs/int1-questions-for-analyst.md
+/testdata/rules/README.md
+/testdata/rules/*/README.md

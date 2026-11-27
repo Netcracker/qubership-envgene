@@ -16,6 +16,7 @@
     - [PLACE-9 - One Cloud Passport per cluster (SHOULD)](#place-9---one-cloud-passport-per-cluster-should)
     - [PLACE-10 - Each entity in its type's directory (MUST)](#place-10---each-entity-in-its-types-directory-must)
     - [PLACE-11 - Set a resource profile on the namespace (SHOULD)](#place-11---set-a-resource-profile-on-the-namespace-should)
+    - [PLACE-12 - Shared defaults belong in the template (SHOULD)](#place-12---shared-defaults-belong-in-the-template-should)
   - [Secrets](#secrets)
     - [SEC-1 - No plaintext secrets (MUST)](#sec-1---no-plaintext-secrets-must)
     - [SEC-2 - No mixed plaintext and encrypted secrets (MUST)](#sec-2---no-mixed-plaintext-and-encrypted-secrets-must)
@@ -47,6 +48,7 @@
     - [VAL-7 - A Resource Profile Override with custom values declares a baseline (SHOULD)](#val-7---a-resource-profile-override-with-custom-values-declares-a-baseline-should)
     - [VAL-8 - Change a baseline with replace mode (SHOULD)](#val-8---change-a-baseline-with-replace-mode-should)
     - [VAL-9 - One Resource Profile Override per key, as a string (SHOULD)](#val-9---one-resource-profile-override-per-key-as-a-string-should)
+    - [VAL-10 - No secret and non-secret values in the same list (MUST)](#val-10---no-secret-and-non-secret-values-in-the-same-list-must)
   - [Templating](#templating)
     - [TPL-1 - Jinja lives only in `.j2` templates (MUST)](#tpl-1---jinja-lives-only-in-j2-templates-must)
     - [TPL-2 - Override at a layer, not through Jinja plumbing (MUST)](#tpl-2---override-at-a-layer-not-through-jinja-plumbing-must)
@@ -346,6 +348,46 @@ profile:
 # templates/env_templates/<template>/cloud.yml.j2
 profile:
   baseline: prod
+```
+
+### PLACE-12 - Shared defaults belong in the template (SHOULD)
+
+Define a parameter default shared by environments using one template in the Template repository,
+directly in the template or in a ParameterSet it references. Keep instance ParameterSets for values
+that intentionally differ.
+
+A complete matching ParameterSet can also be stored once in the Template repository with its original name.
+Existing Environment Inventory bindings continue to select that file. This shares storage while keeping
+environment selection explicit. Compare the complete parameter and application content before removing instance copies.
+
+Identify comparable environments by `envTemplate.name` and the artifact name before the first `:` in
+`envTemplate.artifact`. Artifact versions do not split groups. Compare only connected ParameterSets with
+the same parameter category, association target, and application scope.
+Equal values are candidates for a shared default. Confirm that the value belongs to the template's
+environment type before moving it. Cluster and platform values follow PLACE-3, and Cloud Passport
+contract keys follow PLACE-4.
+
+```yaml
+# Both environments select envTemplate.name: business.
+# env-1 selects envTemplate.artifact: example-env-templates:1.0.0.
+# env-2 selects envTemplate.artifact: example-env-templates:2.0.0.
+# The same deployment parameter is associated with the oss Namespace.
+
+# OK - one default in the Template repository
+# templates/parameters/business-deploy.yml
+# The selected oss Namespace template lists business-deploy in deployParameterSets.
+name: "business-deploy"
+parameters:
+  DATABASE_CLEANUP_ENABLED: "true"
+
+---
+# Not OK - the same template default copied into both instance ParameterSets
+# environments/cluster-01/env-1/Inventory/parameters/oss-env-specific.yml
+# environments/cluster-01/env-2/Inventory/parameters/oss-env-specific.yml
+# Each env_definition lists oss-env-specific under envSpecificParamsets.oss.
+name: "oss-env-specific"
+parameters:
+  DATABASE_CLEANUP_ENABLED: "true"
 ```
 
 ## Secrets
@@ -882,6 +924,34 @@ envSpecificResourceProfiles:
 # Not OK - a list is not supported here, generation fails to resolve it
 envSpecificResourceProfiles:
   core: ["core-prod-override"]
+```
+
+### VAL-10 - No secret and non-secret values in the same list (MUST)
+
+Keep a list either all-secret or all-non-secret. Do not pair a secret value, a `${creds.get(...)}`
+reference, with a non-secret value in the elements of one list. EnvGene writes secret and non-secret
+values to separate Effective Set files, so a mixed list is split across the credentials file and the
+parameters file under the same key. The deployer merges maps by key but replaces a list, so a list that
+lands in both files keeps one copy and silently drops the other. Model the data as a map keyed by its
+non-secret identity: the identity becomes a key, each secret sits at a leaf, and the list no longer mixes
+the two. The consumer reads the map, so a chart that requires a list cannot use this shape (VAL-1). An
+all-secret or all-non-secret list is not split and stays a list. See
+[Do not mix secret and non-secret values in one list](/docs/how-to/defining-complex-parameters-using-yaml-objects.md#do-not-mix-secret-and-non-secret-values-in-one-list).
+
+```yaml
+# Not OK - secret token paired with non-secret region in one list, split across files, one copy dropped
+REGION_TOKENS:
+  - region: eu
+    token: ${creds.get("eu-token").secret}
+  - region: us
+    token: ${creds.get("us-token").secret}
+
+# OK - keyed by region, so the list holds only secrets and is not split
+REGION_TOKENS:
+  eu:
+    token: ${creds.get("eu-token").secret}
+  us:
+    token: ${creds.get("us-token").secret}
 ```
 
 ## Templating

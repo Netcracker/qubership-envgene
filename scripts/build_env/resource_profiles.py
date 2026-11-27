@@ -1,4 +1,4 @@
-from envgenehelper import Path, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, set_nested_yaml_attribute, validate_yaml_by_scheme_or_fail
+from envgenehelper import Path, YamlBacked, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, set_nested_yaml_attribute
 from build_env.render_config_env import EnvGenerator
 from envgene_shared.utils.business_utils import to_bool
 
@@ -33,8 +33,8 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, invent
             if found_path:
                 logger.info(f"Env specific resource profile file for '{profile_file_name}' found in '{found_path}'")
                 env_instance_store = current_env_instance_store()
-                env_specific_profile = env_instance_store.put(found_path, env_instance_store.load_profile_from_cache(found_path))
-                validate_yaml_by_scheme_or_fail(input_yaml_content=env_specific_profile, schema_file_path=rp_schema)
+                env_instance_store.put(found_path, env_instance_store.load_profile_from_cache(found_path))
+                env_instance_store.bind(found_path, Path(rp_schema).name)
                 result[templateType] = str(found_path)
                 break
         if templateType not in result:
@@ -159,8 +159,7 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], templat
         logger.info(f"Found resource profile {needed_profile} in path: {profile_path}")
         if profile_path not in validity_by_path:
             try:
-                validate_yaml_by_scheme_or_fail(input_yaml_content=current_env_instance_store().get(profile_path),
-                                                schema_file_path=profiles_schema)
+                current_env_instance_store().bind(profile_path, Path(profiles_schema).name)
                 validity_by_path[profile_path] = True
             except ValueError:
                 validity_by_path[profile_path] = False
@@ -226,7 +225,7 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
 
 def has_valid_profile_name(content: dict) -> bool:
     profile = content.get("profile")
-    return isinstance(profile, dict) and bool(profile.get("name"))
+    return isinstance(profile, (dict, YamlBacked)) and bool(profile.get("name"))
 
 
 def set_object_profile_field(file_path, field, value):

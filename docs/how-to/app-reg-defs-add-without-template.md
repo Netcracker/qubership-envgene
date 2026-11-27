@@ -29,6 +29,10 @@ For background on the definition override mechanism, see
      fullRepositoryUrl: https://maven.example.com/repository
    ```
 
+   Create a Registry Definition v1.0. For AWS CodeArtifact or GCP Artifact Registry, also set the registry auth
+   parameters in Cloud `e2eParameters`, see
+   [Configuring cloud artifact registries for AWS and GCP](/docs/how-to/configure-cloud-artifact-registries.md).
+
    Use a filename that does **not** match any existing template-rendered definition in `/appdefs/` or `/regdefs/`. If
    the filename matches, the definition override will **replace** the template-rendered one instead of adding a new one.
 

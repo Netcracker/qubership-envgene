@@ -36,7 +36,7 @@
   "jobs": [],
   "libraries": [],
   "complexes": [],
-  "charts": [],
+  "charts": [{"helm_chart_name": "sample-monitoring", "helm_chart_version": "1.2.3", "helm_registry": "https://helm.example.com", "full_chart_name": "https://helm.example.com/charts/sample-monitoring-1.2.3.tgz"}],
   "additionalArtifacts": {},
   "descriptors": []
 }

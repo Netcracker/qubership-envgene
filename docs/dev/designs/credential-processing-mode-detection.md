@@ -142,7 +142,7 @@ the whole entry of the same `credId`. The gap filler never replaces an entry of 
 | `scripts/cloud_passport/cloud_passport.py`     | Drops the flag. Returns Credentials instead of writing them                                    |
 | `scripts/build_env/create_credentials.py`      | `CredentialCollector`, macro rewrite, shared file lookup and rendering, built-in `credId` check|
 | `scripts/creds_rotation/*`                     | Gate at the top of `run_cred_rotation`, error message and code, per-Credential checks removed  |
-| `scripts/CLAUDE.md`, `docs/envgene-objects.md` | Replace the description of mode detection                                                      |
+| `scripts/AGENTS.md`, `docs/envgene-objects.md` | Replace the description of mode detection                                                      |
 | `docs/features/credential-processing.md`       | The auto-generated external entry carries `properties` when the first reference is multi-field |
 
 New objects:

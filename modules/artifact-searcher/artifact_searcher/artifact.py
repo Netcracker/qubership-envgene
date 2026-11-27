@@ -5,11 +5,9 @@ import os
 import re
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urljoin, urlparse, urlunparse
 from collections import defaultdict
-from zipfile import ZipFile
 
 import aiohttp
 import requests
@@ -226,7 +224,7 @@ async def download_async(session, download: ArtifactDownload) -> ArtifactDownloa
             if response.status == 200:
                 with open(download.local_target_path, "wb") as f:
                     f.write(await response.read())
-                logger.info(f"Downloaded: {download.local_target_path}")
+                logger.info(f"Downloaded: {url} -> {download.local_target_path}")
                 return download
             else:
                 logger.error(f"Download process with error {response.text}: {url}")
@@ -441,21 +439,6 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
 
     logger.warning("Artifact not found")
     return None
-
-
-def unzip_file(artifact_id: str, source_zip_path: Path, target_dir: Path):
-    extracted = False
-    entry_prefix = f"{artifact_id}/"
-    try:
-        with ZipFile(source_zip_path, "r") as zip_file:
-            for file in zip_file.namelist():
-                if file.startswith(entry_prefix):
-                    zip_file.extract(file, target_dir)
-                    extracted = True
-    except Exception as e:
-        logger.error(f"Error unpacking {e}")
-    if not extracted:
-        logger.warning(f"No files were extracted for artifact {artifact_id} from {source_zip_path}")
 
 
 def create_artifact_name(artifact_id: str, artifact_extension: FileExtension, version: str,

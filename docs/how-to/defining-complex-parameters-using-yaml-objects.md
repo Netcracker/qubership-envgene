@@ -11,6 +11,7 @@
   - [How to Define Complex Parameters Correctly](#how-to-define-complex-parameters-correctly)
     - [Defining a Map (Object)](#defining-a-map-object)
     - [Defining a List](#defining-a-list)
+    - [Do not mix secret and non-secret values in one list](#do-not-mix-secret-and-non-secret-values-in-one-list)
   - [How EnvGene Processes Complex Parameters](#how-envgene-processes-complex-parameters)
     - [During Environment Instance Generation](#during-environment-instance-generation)
     - [During CMDB Import](#during-cmdb-import)
@@ -170,6 +171,40 @@ Incorrect (JSON string):
 ```yaml
 parameters:
   allowedIPs: '["10.10.0.1","10.10.0.2","10.10.0.3"]'
+```
+
+### Do not mix secret and non-secret values in one list
+
+A list must not hold both a secret value, written as a `${creds.get(...)}` reference, and a non-secret
+value. Keep a list either all-secret or all-non-secret. When entries pair a secret with non-secret data,
+model them as a map instead of a list.
+
+EnvGene writes secret and non-secret values to separate files in the effective set, the credentials file
+and the parameters file. A list that mixes the two is split across both files under the same key, the
+secret entries in one file and the rest in the other. The deployer then layers the two files. It replaces
+a list rather than merging it, and merges only maps, key by key. One file's copy of the list survives, the
+other is dropped with no error, and the application reads a half-built value.
+
+Not OK - each entry pairs a secret `token` with a non-secret `region`, so EnvGene splits the list across
+the two files and the deployer keeps only one:
+
+```yaml
+REGION_TOKENS:
+  - region: eu
+    token: ${creds.get("eu-token").secret}
+  - region: us
+    token: ${creds.get("us-token").secret}
+```
+
+OK - a map keyed by `region`. The region is a key, not a value, so each entry holds only its secret, the
+list no longer mixes the two, and the whole value stays in the credentials file:
+
+```yaml
+REGION_TOKENS:
+  eu:
+    token: ${creds.get("eu-token").secret}
+  us:
+    token: ${creds.get("us-token").secret}
 ```
 
 ## How EnvGene Processes Complex Parameters

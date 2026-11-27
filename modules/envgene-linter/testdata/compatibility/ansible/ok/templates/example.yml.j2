@@ -1,0 +1,4 @@
+REFERENCE: "{{ lookup('ansible.builtin.env', 'EXAMPLE_REFERENCE') | default('main') }}"
+PARAMETERS:
+{{ PARAMETERS | default({}) | ansible.builtin.to_nice_yaml | indent(2, true) }}
+APPLICATION_ID: "{% raw %}{{ id }}{% endraw %}"

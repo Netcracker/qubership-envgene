@@ -113,7 +113,6 @@ applications:
 
 ```yaml
 inventory:
-  environmentName: prod-env
   tenantName: my-tenant
 envTemplate:
   name: composite-prod

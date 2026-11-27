@@ -6,21 +6,23 @@ from pathlib import Path
 from typing import OrderedDict
 
 import jschon
+import jschon_tools
 import ruyaml
 from jsonschema import RefResolver
 from ruyaml import CommentedMap, CommentedSeq
 from ruyaml.scalarstring import DoubleQuotedScalarString
 import yaml as pyyaml
 
-from .file_helper import os, re, check_dir_exists, findFiles, openFileAsString, writeToFile
+from .file_helper import os, check_dir_exists, findFiles, openFileAsString, writeToFile
 from .json_helper import openJson
+from .models import YamlBacked
 from envgene_shared.utils.logger import logger
 
-from envgene_shared.utils.yaml_utils import get_empty_yaml, openYaml, readYaml, \
+from envgene_shared.utils.yaml_utils import get_empty_yaml, get_schema, openYaml, readYaml, load_schema, \
     validate_yaml_by_scheme_or_fail, validate_yaml_data_by_schema, writeYamlToFile, \
     remove_cred_yaml_comments, remove_empty_list_comments, ensure_nested_attr_parents_exist, \
     ensure_nested_attr_exists, get_or_create_nested_yaml_attribute, create_yaml_processor, \
-    yaml, safe_yaml, sortYaml, make_quotes_for_strings, dumpYamlToStr
+    yaml, safe_yaml, make_quotes_for_strings, dumpYamlToStr
 
 
 def convert_dict_to_yaml(d):
@@ -64,6 +66,109 @@ def alignYamlComments(yamlContent, extra_indent=0):
     for element in (yamlContent.values() if is_dict else yamlContent):
         alignYamlComments(element, extra_indent=extra_indent)
     return None
+
+
+def _resolve_ref(root, schema):
+    if not isinstance(schema, dict) or "$ref" not in schema:
+        return schema if isinstance(schema, dict) else {}
+    ref = schema["$ref"]
+    if not isinstance(ref, str) or not ref.startswith("#/"):
+        return schema
+    node = root
+    for raw in ref[2:].split("/"):
+        part = raw.replace("~1", "/").replace("~0", "~")
+        if not isinstance(node, dict) or part not in node:
+            return schema
+        node = node[part]
+    return _resolve_ref(root, node)
+
+
+def _flatten_schema(root, schema, seen=None):
+    seen = set() if seen is None else seen
+    schema = _resolve_ref(root, schema)
+    marker = id(schema)
+    if marker in seen:
+        return
+    seen.add(marker)
+    yield schema
+    for key in ("allOf", "anyOf", "oneOf"):
+        for subschema in schema.get(key) or []:
+            yield from _flatten_schema(root, subschema, seen)
+    for key in ("then", "else"):
+        branch = schema.get(key)
+        if isinstance(branch, dict):
+            yield from _flatten_schema(root, branch, seen)
+
+
+def _property_order(schemas):
+    order = []
+    for schema in schemas:
+        for name in schema.get("properties") or {}:
+            if name not in order:
+                order.append(name)
+    return order
+
+
+def _child_schemas(root, schemas, key):
+    children = []
+    known = False
+    for schema in schemas:
+        properties = schema.get("properties") or {}
+        if key in properties:
+            known = True
+            children.extend(_flatten_schema(root, properties[key]))
+    if known:
+        return children
+    for schema in schemas:
+        extra = schema.get("additionalProperties")
+        if isinstance(extra, dict):
+            children.extend(_flatten_schema(root, extra))
+    return children
+
+
+def _item_schemas(root, schemas):
+    children = []
+    for schema in schemas:
+        items = schema.get("items")
+        if isinstance(items, dict):
+            children.extend(_flatten_schema(root, items))
+    return children
+
+
+def _sort_by_schema_shape(node, root, schemas):
+    if isinstance(node, dict):
+        order = {name: index for index, name in enumerate(_property_order(schemas))}
+        pairs = [
+            (key, _sort_by_schema_shape(value, root, _child_schemas(root, schemas, key)))
+            for key, value in node.items()
+        ]
+        pairs.sort(key=lambda pair: (0, order[pair[0]]) if pair[0] in order else (1, pair[0]))
+        copied = node.copy()
+        copied.clear()
+        copied.update(pairs)
+        return copied
+    if isinstance(node, list):
+        return [_sort_by_schema_shape(item, root, _item_schemas(root, schemas)) for item in node]
+    return node
+
+
+def sortYaml(yaml_data, schema_path, remove_additional_props, validate=True):
+    schema_name = str(schema_path)
+    is_path = isinstance(schema_path, Path) or "/" in schema_name or "\\" in schema_name
+    schema_data = load_schema(schema_name) if is_path else get_schema(schema_name)
+    if not validate:
+        return _sort_by_schema_shape(yaml_data, schema_data, list(_flatten_schema(schema_data, schema_data)))
+    validate_yaml_by_scheme_or_fail(
+        input_yaml_content=yaml_data,
+        schema_file_path=schema_name if is_path else None,
+        schema_name=None if is_path else schema_name,
+    )
+    return jschon_tools.process_json_doc(
+        schema_data=schema_data,
+        doc_data=yaml_data,
+        sort=True,
+        remove_additional_props=remove_additional_props,
+    )
 
 
 def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
@@ -156,6 +261,9 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
 
 def store_value_to_yaml(yamlContent, key, value, comment=""):
     logger.debug(f"Updating key {key} with value {value} in yaml")
+    if isinstance(yamlContent, YamlBacked):
+        yamlContent.store_value(key, value, comment)
+        return
     if key in yamlContent:
         deleteCommentByKey(yamlContent, key)
         del yamlContent[key]

@@ -109,21 +109,23 @@ envTemplate:
   name: string
   # Mandatory
   # Template artifact in application:version notation
-  # Used for rendering all Environment Instance objects except peer/origin Namespaces in BG Domain
+  # Renders all Environment Instance objects. For the origin and peer Namespaces of a BG Domain it is
+  # the fallback, used when bgNsArtifacts or that side is not specified
   artifact: string
   # Optional
-  # Blue-Green deployment artifacts for peer and origin namespaces
-  # Used ONLY for rendering peer and origin Namespaces in BG Domain
-  # If specified, bgNsArtifacts and artifact are NOT mutually exclusive:
-  # - bgNsArtifacts is used for rendering peer/origin Namespaces
-  # - artifact is used for rendering all other Environment Instance objects
+  # Per-side template artifact overrides for the origin and peer Namespaces of a BG Domain
+  # bgNsArtifacts and artifact are NOT mutually exclusive:
+  # - When specified, bgNsArtifacts renders the origin and peer Namespaces and artifact renders everything else
+  # - When a side is not specified, that Namespace renders from artifact
   # The role of a Namespace (origin, peer, or controller) is determined through the BG Domain object
   bgNsArtifacts:
-    # Mandatory
-    # Template artifact in application:version notation for origin namespace
+    # Optional
+    # Template artifact in application:version notation for the origin namespace
+    # When not specified, the origin Namespace renders from artifact
     origin: string
-    # Mandatory
-    # Template artifact in application:version notation for peer namespace
+    # Optional
+    # Template artifact in application:version notation for the peer namespace
+    # When not specified, the peer Namespace renders from artifact
     peer: string
   # Optional
   # Additional variables that will be available during template rendering
@@ -373,12 +375,12 @@ crypt_backend: enum [`SOPS`]
 # `auto` - Artifact Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # Optional. Default value - `auto`
-# Defines the auto-discovery mode for Application and Registry Definitions
-# Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
-# `local` - Only repository-located Application and Registry Definitions are used for application:version resolution
-# `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
-# `auto` - Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
-app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
+# Selects the source of truth for an application artifact coordinates (its Helm chart URL and its container image URL)
+# Used by both SBOM generation and the deploy side
+# `auto` - Use the Deployment Descriptor embedded chart/image coordinates when present. Reconstruct them from the Registry Definition only when the Deployment Descriptor was obfuscated at delivery
+# `regdef` - Always reconstruct the chart/image coordinates from the Registry Definition, ignoring the Deployment Descriptor embedded coordinates even when present
+# See /docs/features/sbom-generation.md#handling-dd-after-delivery for the canonical behavioral description
+artifact_coordinate_source: enum [`auto`, `regdef`]
 # Optional. Default value - `dual`
 # Controls where rendered Application and Registry Definitions are written
 # `dual` - written to both `/appdefs/`, `/regdefs/` AND per-environment compatibility folders `/environments/<cluster>/<env>/AppDefs|RegDefs/`
