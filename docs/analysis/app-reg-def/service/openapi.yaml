@@ -1,0 +1,16 @@
+openapi: 3.1.0
+info:
+  title: appregdef service API
+  version: 0.0.0
+# Placeholder skeleton. Fill in after the design settles, do not freeze the contract early.
+# checkov:skip=CKV_OPENAPI_4:placeholder skeleton, global security is defined once the contract settles
+paths: {}
+  # /resolve                          GET one app or POST a list, returns the Application(s)
+  # /registry-definitions/{name}      getRegDef, create, update
+  # /application-definitions/{name}   getAppDef, create, update
+components:
+  schemas: {}
+    # Application          appdef attributes + the resolved registry (v1 or v2)
+    # RegistryDefinition   v1 or v2
+    # ApplicationDefinition
+    # Error
