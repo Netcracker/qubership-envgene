@@ -10,7 +10,7 @@
 | 2026-11-26 14:44 | docs | - | - | gate: docs check passes, committed as a19c8c58 `docs: Issues #1971 Extend app_reg_defs_placement with an env mode` (5 files, 127 insertions) |
 | 2026-11-26 14:46 | propose | `git rev-parse --short HEAD` | 0 | start at propose; base main @ c02bb812, HEAD a19c8c58 is the docs commit of this change on branch `app_reg_defs_placement` |
 | 2026-11-26 14:46 | propose | - | - | source: Jira PDPLDEVOPS-27393 (parent PDPLDEVOPS-27325): add `env` placement mode, change default `dual` to `root` |
-| 2026-11-26 14:46 | propose | - | - | decision Q1 (developer, chat): implement placement-aware resolution next to the write side, so `root`, `env`, `dual` all work end to end; the locked test asserting the opposite is rewritten |
+| 2026-11-26 14:46 | propose | - | - | decision Q1 (developer, chat): implement placement-aware resolution next to the write side, so `root`, `env`, `dual` all work end-to-end; the locked test asserting the opposite is rewritten |
 | 2026-11-26 14:46 | propose | - | - | decision Q2 (developer, chat): declare `app_reg_defs_placement` in `schemas/config.schema.json`, strict enum, `root` default, case-sensitive; audit found no in-repo `config.yml` with an affected value |
 | 2026-11-26 14:46 | propose | - | - | decision Q3 F1 (developer, chat): pin `app_reg_defs_placement: dual` in the 59 BDD fixtures carrying per-environment definitions (7 amended, 52 created) |
 | 2026-11-26 14:46 | propose | `git ls-files cucumber_tests/test_data/e2e` | 0 | fixture `configuration/config.yml` files are tracked and not gitignored (`git check-ignore` exit 1), so the 52 new fixture files will be committed |
