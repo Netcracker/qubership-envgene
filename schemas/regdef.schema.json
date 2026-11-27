@@ -49,28 +49,28 @@
       "additionalProperties": false,
       "properties": {
         "snapshotUri": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "stagingUri": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "releaseUri": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "groupUri": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "snapshotRepoName": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "stagingRepoName": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "releaseRepoName": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "groupName": {
-          "type": "string"
+          "type": ["string", "null"]
         }
       },
       "required": [
@@ -89,25 +89,25 @@
       "additionalProperties": false,
       "properties": {
         "repositoryDomainName": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "fullRepositoryUrl": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "targetSnapshot": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "targetStaging": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "targetRelease": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "snapshotGroup": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "releaseGroup": {
-          "type": "string"
+          "type": ["string", "null"]
         }
       },
       "required": [
@@ -124,13 +124,13 @@
       "additionalProperties": false,
       "properties": {
         "goTargetSnapshot": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "goTargetRelease": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "goProxyRepository": {
-          "type": "string"
+          "type": ["string", "null"]
         }
       },
       "required": [
@@ -144,16 +144,16 @@
       "additionalProperties": false,
       "properties": {
         "rawTargetSnapshot": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "rawTargetRelease": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "rawTargetStaging": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "rawTargetProxy": {
-          "type": "string"
+          "type": ["string", "null"]
         }
       },
       "required": [
@@ -168,10 +168,10 @@
       "additionalProperties": false,
       "properties": {
         "npmTargetSnapshot": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "npmTargetRelease": {
-          "type": "string"
+          "type": ["string", "null"]
         }
       },
       "required": [
@@ -184,10 +184,10 @@
       "additionalProperties": false,
       "properties": {
         "helmTargetStaging": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "helmTargetRelease": {
-          "type": "string"
+          "type": ["string", "null"]
         }
       },
       "required": [
@@ -200,16 +200,16 @@
       "additionalProperties": false,
       "properties": {
         "helmStagingRepoName": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "helmReleaseRepoName": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "helmGroupRepoName": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "helmDevRepoName": {
-          "type": "string"
+          "type": ["string", "null"]
         }
       },
       "required": [

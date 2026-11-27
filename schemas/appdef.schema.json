@@ -29,6 +29,12 @@
     },
     "metadata" : {
       "$ref": "#/definitions/metaString"
+    },
+    "baseline": {
+      "type": ["string", "null"]
+    },
+    "config": {
+      "type": ["string", "null"]
     }
   },
   "definitions": {

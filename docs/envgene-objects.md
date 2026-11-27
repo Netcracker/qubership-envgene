@@ -3106,6 +3106,12 @@ technicalConfigurationParameters: hashmap
 # Optional
 # Whether this application carries a Solution Descriptor
 solutionDescriptor: boolean
+# Optional
+# Git branch or tag of the application baseline, populated from Builder. May be an empty string or null.
+baseline: string
+# Optional
+# URL of the application config file, populated from Builder. May be an empty string or null.
+config: string
 ```
 
 **Example:**
@@ -3119,6 +3125,8 @@ supportParallelDeploy: false
 deployParameters: {}
 technicalConfigurationParameters: {}
 solutionDescriptor: false
+baseline: ''
+config: ''
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)
