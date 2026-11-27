@@ -1,12 +1,11 @@
 import hashlib
 import os
 import pickle
-from collections.abc import Mapping, MutableMapping
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from pathlib import Path
 
-from ruyaml import CommentedMap, CommentedSeq
+from ruyaml import CommentedMap
 
 from envgene_shared.crypto.cred_store import current_cred_store
 from envgene_shared.utils.business_utils import get_envgene_config_yaml, to_bool
@@ -17,6 +16,7 @@ from envgene_shared.utils.yaml_utils import (
 )
 
 from .business_helper import NamespaceFile
+from .migrations import migrate_empty_parameter_sets
 from .models import SCHEMA_TO_MODEL, YamlBacked, bind_yaml, CredentialMode
 from .yaml_helper import normalize_comments, sortYaml
 
@@ -40,24 +40,8 @@ def _match(parts: tuple, pattern: tuple) -> bool:
     return len(parts) == len(pattern) and all(fnmatchcase(part, name) for part, name in zip(parts, pattern))
 
 
-# Env templates of projects created before v3.26 write an empty mapping where the schema expects a list of
-# parameter set names. The build normalized the tag before it validated the file, so the mapping never reached
-# the schema. Templates live in project repositories we do not ship, so the empty mapping is migrated here.
-PARAMETER_SET_TAGS = ("deployParameterSets", "e2eParameterSets", "technicalConfigurationParameterSets")
-
-
-def _migrate_empty_parameter_sets(obj, path) -> None:
-    if not isinstance(obj, MutableMapping):
-        return
-    for tag in PARAMETER_SET_TAGS:
-        value = obj.get(tag)
-        if isinstance(value, Mapping) and not value:
-            logger.warning(f"{path}: {tag} is an empty mapping, migrated to an empty list. Write '{tag}: []'.")
-            obj[tag] = CommentedSeq()
-
-
 def _to_model(obj, schema_path, path):
-    _migrate_empty_parameter_sets(obj, path)
+    migrate_empty_parameter_sets(obj, path)
     name = Path(str(schema_path)).name
     model_cls = SCHEMA_TO_MODEL.get(name)
     if model_cls is None:

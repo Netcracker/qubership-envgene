@@ -26,6 +26,7 @@ from envgene_shared.utils.yaml_utils import validate_yaml_by_scheme_or_fail
 import jschon_tools
 
 STORE_MODULE = importlib.import_module("envgenehelper.current_env_instance_store")
+MIGRATIONS_MODULE = importlib.import_module("envgenehelper.migrations")
 
 SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -410,7 +411,7 @@ NAMESPACE_BASE = ('name: ns\nisServerSideMerge: false\ncleanInstallApprovalRequi
 def test_beautify_migrates_empty_parameter_set_mapping(monkeypatch, env_dir):
     monkeypatch.setenv("JSON_SCHEMAS_DIR", str(Path(__file__).resolve().parents[3] / "schemas"))
     warnings = []
-    monkeypatch.setattr(STORE_MODULE.logger, "warning", lambda message: warnings.append(message))
+    monkeypatch.setattr(MIGRATIONS_MODULE.logger, "warning", lambda message: warnings.append(message))
     target = env_dir / "Namespaces" / "platform" / "namespace.yml"
     objects = CurrentEnvInstanceStore(env_dir)
     objects.put(target, readYaml(NAMESPACE_BASE + 'deployParameterSets: {}\ne2eParameterSets: {}\n'))
