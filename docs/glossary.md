@@ -245,7 +245,8 @@ Proposed.
 
 ### Namespace name
 
-1. **Namespace folder name** - keys `envSpecificResourceProfiles` and Effective Set folders. See [Environment-specific
+1. **Namespace folder name** - keys `envSpecificResourceProfiles`, `generatedProfileDefaults` and Effective Set
+   folders. See [Environment-specific
    Resource Profile Override](/docs/features/resource-profile.md#environment-specific-resource-profile-override).
 2. **Namespace `name` attribute** - the Kubernetes namespace name, mapped in `mapping.yaml`. See
    [Namespace](/docs/envgene-objects.md#namespace).

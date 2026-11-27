@@ -496,6 +496,7 @@ class ResourceProfileApplicationModel(YamlModel):
     name: str
     version: Union[str, int, float] = None
     sd: str = None
+    baseline: str = None
     services: list[ResourceProfileServiceModel]
 
 
@@ -854,6 +855,7 @@ class EnvTemplateModel(YamlModel):
     envSpecificTechnicalParamsets: dict[str, list[str]] = None
     envSpecificE2EParamsets: dict[str, list[str]] = None
     envSpecificResourceProfiles: dict[str, str] = None
+    generatedProfileDefaults: dict[str, str] = None
     bgNsArtifacts: BgNsArtifactsModel = None
     sharedMasterCredentialFiles: list[str] = None
 

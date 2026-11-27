@@ -7,7 +7,8 @@ from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
 from build_env.create_credentials import create_credentials
 from build_env.render_config_env import EnvGenerator
 from build_env.env_specific_overrides import validate_env_specific_override_keys
-from build_env.resource_profiles import get_env_specific_resource_profiles
+from build_env.deployment_profile import apply_run_profile, GENERATED_PROFILES_MAP_KEY
+from build_env.resource_profiles import get_resource_profiles_map
 
 
 def copy_paramsets_to_render_workspace(source_env_dir, templates_dirs, render_parameters_dir):
@@ -82,11 +83,17 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["env_definition"] = env_definition
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
+    # the Namespaces of the render live in the store of the build, which is open until the env build step is over
+    apply_run_profile(source_env_dir, env_definition)
     validate_env_specific_override_keys(source_env_dir, env_definition)
-    env_specific_resource_profile_map = get_env_specific_resource_profiles(
+    env_specific_resource_profile_map = get_resource_profiles_map(
         source_env_dir, all_instances_dir, "resource-profile.schema.json", env_definition)
+    generated_profile_defaults_map = get_resource_profiles_map(
+        source_env_dir, all_instances_dir, "resource-profile.schema.json", env_definition,
+        GENERATED_PROFILES_MAP_KEY)
     passport_creds = build_env(source_env_dir, env_definition, render_parameters_dir, template_profiles_dir,
-                               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs)
+                               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs,
+                               generated_profile_defaults_map)
     credential_sources = [render_context.template_creds, passport_creds]
     create_credentials(source_env_dir, all_instances_dir, env_definition, credential_sources, render_context)
 

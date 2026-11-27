@@ -10,6 +10,8 @@
   - [Scenario 5: Use a baseline with custom values for a cluster](#scenario-5-use-a-baseline-with-custom-values-for-a-cluster)
   - [Scenario 6: Use a baseline with custom values for all environments](#scenario-6-use-a-baseline-with-custom-values-for-all-environments)
   - [Scenario 7: Add custom values for one environment on top of a template override](#scenario-7-add-custom-values-for-one-environment-on-top-of-a-template-override)
+  - [Scenario 8: Set the baseline of one application](#scenario-8-set-the-baseline-of-one-application)
+  - [Scenario 9: Deploy every application of the run on one baseline](#scenario-9-deploy-every-application-of-the-run-on-one-baseline)
   - [Best practices](#best-practices)
   - [Related documentation](#related-documentation)
 
@@ -298,11 +300,76 @@ conflicting values use the environment-specific value.
 **Sample:** an environment-specific override merged onto a template override -
 `docs/samples/instance-repository/environments/cluster-01/env-02/`.
 
+## Scenario 8: Set the baseline of one application
+
+**When to use:** One application of the namespace has to use another baseline than the rest of the namespace.
+
+An entry of `applications` carries its own `baseline`. It is the baseline of that application, instead of the
+`baseline` of the whole override, and it takes the same free-form baseline name the application defines. An
+application that sets no custom values still needs an empty `services` list.
+
+```yaml
+# environments/cluster-01/env-01/Inventory/resource_profiles/core-app-baseline.yml
+name: "core-app-baseline"
+baseline: "prod"
+applications:
+  - name: "Core"
+    baseline: "prod-nonha"
+    services: []
+  - name: "Billing"
+    services:
+      - name: "billing-api"
+        parameters:
+          - name: "REPLICAS"
+            value: "3"
+```
+
+`Core` uses the `prod-nonha` baseline, `Billing` and every other application of the namespace use `prod`.
+Reference the override in `env_definition.yml` as in Scenario 4, then commit to the Instance repository and
+trigger environment generation.
+
+## Scenario 9: Deploy every application of the run on one baseline
+
+**When to use:** the applications a run deploys have to start on the baseline named by the run, without editing the
+Instance repository beforehand.
+
+Start the pipeline with the [`PROFILE`](../instance-pipeline-parameters.md#profile) parameter. The
+`env_build` step writes `Inventory/resource_profiles/<deploy-postfix>-profile-override.yml` for every
+deploy postfix of the run, which names that baseline for every application the run deploys, and records it for each
+Namespace in `envTemplate.generatedProfileDefaults` of `env_definition.yml`. EnvGene maintains that map. Nothing stops
+you from adding an entry by hand: the environment build applies it like any other override while its Namespace exists,
+and ignores it with a warning once that Namespace is gone.
+
+- The generated override is the last layer of its Namespace, so for an application the run deploys the baseline of the
+  run wins over the baseline your own override sets for it. Scenario 8 keeps its application baselines only for the
+  applications the run does not deploy.
+- The applications your own override does not mention start on the baseline of the run, and its custom values stay.
+- A Namespace of the run that references no override of its own takes the generated override as its profile, named
+  `<deploy-postfix>-profile-override`, unless the template of the Namespace has a profile of its own, which keeps its
+  name.
+- The entry of a Namespace is keyed by its folder name under `Namespaces/`. In a Blue-Green environment that name is
+  the deploy postfix with the `-origin` or `-peer` suffix of the side, so the two Namespaces of a pair get two entries
+  that name one generated override.
+- In replace mode the template override is dropped and the generated override is merged on top of the override of
+  the Namespace, see [Resource profiles](/docs/features/resource-profile.md#replace-mode).
+- An application that does not define the named baseline keeps the baseline it had.
+- A name ending with `-profile-override` is reserved for the step. Naming one in `envSpecificResourceProfiles` has no
+  effect and the environment build warns about it.
+- Both files say what they are: the generated file opens with a header that names `PROFILE` and links to its
+  description, and the entry in `env_definition.yml` carries a comment that EnvGene wrote it.
+- The file is rewritten by every run that passes the parameter and deploys at least one application, so change the
+  parameter rather than the file.
+
 ## Best practices
 
 **Set a baseline on every override that sets custom values.** An override that sets custom values but no
 `baseline` generates a warning. The `baseline` field is optional in the schema for backward compatibility, but
 setting it is mandated by configuration best practice.
+
+**Give every override file a distinct filename.** The environment build copies every referenced override into the
+`Profiles/` directory of the Environment Instance under its filename, so two files of one name collide there even when
+they sit in different scopes, and only the one copied last reaches the environment. The build warns about the
+collision, see [Resource profiles](/docs/features/resource-profile.md#naming-rules-for-resource-profile-override).
 
 **Do not set `baseline: ""`** (empty string). An empty string is treated as absent in the resolution
 logic. Omit the field instead if you want no baseline selection.

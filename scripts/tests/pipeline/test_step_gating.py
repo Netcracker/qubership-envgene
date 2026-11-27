@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 os.environ.setdefault("CI_PROJECT_DIR", "/tmp")
 os.environ.setdefault("ENV_NAMES", "cluster-01/env-01")
@@ -129,4 +130,31 @@ class TestStepGating:
             ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION=bgd_operation)
 
             assert not GenerateEffectiveSetStep().should_run(ctx)
+
+    @pytest.mark.unit
+    def test_env_build_warns_about_profile_when_the_environment_is_not_built(self):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION="promote", PROFILE="prod")
+
+        with patch("pipeline.orchestrator.logger") as logger:
+            assert not EnvBuildStep().should_run(ctx)
+
+        logger.warning.assert_called_once()
+
+    @pytest.mark.unit
+    def test_env_build_stays_silent_about_profile_when_it_builds(self):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="CLEAN", PROFILE="prod")
+
+        with patch("pipeline.orchestrator.logger") as logger:
+            assert EnvBuildStep().should_run(ctx)
+
+        logger.warning.assert_not_called()
+
+    @pytest.mark.unit
+    def test_env_build_stays_silent_about_profile_when_it_is_not_set(self):
+        ctx = _ctx(PIPELINE_TYPE=GITLAB_DEPLOY, OPERATION_TYPE="BGD", BGD_OPERATION="promote", PROFILE="")
+
+        with patch("pipeline.orchestrator.logger") as logger:
+            assert not EnvBuildStep().should_run(ctx)
+
+        logger.warning.assert_not_called()
 

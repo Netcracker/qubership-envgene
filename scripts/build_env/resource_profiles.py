@@ -1,9 +1,14 @@
 from envgenehelper import Path, YamlBacked, copy, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllYamlsInDir, find_yaml_file, getEnvDefinitionPath, get_empty_yaml, logger, merge_dict_key_with_comment, set_nested_yaml_attribute
+from build_env.deployment_profile import GENERATED_PROFILES_MAP_KEY, PROFILE_OVERRIDE_SUFFIX
 from build_env.render_config_env import EnvGenerator
 from envgene_shared.utils.business_utils import to_bool
 
+ENV_SPECIFIC_PROFILES_MAP_KEY = "envSpecificResourceProfiles"
+RESULTING_PROFILES_DIR_NAME = "Profiles"
 
-def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, inventoryYaml):
+
+def get_resource_profiles_map(env_dir, instances_dir, rp_schema, inventoryYaml,
+                              map_key=ENV_SPECIFIC_PROFILES_MAP_KEY):
     levels = [
         Path(env_dir) / "Inventory",
         Path(env_dir).parent,
@@ -13,21 +18,23 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, invent
     rp_dir_names = ["resource_profiles", "rp_override", "Profiles", "parameters"]
 
     result = {}
-    logger.info(f"Finding env specific resource profiles for '{env_dir}' in '{instances_dir}'")
+    logger.info(f"Finding '{map_key}' resource profiles for '{env_dir}' in '{instances_dir}'")
     envDefinitionPath = getEnvDefinitionPath(env_dir)
 
-    if not "envSpecificResourceProfiles" in inventoryYaml["envTemplate"]:
-        logger.info(f"No environment specific resource profiles are defined in {envDefinitionPath}")
+    if map_key not in inventoryYaml["envTemplate"]:
+        logger.info(f"No {map_key} are defined in {envDefinitionPath}")
         return result
-    envSepcificResourceProfileNames = inventoryYaml["envTemplate"]["envSpecificResourceProfiles"]
-    logger.info(
-        f"Environment specific resource profiles for '{envDefinitionPath}' are: \n{dump_as_yaml_format(envSepcificResourceProfileNames)}")
+    resourceProfileNames = inventoryYaml["envTemplate"][map_key]
+    logger.info(f"{map_key} for '{envDefinitionPath}' are: \n{dump_as_yaml_format(resourceProfileNames)}")
 
-    for templateType in envSepcificResourceProfileNames:
-        profile_file_name = envSepcificResourceProfileNames[templateType]
+    for templateType, profile_file_name in resourceProfileNames.items():
+        if map_key == ENV_SPECIFIC_PROFILES_MAP_KEY and profile_file_name.endswith(PROFILE_OVERRIDE_SUFFIX):
+            logger.warning(f"'{profile_file_name}' in '{ENV_SPECIFIC_PROFILES_MAP_KEY}.{templateType}' is ignored, "
+                           f"a name ending with '{PROFILE_OVERRIDE_SUFFIX}' is reserved for the profile the "
+                           f"'PROFILE' parameter generates and is applied through '{GENERATED_PROFILES_MAP_KEY}'")
+            continue
         logger.debug(f"Searching for {profile_file_name} for template type {templateType}")
         shared_rp_paths = [level / name for level in levels for name in rp_dir_names]
-
         for p in shared_rp_paths:
             found_path = find_yaml_file(p, profile_file_name, recursively=True)
             if found_path:
@@ -38,7 +45,8 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema, invent
                 result[templateType] = str(found_path)
                 break
         if templateType not in result:
-            raise ReferenceError(f"Resource profile file with key '{profile_file_name}' not found.")
+            raise ReferenceError(f"Resource profile file '{profile_file_name}' of "
+                                 f"'{map_key}.{templateType}' is not found.")
     return result
 
 
@@ -110,6 +118,7 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
             merge_dict_key_with_comment("name", sourceApp, "name", app, commentText)
         merge_dict_key_with_comment("version", sourceApp, "version", app, commentText)
         merge_dict_key_with_comment("sd", sourceApp, "sd", app, commentText)
+        merge_dict_key_with_comment("baseline", sourceApp, "baseline", app, commentText)
         for service in app["services"]:
             sourceService = get_service_from_resource_profile_app(service["name"], sourceApp)
             if not sourceService:
@@ -188,10 +197,72 @@ def collect_resource_profiles(template_profiles_dir, profiles_schema,
     return profiles_map
 
 
+def apply_generated_override(profile_key, target_profile, generated_path, object_baseline):
+    logger.info(f"Profile key '{profile_key}' applies the generated profile '{generated_path}' on top of its "
+                f"profile '{target_profile.get('name')}'")
+    merge_resource_profiles(target_profile, current_env_instance_store().get(generated_path),
+                            extractNameFromFile(generated_path), object_baseline)
+
+
+def result_profile_path(name, profile_key, taken_names):
+    requested = name
+    while name in taken_names:
+        name = f"{name}-{profile_key}"
+    if name != requested:
+        logger.warning(f"This environment already has a profile named '{requested}', so the assembled profile of "
+                       f"'{profile_key}' is saved as '{name}'")
+    taken_names.add(name)
+    return str(current_env_instance_store().env_dir / RESULTING_PROFILES_DIR_NAME / f"{name}.yml")
+
+
+def assemble_profile(profile_key, base_path, base_name, generated_path, object_baseline, taken_names):
+    env_instance_store = current_env_instance_store()
+    result_path = result_profile_path(base_name, profile_key, taken_names)
+    assembled = copy.deepcopy(env_instance_store.get(base_path))
+    assembled["name"] = Path(result_path).stem
+    env_instance_store.put(result_path, assembled)
+    logger.info(f"Profile key '{profile_key}' assembles its profile from '{base_path}' as '{result_path}'")
+    if generated_path and generated_path != base_path:
+        apply_generated_override(profile_key, assembled, generated_path, object_baseline)
+    return result_path
+
+
+def drop_profiles_without_object(object_paths, *profile_maps):
+    dropped = []
+    for profile_key in dict.fromkeys(key for profile_map in profile_maps for key in profile_map):
+        if profile_key in object_paths:
+            continue
+        for profile_map in profile_maps:
+            profile_map.pop(profile_key, None)
+        dropped.append(profile_key)
+        hints = [f"'{profile_key}{suffix}'" for suffix in ("-origin", "-peer")
+                 if f"{profile_key}{suffix}" in object_paths]
+        suffix_hint = f" Did you mean {' or '.join(hints)}?" if hints else ""
+        logger.warning(f"Resource profile key '{profile_key}' matches no 'cloud' and no Namespace of this "
+                       f"environment, so its resource profile is ignored.{suffix_hint} "
+                       f"'{GENERATED_PROFILES_MAP_KEY}' is maintained by EnvGene from the runs that deploy with the "
+                       f"'PROFILE' baseline")
+    return dropped
+
+
+def warn_on_profile_name_collisions(all_profiles):
+    profile_paths_by_name: dict[str, dict[str, None]] = {}
+    for profile_path in all_profiles.values():
+        profile_paths_by_name.setdefault(Path(profile_path).name, {}).setdefault(profile_path, None)
+    collisions = [(name, *paths) for name, paths in profile_paths_by_name.items() if len(paths) > 1]
+    for name, *profile_paths in collisions:
+        logger.warning(f"The resource profiles {', '.join(repr(path) for path in profile_paths)} share the file name "
+                       f"'{name}', so only the one copied last reaches '{RESULTING_PROFILES_DIR_NAME}' and the other "
+                       f"is lost. Give one of them another file name.")
+    return collisions
+
+
 def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator,
-                                      object_baselines):
+                                      object_baselines, generated_profile_defaults_map=None):
     override_profile_map = {}
-    render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
+    generated_profile_defaults_map = generated_profile_defaults_map or {}
+    render_context.generate_profiles(set(env_specific_resource_profile_map.values()) |
+                                     set(generated_profile_defaults_map.values()))
     combination_mode_key = "mergeEnvSpecificResourceProfiles"
     try:
         combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
@@ -199,27 +270,65 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
         logger.info(
             f"inventory.config.{combination_mode_key} key not found in env_definition, default value is 'true'")
         combination_mode = 'true'
+    merge_mode = to_bool(combination_mode)
     common_msg = f"profile overrides, because {combination_mode_key} is set to {combination_mode}"
-    for profile_key, env_specific_profile_path in env_specific_resource_profile_map.items():
-        if profile_key not in all_profiles:
-            logger.info(f"No template profile for profile key '{profile_key}', attaching standalone "
-                        f"environment specific profile {env_specific_profile_path}")
-            override_profile_map[profile_key] = env_specific_profile_path
+    profile_keys = list(env_specific_resource_profile_map) + [key for key in generated_profile_defaults_map
+                                                             if key not in env_specific_resource_profile_map]
+    taken_names = {Path(profile_path).stem for profile_path in all_profiles.values()}
+    taken_names |= {Path(profile_path).stem for profile_key, profile_path in env_specific_resource_profile_map.items()
+                    if not generated_profile_defaults_map.get(profile_key)
+                    and (not merge_mode or all_profiles.get(profile_key) is None)}
+    for profile_key in profile_keys:
+        env_specific_profile_path = env_specific_resource_profile_map.get(profile_key)
+        generated_path = generated_profile_defaults_map.get(profile_key)
+        object_baseline = object_baselines.get(profile_key)
+        template_profile_file_path = all_profiles.get(profile_key)
+        if template_profile_file_path is None:
+            if not env_specific_profile_path:
+                logger.info(f"Profile key '{profile_key}' has no profile of its own, taking the profile generated "
+                            f"by the PROFILE parameter, '{generated_path}'")
+                override_profile_map[profile_key] = assemble_profile(profile_key, generated_path,
+                                                                     extractNameFromFile(generated_path),
+                                                                     generated_path, object_baseline, taken_names)
+                continue
+            if not generated_path:
+                logger.info(f"No template profile for profile key '{profile_key}', attaching standalone "
+                            f"environment specific profile {env_specific_profile_path}")
+                override_profile_map[profile_key] = env_specific_profile_path
+                continue
+            base_name = (Path(env_specific_profile_path).stem if merge_mode
+                         else extractNameFromFile(generated_path))
+            override_profile_map[profile_key] = assemble_profile(profile_key, env_specific_profile_path, base_name,
+                                                                generated_path, object_baseline, taken_names)
             continue
-        template_profile_file_path = all_profiles[profile_key]
-        logger.info(f"Profile key '{profile_key}' has template profile '{template_profile_file_path}' "
-                    f"and environment specific profile '{env_specific_profile_path}'")
+        if not merge_mode:
+            if not env_specific_profile_path:
+                if generated_path:
+                    logger.info(f"Replacing {common_msg}, the profile the run generated is the only override of "
+                                f"'{profile_key}' left")
+                    override_profile_map[profile_key] = assemble_profile(profile_key, generated_path,
+                                                                         extractNameFromFile(generated_path),
+                                                                         generated_path, object_baseline, taken_names)
+                continue
+            if not generated_path:
+                logger.info(f"Replacing {common_msg}")
+                override_profile_map[profile_key] = env_specific_profile_path
+                continue
+            logger.info(f"Replacing {common_msg} and applying the profile the run generated on top of it")
+            override_profile_map[profile_key] = assemble_profile(profile_key, env_specific_profile_path,
+                                                                extractNameFromFile(generated_path), generated_path,
+                                                                object_baseline, taken_names)
+            continue
+        own_profile = (f"environment specific profile '{env_specific_profile_path}'" if env_specific_profile_path
+                       else "no environment specific profile")
+        logger.info(f"Profile key '{profile_key}' has template profile '{template_profile_file_path}' and {own_profile}")
         template_profile_yaml = current_env_instance_store().get(template_profile_file_path)
-        env_specific_profile_yaml = current_env_instance_store().get(env_specific_profile_path)
-
-        if to_bool(combination_mode):
+        if env_specific_profile_path:
             logger.info(f"Joining {common_msg}")
-            merge_resource_profiles(template_profile_yaml, env_specific_profile_yaml,
-                                    extractNameFromFile(env_specific_profile_path),
-                                    object_baselines.get(profile_key))
-        else:
-            logger.info(f"Replacing {common_msg}")
-            override_profile_map[profile_key] = env_specific_profile_path
+            merge_resource_profiles(template_profile_yaml, current_env_instance_store().get(env_specific_profile_path),
+                                    extractNameFromFile(env_specific_profile_path), object_baseline)
+        if generated_path:
+            apply_generated_override(profile_key, template_profile_yaml, generated_path, object_baseline)
     return override_profile_map
 
 

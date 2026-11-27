@@ -87,3 +87,16 @@ class TestEnvSpecificOverrideKeys:
             _write_env_definition(env_dir, {"name": "demo-template"})
 
             _validate_override_keys(env_dir, ["bss"])
+
+    def test_accepts_resource_profile_override_lists(self):
+        with tempfile.TemporaryDirectory(prefix="env-override-keys-") as tmp:
+            env_dir = Path(tmp)
+            _write_env_definition(
+                env_dir,
+                {
+                    "name": "demo-template",
+                    "envSpecificResourceProfiles": {"bss": ["first-over", "second-over"], "cloud": ["cloud-over"]},
+                },
+            )
+
+            _validate_override_keys(env_dir, ["bss"])

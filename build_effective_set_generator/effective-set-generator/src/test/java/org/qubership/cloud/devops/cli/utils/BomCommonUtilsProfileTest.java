@@ -107,9 +107,21 @@ class BomCommonUtilsProfileTest {
     }
 
     private Map<String, Object> resolve(Component serviceBaselines, String baseline, Profile override) {
+        return resolve(serviceBaselines, APP, SERVICE, baseline, override);
+    }
+
+    private Map<String, Object> resolve(Component serviceBaselines, String app, String service, String baseline,
+                                        Profile override) {
         Map<String, Object> values = new HashMap<>();
-        bomCommonUtils.fillProfileValues(values, serviceBaselines, APP, SERVICE, override, baseline);
+        bomCommonUtils.fillProfileValues(values, serviceBaselines, app, service, override, baseline);
         return values;
+    }
+
+    private static ApplicationProfile application(String name, String baseline, String service, String param, Object value) {
+        return ApplicationProfile.builder().name(name).baseline(baseline).services(List.of(
+                ServiceProfile.builder().name(service)
+                        .parameters(List.of(ParameterProfile.builder().name(param).value(value).build())).build()))
+                .build();
     }
 
     @Test
@@ -239,6 +251,42 @@ class BomCommonUtilsProfileTest {
     @Test
     void matchedBaselineWithOverrideIsNotWarned() {
         resolve(baselines("dev", "prod"), "prod", override(SERVICE, "replicas", 3));
+        assertTrue(warnings.isEmpty(), warnings.toString());
+    }
+
+    @Test
+    void appliesChosenBaselineToApplicationWithOne() {
+        Profile over = Profile.builder().name("over")
+                .applications(List.of(application(APP, "prod", SERVICE, "replicas", 3))).build();
+        assertEquals(Map.of("replicas", 3, "cpu", "1"), resolve(baselines("dev", "prod"), "dev", over));
+        assertTrue(warnings.isEmpty(), warnings.toString());
+    }
+
+    @Test
+    void keepsBaselineOfApplicationWithoutOne() {
+        Profile over = Profile.builder().name("over")
+                .applications(List.of(application(APP, "prod", SERVICE, "replicas", 3),
+                        application("crm", null, SERVICE, "replicas", 5))).build();
+        assertEquals(Map.of("replicas", 3, "cpu", "1"), resolve(baselines("dev", "prod"), APP, SERVICE, "dev", over));
+        assertEquals(Map.of("replicas", 5, "cpu", "100m"), resolve(baselines("dev", "prod"), "crm", SERVICE, "dev", over));
+        assertTrue(warnings.isEmpty(), warnings.toString());
+    }
+
+    @Test
+    void applicationWithoutTheChosenBaselineFallsBackToTheProfileBaseline() {
+        Profile over = Profile.builder().name("over")
+                .applications(List.of(application(APP, "large", SERVICE, "replicas", 3))).build();
+        assertEquals(Map.of("replicas", 3, "cpu", "100m"), resolve(baselines("dev", "prod"), "dev", over));
+        assertEquals(1, warnings.size(), warnings.toString());
+    }
+
+    @Test
+    void applicationOverrideReplacesProfileDefault() {
+        Profile merged = Profile.builder().name("deployment-profile")
+                .applications(List.of(application(APP, "dev", SERVICE, "replicas", 5),
+                        ApplicationProfile.builder().name(APP).baseline("prod").services(List.of()).build()))
+                .build();
+        assertEquals(Map.of("replicas", 5, "cpu", "100m"), resolve(baselines("dev", "prod"), "prod", merged));
         assertTrue(warnings.isEmpty(), warnings.toString());
     }
 }

@@ -98,4 +98,21 @@ class ProfileSelectionTest {
         assertNull(selection.baseline());
         assertNull(selection.override());
     }
+
+    @Test
+    void namespaceWithoutProfileKeepsUsingCloudProfileBeforeFirstDeploymentWithProfile() {
+        Cloud cloud = Cloud.builder().baseline("cloud-baseline").profile(CLOUD_OVERRIDE).build();
+        ProfileSelection selection = ProfileSelection.of(Namespace.builder().cloud(cloud).build());
+        assertSame(CLOUD_OVERRIDE, selection.override());
+        assertEquals("prod", selection.baseline());
+    }
+
+    @Test
+    void namespaceUsesOwnProfileAfterFirstDeploymentWithProfile() {
+        Cloud cloud = Cloud.builder().baseline("cloud-baseline").profile(CLOUD_OVERRIDE).build();
+        Profile ownProfile = override("perf");
+        ProfileSelection selection = ProfileSelection.of(Namespace.builder().profile(ownProfile).cloud(cloud).build());
+        assertSame(ownProfile, selection.override());
+        assertEquals("perf", selection.baseline());
+    }
 }

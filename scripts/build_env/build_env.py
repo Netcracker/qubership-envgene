@@ -1,8 +1,9 @@
 from envgenehelper import NamespaceFile, NamespaceRole, OperationType, Path, check_dir_exist_and_create, check_dir_exists, copy, copy_path, current_env_instance_store, dump_as_yaml_format, extractNameFromFile, findAllJsonsInDir, findAllYamlsInDir, find_yaml_file, getDirName, getEnvDefinitionPath, getTemplateArtifactName, get_merged_param_value, getenv, is_from_template_dir, logger, openJson, openYaml, os, pathlib, set_nested_yaml_attribute, split_multi_value_param, store_value_to_yaml, yaml
 
 from cloud_passport.cloud_passport import process_cloud_passport
-from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
-    get_profile_baseline, set_object_profile_field
+from build_env.resource_profiles import collect_resource_profiles, drop_profiles_without_object, \
+    override_by_env_specific_profiles, has_valid_profile_name, \
+    get_profile_baseline, set_object_profile_field, RESULTING_PROFILES_DIR_NAME, warn_on_profile_name_collisions
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -366,7 +367,8 @@ def process_additional_template_parameters(inventoryYaml, source_env_dir, all_in
 
 
 def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None):
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None,
+              generated_profile_defaults_map=None):
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
     origin_template_exists = NamespaceRole.ORIGIN in templates_dirs
@@ -453,14 +455,17 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
         set_cleaned_mark(namespaces)
 
     # process resource profiles
-    result_profiles_dir = Path(f"{env_dir}/Profiles")
+    result_profiles_dir = Path(env_dir) / RESULTING_PROFILES_DIR_NAME
     all_profiles = collect_resource_profiles(resource_profiles_dir, profiles_schema,
                                              needed_resource_profiles_map, render_context)
     object_paths = {"cloud": cloudTemlatePath} | {ns.postfix: ns.definition_path for ns in namespaces}
+    drop_profiles_without_object(object_paths, all_profiles, env_specific_resource_profile_map,
+                                 generated_profile_defaults_map)
     object_baselines = {key: get_profile_baseline(env_instance_store.get(path).get("profile") or {})
                         for key, path in object_paths.items()}
     override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
-                                                             render_context, object_baselines)
+                                                             render_context, object_baselines,
+                                                             generated_profile_defaults_map)
 
     for profile_key, profile_file_path in override_profile_map.items():
         all_profiles[profile_key] = profile_file_path
@@ -485,6 +490,7 @@ def build_env(env_instances_dir, envDefinitionYaml, parameters_dir, resource_pro
             logger.info(f"'{profile_key}' has no baseline: neither resource profile '{profile_file_path}' "
                         f"nor the object sets it")
 
+    warn_on_profile_name_collisions(all_profiles)
     for profile_file_path in dict.fromkeys(all_profiles.values()):
         logger.info(f"Copying profile '{profile_file_path}' to resulting directory '{result_profiles_dir}'")
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name

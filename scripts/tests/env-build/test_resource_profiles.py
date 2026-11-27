@@ -5,8 +5,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from envgenehelper import dumpYamlToStr, open_current_env_instance_store, readYaml, writeYamlToFile
 
-from build_env.resource_profiles import get_env_specific_resource_profiles, has_valid_profile_name, \
-    merge_resource_profiles, override_by_env_specific_profiles, set_object_profile_field, validate_resource_profiles
+from build_env.deployment_profile import GENERATED_PROFILES_MAP_KEY, PROFILE_OVERRIDE_SUFFIX, profile_override_name
+from build_env.resource_profiles import drop_profiles_without_object, get_resource_profiles_map, \
+    has_valid_profile_name, merge_resource_profiles, override_by_env_specific_profiles, set_object_profile_field, \
+    validate_resource_profiles, warn_on_profile_name_collisions
 
 RP_SCHEMA = str(Path(__file__).resolve().parents[3] / "schemas" / "resource-profile.schema.json")
 
@@ -27,6 +29,30 @@ def _render_context(merge):
     context = MagicMock()
     context.ctx.env_definition = {"inventory": {"config": {"mergeEnvSpecificResourceProfiles": merge}}}
     return context
+
+
+def _apps_profile(name, baseline, apps):
+    profile = {"name": name, "baseline": baseline, "applications": apps}
+    return readYaml(json.dumps(profile))
+
+
+def _app(name, baseline, param=None):
+    app = {"name": name, "baseline": baseline, "services": []}
+    if param:
+        key, value = param
+        app["services"] = [{"name": "svc", "parameters": [{"name": key, "value": value}]}]
+    return app
+
+
+def _params_of(profile):
+    return {param["name"]: param["value"]
+            for app in profile.get("applications") or []
+            for service in app["services"]
+            for param in service["parameters"]}
+
+
+def _apps_of(profile):
+    return {app["name"]: app.get("baseline") for app in profile.get("applications") or []}
 
 
 @pytest.fixture
@@ -148,6 +174,20 @@ class TestMergeResourceProfiles:
         assert template["applications"][0]["version"] == "2.0"
         assert template["applications"][0]["sd"] == "sd-2"
 
+    def test_application_baseline_comes_from_env_specific(self):
+        template = _apps_profile("tmpl", "dev", [_app("Core", "dev", ("replicas", 1)), _app("Billing", "dev-ha")])
+        env_specific = _apps_profile("env", "prod", [_app("Core", "prod")])
+        merge_resource_profiles(template, env_specific, "env")
+        baselines = {app["name"]: app["baseline"] for app in template["applications"]}
+        assert baselines == {"Core": "prod", "Billing": "dev-ha"}
+
+    def test_application_baseline_is_added_to_application_missing_in_template(self):
+        template = _apps_profile("tmpl", "dev", [_app("Core", "dev")])
+        env_specific = _apps_profile("env", "prod", [_app("Billing", "prod-nonha")])
+        merge_resource_profiles(template, env_specific, "env")
+        baselines = {app["name"]: app["baseline"] for app in template["applications"]}
+        assert baselines == {"Core": "dev", "Billing": "prod-nonha"}
+
 
 class TestOverrideByEnvSpecificProfiles:
     def test_standalone_override_is_attached(self, tmp_path, env_instance_store):
@@ -155,6 +195,30 @@ class TestOverrideByEnvSpecificProfiles:
         env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
         result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("true"), {})
         assert result == {"bss": str(env_profile)}
+
+    def test_merge_writes_env_specific_baseline(self, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        env_profile = tmp_path / "env-over.yml"
+        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev"))
+        env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+                                                   _render_context("true"), {})
+        assert result == {}
+        assert env_instance_store.get(template_profile)["baseline"] == "prod"
+
+    def test_application_baseline_selects_that_application_baseline(self, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        env_profile = tmp_path / "env-over.yml"
+        env_instance_store.put(template_profile, _apps_profile("tmpl", "dev",
+                                                               [_app("Core", "dev", ("replicas", 1)),
+                                                                _app("Billing", "dev-ha")]))
+        env_instance_store.put(env_profile, _apps_profile("env-over", "prod", [_app("Core", "prod")]))
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+                                                   _render_context("true"), {})
+        assert result == {}
+        merged = env_instance_store.get(template_profile)
+        baselines = {app["name"]: app["baseline"] for app in merged["applications"]}
+        assert baselines == {"Core": "prod", "Billing": "dev-ha"}
 
     def test_template_only_is_untouched(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
@@ -178,16 +242,6 @@ class TestOverrideByEnvSpecificProfiles:
                                                    _render_context("false"), {})
         assert result == {"bss": str(env_profile)}
         assert env_instance_store.get(template_profile)["baseline"] == "dev"
-
-    def test_merge_writes_env_specific_baseline(self, tmp_path, env_instance_store):
-        template_profile = tmp_path / "tmpl.yml"
-        env_profile = tmp_path / "env-over.yml"
-        env_instance_store.put(template_profile, _profile("tmpl", baseline="dev"))
-        env_instance_store.put(env_profile, _profile("env-over", baseline="prod"))
-        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
-                                                   _render_context("true"), {})
-        assert result == {}
-        assert env_instance_store.get(template_profile)["baseline"] == "prod"
 
     def test_merge_compares_with_object_baseline(self, tmp_path, env_instance_store):
         template_profile = tmp_path / "tmpl.yml"
@@ -220,6 +274,221 @@ class TestOverrideByEnvSpecificProfiles:
                                                    context, {})
         assert result == {}
         assert env_instance_store.get(template_profile)["baseline"] == "prod"
+
+    def test_generated_override_alone_becomes_the_profile(self, tmp_path, env_instance_store):
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(generated, _profile("bss-profile-override", baseline="prod"))
+
+        result = override_by_env_specific_profiles({}, {}, _render_context("true"), {}, {"bss": str(generated)})
+
+        assert result == {"bss": str(tmp_path / "Profiles" / "bss-profile-override.yml")}
+        assert _apps_of(env_instance_store.get(result["bss"])) == {}
+        assert env_instance_store.get(result["bss"])["baseline"] == "prod"
+
+    def test_generated_override_wins_over_the_env_profile(self, tmp_path, env_instance_store):
+        env_profile = tmp_path / "core-tuning.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(env_profile, _apps_profile("core-tuning", "stage", [_app("Core", "dev",
+                                                                                        ("replicas", 3))]))
+        env_instance_store.put(generated, _apps_profile("bss-profile-override", "", [_app("Core", "prod",
+                                                                                          ("replicas", 9))]))
+
+        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("true"), {},
+                                                   {"bss": str(generated)})
+
+        assert result == {"bss": str(tmp_path / "Profiles" / "core-tuning.yml")}
+        merged = env_instance_store.get(result["bss"])
+        assert merged["name"] == "core-tuning"
+        assert merged["baseline"] == "stage"
+        assert _apps_of(merged) == {"Core": "prod"}
+        assert _params_of(merged) == {"replicas": 9}
+        assert _apps_of(env_instance_store.get(env_profile)) == {"Core": "dev"}
+        assert _params_of(env_instance_store.get(env_profile)) == {"replicas": 3}
+
+    def test_generated_override_adds_the_applications_the_env_profile_lacks(self, tmp_path, env_instance_store):
+        env_profile = tmp_path / "core-tuning.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(env_profile, _apps_profile("core-tuning", "stage", [_app("Core", "dev")]))
+        env_instance_store.put(generated, _apps_profile("bss-profile-override", "", [_app("Core", "prod"),
+                                                                                    _app("Reporting", "prod")]))
+
+        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("true"), {},
+                                                   {"bss": str(generated)})
+
+        assert _apps_of(env_instance_store.get(result["bss"])) == {"Core": "prod", "Reporting": "prod"}
+
+    def test_generated_override_is_the_last_layer_of_the_template_profile(self, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        env_profile = tmp_path / "core-tuning.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(template_profile, _apps_profile("tmpl", "dev", [_app("Core", "dev"),
+                                                                              _app("Billing", "dev")]))
+        env_instance_store.put(env_profile, _apps_profile("core-tuning", "", [_app("Core", "stage")]))
+        env_instance_store.put(generated, _apps_profile("bss-profile-override", "", [_app("Core", "prod"),
+                                                                                    _app("Billing", "prod"),
+                                                                                    _app("Reporting", "prod")]))
+
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {"bss": str(env_profile)},
+                                                   _render_context("true"), {}, {"bss": str(generated)})
+
+        assert result == {}
+        merged = env_instance_store.get(template_profile)
+        assert merged["name"] == "tmpl"
+        assert _apps_of(merged) == {"Core": "prod", "Billing": "prod", "Reporting": "prod"}
+
+    def test_generated_override_takes_the_baseline_of_a_template_profile(self, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(template_profile, _apps_profile("tmpl", "dev", [_app("Core", "dev")]))
+        env_instance_store.put(generated, _apps_profile("bss-profile-override", "prod", [_app("Core", "prod"),
+                                                                                        _app("Reporting", "prod")]))
+
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {}, _render_context("true"), {},
+                                                   {"bss": str(generated)})
+
+        assert result == {}
+        merged = env_instance_store.get(template_profile)
+        assert merged["baseline"] == "prod"
+        assert _apps_of(merged) == {"Core": "prod", "Reporting": "prod"}
+
+    def test_generated_override_is_applied_on_top_in_replace_mode(self, tmp_path, env_instance_store):
+        env_profile = tmp_path / "core-tuning.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(env_profile, _apps_profile("core-tuning", "stage", [_app("Core", "dev",
+                                                                                        ("replicas", 3))]))
+        env_instance_store.put(generated, _apps_profile("bss-profile-override", "", [_app("Core", "prod"),
+                                                                                    _app("Reporting", "prod")]))
+
+        result = override_by_env_specific_profiles({}, {"bss": str(env_profile)}, _render_context("false"), {},
+                                                   {"bss": str(generated)})
+
+        assert result == {"bss": str(tmp_path / "Profiles" / "bss-profile-override.yml")}
+        assembled = env_instance_store.get(result["bss"])
+        assert assembled["name"] == "bss-profile-override"
+        assert _apps_of(assembled) == {"Core": "prod", "Reporting": "prod"}
+        assert _params_of(assembled) == {"replicas": 3}
+        assert _apps_of(env_instance_store.get(env_profile)) == {"Core": "dev"}
+
+    def test_generated_override_replaces_the_template_profile_in_replace_mode(self, tmp_path, env_instance_store):
+        template_profile = tmp_path / "tmpl.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(template_profile, _apps_profile("tmpl", "dev", [_app("Core", "dev")]))
+        env_instance_store.put(generated, _apps_profile("bss-profile-override", "prod", [_app("Core", "prod"),
+                                                                                        _app("Reporting", "prod")]))
+
+        result = override_by_env_specific_profiles({"bss": str(template_profile)}, {}, _render_context("false"), {},
+                                                   {"bss": str(generated)})
+
+        assert result == {"bss": str(tmp_path / "Profiles" / "bss-profile-override.yml")}
+        assembled = env_instance_store.get(result["bss"])
+        assert assembled["name"] == "bss-profile-override"
+        assert _apps_of(assembled) == {"Core": "prod", "Reporting": "prod"}
+        assert _apps_of(env_instance_store.get(template_profile)) == {"Core": "dev"}
+
+    def test_env_profiles_of_the_same_name_are_merged_per_key(self, tmp_path, env_instance_store):
+        shared = tmp_path / "shared.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(shared, _profile("shared", params={"a": 1}))
+        env_instance_store.put(generated, _profile("bss-profile-override", params={"b": 2}))
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            result = override_by_env_specific_profiles({}, {"bss": str(shared), "oss": str(shared)},
+                                                       _render_context("true"), {},
+                                                       {"bss": str(generated), "oss": str(generated)})
+
+        assert result["bss"] == str(tmp_path / "Profiles" / "shared.yml")
+        assert result["oss"] == str(tmp_path / "Profiles" / "shared-oss.yml")
+        logger.warning.assert_called()
+        assert _params_of(env_instance_store.get(result["bss"])) == {"a": 1, "b": 2}
+        assert env_instance_store.get(result["oss"])["name"] == "shared-oss"
+        assert _params_of(env_instance_store.get(shared)) == {"a": 1}
+
+    def test_an_assembled_profile_never_shares_a_name_with_a_standalone_override(self, tmp_path, env_instance_store):
+        shared = tmp_path / "Inventory" / "resource_profiles" / "shared.yml"
+        generated = tmp_path / "bss-profile-override.yml"
+        env_instance_store.put(shared, _profile("shared", params={"a": 1}))
+        env_instance_store.put(generated, _profile("bss-profile-override", params={"b": 2}))
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            result = override_by_env_specific_profiles({}, {"bss": str(shared), "oss": str(shared)},
+                                                       _render_context("true"), {}, {"bss": str(generated)})
+
+        assert result["oss"] == str(shared)
+        assert result["bss"] == str(tmp_path / "Profiles" / "shared-bss.yml")
+        logger.warning.assert_called()
+        assert _params_of(env_instance_store.get(result["bss"])) == {"a": 1, "b": 2}
+        assert _params_of(env_instance_store.get(shared)) == {"a": 1}
+
+
+class TestDropProfilesWithoutObject:
+
+    def test_a_key_without_an_object_is_dropped(self):
+        all_profiles = {"bss-origin": "/tmpl/bss-origin.yml"}
+        generated_map = {"bss": str(Path("Profiles") / "bss-profile-override.yml")}
+        object_paths = {"cloud": "/cloud.yml", "bss-origin": "/ns/bss-origin/namespace.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            dropped = drop_profiles_without_object(object_paths, all_profiles, generated_map)
+
+        assert dropped == ["bss"]
+        assert all_profiles == {"bss-origin": "/tmpl/bss-origin.yml"}
+        assert generated_map == {}
+        logger.warning.assert_called()
+
+    def test_every_key_with_an_object_is_kept(self):
+        all_profiles = {"bss": "/tmpl/bss.yml"}
+        generated_map = {"cloud": str(Path("Profiles") / "cloud-profile-override.yml")}
+        object_paths = {"cloud": "/cloud.yml", "bss": "/ns/bss/namespace.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            dropped = drop_profiles_without_object(object_paths, all_profiles, generated_map)
+
+        assert dropped == []
+        assert all_profiles == {"bss": "/tmpl/bss.yml"}
+        assert generated_map == {"cloud": str(Path("Profiles") / "cloud-profile-override.yml")}
+        logger.warning.assert_not_called()
+
+    def test_the_warning_names_the_sides_a_blue_green_key_missed(self):
+        generated_map = {"bss": str(Path("Profiles") / "bss-profile-override.yml")}
+        object_paths = {"bss-origin": "/ns/bss-origin/namespace.yml", "bss-peer": "/ns/bss-peer/namespace.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            drop_profiles_without_object(object_paths, generated_map)
+
+        message = logger.warning.call_args.args[0]
+        assert GENERATED_PROFILES_MAP_KEY in message
+        assert "'bss-origin' or 'bss-peer'" in message
+
+
+class TestWarnOnProfileNameCollisions:
+
+    def test_two_files_of_one_name_are_reported(self):
+        all_profiles = {"bss": "/templates/Profiles/foo.yml", "oss": "/env/Inventory/resource_profiles/foo.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            collisions = warn_on_profile_name_collisions(all_profiles)
+
+        assert collisions == [("foo.yml", "/templates/Profiles/foo.yml", "/env/Inventory/resource_profiles/foo.yml")]
+        assert logger.warning.call_count == 1
+
+    def test_two_objects_of_one_file_are_not_a_collision(self):
+        all_profiles = {"bss": "/env/Inventory/resource_profiles/foo.yml",
+                        "oss": "/env/Inventory/resource_profiles/foo.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            collisions = warn_on_profile_name_collisions(all_profiles)
+
+        assert collisions == []
+        logger.warning.assert_not_called()
+
+    def test_distinct_names_are_not_reported(self):
+        all_profiles = {"bss": "/templates/Profiles/foo.yml", "oss": "/env/resource_profiles/bar.yml"}
+
+        with patch("build_env.resource_profiles.logger") as logger:
+            collisions = warn_on_profile_name_collisions(all_profiles)
+
+        assert collisions == []
+        logger.warning.assert_not_called()
 
 
 class TestSetObjectProfileField:
@@ -305,10 +574,12 @@ class TestGetEnvSpecificResourceProfiles:
         return env_dir
 
     @staticmethod
-    def _env_definition(profiles):
+    def _env_definition(profiles, generated=None):
         env_template = {"name": "tmpl"}
         if profiles is not None:
             env_template["envSpecificResourceProfiles"] = profiles
+        if generated is not None:
+            env_template[GENERATED_PROFILES_MAP_KEY] = generated
         return {"envTemplate": env_template}
 
     @staticmethod
@@ -319,28 +590,56 @@ class TestGetEnvSpecificResourceProfiles:
         return path
 
     def test_no_section_returns_empty(self, env_dir, env_instance_store):
-        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
-                                                  self._env_definition(None)) == {}
+        assert get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                   self._env_definition(None)) == {}
 
     def test_finds_profile_in_environment_folder(self, env_dir, env_instance_store):
         path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-over", "prod")
-        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
-                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
+        assert get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                   self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
 
     def test_environment_level_wins_over_cluster_and_global(self, env_dir, env_instance_store):
         self._write_profile(env_dir.parents[1] / "resource_profiles", "bss-over", "global")
         self._write_profile(env_dir.parent / "resource_profiles", "bss-over", "cluster")
         path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-over", "env")
-        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
-                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
+        assert get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                   self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
 
     def test_falls_back_to_cluster_level(self, env_dir, env_instance_store):
         self._write_profile(env_dir.parents[1] / "resource_profiles", "bss-over", "global")
         path = self._write_profile(env_dir.parent / "resource_profiles", "bss-over", "cluster")
-        assert get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
-                                                  self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
+        assert get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                   self._env_definition({"bss": "bss-over"})) == {"bss": str(path)}
 
     def test_missing_profile_fails(self, env_dir, env_instance_store):
         with pytest.raises(ReferenceError):
-            get_env_specific_resource_profiles(env_dir, env_dir.parents[1], RP_SCHEMA,
+            get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
                                                self._env_definition({"bss": "bss-over"}))
+
+    def test_generated_profiles_are_resolved_by_name(self, env_dir, env_instance_store):
+        generated_name = profile_override_name("bss")
+        assert generated_name.endswith(PROFILE_OVERRIDE_SUFFIX)
+        path = self._write_profile(env_dir / "Inventory" / "resource_profiles", generated_name, "prod")
+        assert get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                   self._env_definition(None, {
+                                                       "bss": generated_name}),
+                                                   GENERATED_PROFILES_MAP_KEY) == {"bss": str(path)}
+
+    def test_no_generated_section_returns_empty(self, env_dir, env_instance_store):
+        assert get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                   self._env_definition({"bss": "bss-over"}),
+                                                   GENERATED_PROFILES_MAP_KEY) == {}
+
+    def test_reserved_name_is_ignored_in_the_user_map(self, env_dir, env_instance_store):
+        generated_name = profile_override_name("bss")
+        self._write_profile(env_dir / "Inventory" / "resource_profiles", generated_name, "stage")
+        with patch("build_env.resource_profiles.logger") as logger:
+            found = get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                        self._env_definition({"bss": generated_name}))
+        assert found == {}
+        logger.warning.assert_called()
+
+    def test_another_name_is_kept_in_the_user_map(self, env_dir, env_instance_store):
+        path = self._write_profile(env_dir / "Inventory" / "resource_profiles", "bss-profile", "stage")
+        assert get_resource_profiles_map(env_dir, env_dir.parents[1], RP_SCHEMA,
+                                                   self._env_definition({"bss": "bss-profile"})) == {"bss": str(path)}

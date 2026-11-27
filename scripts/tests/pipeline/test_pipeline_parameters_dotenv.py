@@ -42,3 +42,23 @@ class TestJobEnvExports:
         ctx.write_dotenv()
 
         assert not set(JOB_ENV_EXPORTS) & set(_read_dotenv(ctx))
+
+
+class TestProfileParameter:
+    @pytest.mark.unit
+    def test_profile_parameter_is_read(self, monkeypatch):
+        monkeypatch.setenv("PROFILE", "prod")
+
+        ctx = PipelineParametersHandler.from_env()
+        ctx.write_dotenv()
+
+        assert ctx.params["PROFILE"] == "prod"
+        assert _read_dotenv(ctx)["PROFILE"] == "prod"
+
+    @pytest.mark.unit
+    def test_profile_parameter_defaults_to_empty(self, monkeypatch):
+        monkeypatch.delenv("PROFILE", raising=False)
+
+        ctx = PipelineParametersHandler.from_env()
+
+        assert ctx.params["PROFILE"] == ""

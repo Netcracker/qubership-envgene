@@ -76,6 +76,17 @@
               ""
             ]
           },
+          "baseline": {
+            "type": "string",
+            "title": "Application Baseline",
+            "description": "Baseline of this application, used instead of the baseline of the resource profile",
+            "examples": [
+              "dev",
+              "prod",
+              "prod-nonha",
+              "dev-ha"
+            ]
+          },
           "services": {
             "type": "array",
             "items": {

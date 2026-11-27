@@ -287,9 +287,10 @@ class EnvBuildStep(PipelineStep):
         return "env_build"
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        if ctx.is_gitlab_deploy():
-            return ctx.is_deploy_or_clean()
-        return bool(ctx.params.get('ENV_BUILDER'))
+        will_run = ctx.is_deploy_or_clean() if ctx.is_gitlab_deploy() else bool(ctx.params.get('ENV_BUILDER'))
+        if not will_run and ctx.params.get('PROFILE'):
+            logger.warning("'PROFILE' is set but env_build is not running - PROFILE has no effect here")
+        return will_run
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
         env_dir = get_current_env_dir_from_env_vars()

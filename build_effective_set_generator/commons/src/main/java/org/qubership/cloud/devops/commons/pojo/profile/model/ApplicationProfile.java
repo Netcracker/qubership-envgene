@@ -38,6 +38,7 @@ public class ApplicationProfile implements Serializable {
     private String name;
     private String version;
     private String sd;
+    private String baseline;
     @JsonManagedReference
     private List<ServiceProfile> services;
     @JsonBackReference
@@ -49,6 +50,7 @@ public class ApplicationProfile implements Serializable {
                 ", name='" + name + '\'' +
                 ", version='" + version + '\'' +
                 ", sd='" + sd + '\'' +
+                ", baseline='" + baseline + '\'' +
                 ", services=" + services +
                 '}';
     }

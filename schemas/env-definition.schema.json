@@ -223,6 +223,16 @@
             }
           }
         },
+        "generatedProfileDefaults": {
+          "type": "object",
+          "title": "Generated Profile Defaults",
+          "description": "Resource profiles EnvGene generates from the PROFILE pipeline parameter during the env_build step, one per deploy postfix, keyed by namespace folder name. EnvGene applies each one on top of the profile its namespace references. Users do not set this key, a name ending with -profile-override is reserved for it",
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          }
+        },
         "bgNsArtifacts": {
           "type": "object",
           "title": "Blue-Green Namespace Artifacts",

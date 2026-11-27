@@ -31,5 +31,6 @@ public class ApplicationProfileDto {
     private String name;
     private String version;
     private String sd;
+    private String baseline;
     private List<ServiceProfileDto> services;
 }

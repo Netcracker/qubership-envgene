@@ -1,0 +1,5 @@
+name: bss-dev-baseline
+applications:
+  - name: app1
+    baseline: dev
+    services: []
