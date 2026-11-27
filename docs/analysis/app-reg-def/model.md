@@ -13,6 +13,7 @@ and the RegDef v2 analysis linked below, not restated here. The behavior that us
   - [description](/docs/envgene-objects.md#registry-definition)
   - [regdef.schema.json](/schemas/regdef.schema.json)
   - [regdef-v2-extensions.md](/docs/analysis/regdef-v2-extensions.md)
+  - [regdef-v2-extended.schema.json](/docs/analysis/regdef-v2-extensions/regdef-v2-extended.schema.json)
 - **client** - the opened appregdef-client over a backend, returned by `open_defs` (Git) or `connect`
   (service). One object with the defs-store operations.
   See [library/interface-spec.md](library/interface-spec.md).
