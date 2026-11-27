@@ -75,8 +75,8 @@ release.
 
 Casing by role, so the same identity reads consistently across the file system and the object.
 
-- path identifiers, the def filenames and the def `name`, are kebab-case and DNS-safe. The two container
-  folders `AppDefs/` and `RegDefs/` are the inherited exception (see Repository layout).
+<!-- - path identifiers, the def filenames and the def `name`, are kebab-case and DNS-safe. The two container
+  folders `AppDefs/` and `RegDefs/` are the inherited exception (see Repository layout). -->
 - object fields are camelCase.
 - a `kind`, where an object carries one, is PascalCase, for example `RegistryDefinition`.
 - the filename without the extension equals the def `name`, so `RegDefs/shared-platform.yaml` holds the
