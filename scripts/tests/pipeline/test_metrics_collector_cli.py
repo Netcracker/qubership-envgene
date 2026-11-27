@@ -22,7 +22,7 @@ from pipeline.metrics_collector_activity import MetricsCollectorActivity
     ],
 )
 def test_hook_events(monkeypatch, args, job_status, event_type, status):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("METRICS_COLLECTOR_PARENT_ID", "parent")
     monkeypatch.setenv("CI_JOB_NAME", "sync")
@@ -53,7 +53,7 @@ def test_hook_events(monkeypatch, args, job_status, event_type, status):
 
 
 def test_disabled_hooks_do_not_post(monkeypatch, capsys):
-    monkeypatch.delenv("METRICS_COLLECTOR_URL", raising=False)
+    monkeypatch.delenv("DOBP_METRICS_COLLECTOR_URL", raising=False)
     def unexpected_post(*args, **kwargs):
         pytest.fail("Disabled integration must not POST")
     monkeypatch.setattr("pipeline.metrics_collector_activity.requests.post", unexpected_post)
@@ -63,7 +63,7 @@ def test_disabled_hooks_do_not_post(monkeypatch, capsys):
 
 
 def test_trace_id_can_be_exported_and_reused(monkeypatch, capsys):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.delenv("METRICS_COLLECTOR_TRACE_ID", raising=False)
     assert main(["trace-id"]) == 0
     trace_id = capsys.readouterr().out.strip()
@@ -81,7 +81,7 @@ def test_trace_id_can_be_exported_and_reused(monkeypatch, capsys):
      ("UNKNOWN", "success", "UNKNOWN")],
 )
 def test_stop_uses_recorded_pipeline_results(monkeypatch, pipeline_status, job_status, expected):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_STATUS", job_status)
@@ -110,7 +110,7 @@ def test_stop_uses_recorded_pipeline_results(monkeypatch, pipeline_status, job_s
 
 
 def test_stop_aggregates_child_results_from_shared_directory(monkeypatch, tmp_path):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_STATUS", "success")
@@ -134,7 +134,7 @@ def test_stop_aggregates_child_results_from_shared_directory(monkeypatch, tmp_pa
 
 
 def test_stop_ignores_results_from_another_job(monkeypatch):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_ID", "previous-job")
     ctx = SimpleNamespace(params={}, sensitive_params=[])
@@ -157,7 +157,7 @@ def test_orchestrator_completion_is_sent_only_by_stop_hook(monkeypatch, failure)
     pytest.importorskip("ruyaml")
     from pipeline import orchestrator
 
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_STATUS", "success")
@@ -203,7 +203,7 @@ def test_orchestrator_completion_is_sent_only_by_stop_hook(monkeypatch, failure)
 
 
 def test_explicit_stop_status_keeps_steps_and_cleans_reports(monkeypatch, tmp_path):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-123")
     ctx = SimpleNamespace(params={"ENV_NAMES": "cluster/env"}, sensitive_params=[])
     activity = MetricsCollectorActivity(ctx)
@@ -226,7 +226,7 @@ def test_explicit_stop_status_keeps_steps_and_cleans_reports(monkeypatch, tmp_pa
 def test_two_job_pipeline_flow_with_artifact_handoff(monkeypatch, tmp_path, job2_status, job1_stop):
     import shutil
 
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_PIPELINE_ID", "pipeline-1")
     monkeypatch.setenv("CI_PROJECT_ID", "project-1")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
@@ -295,7 +295,7 @@ def test_two_job_pipeline_flow_with_artifact_handoff(monkeypatch, tmp_path, job2
 
 @pytest.mark.parametrize("outcome", ["FAILED", "CANCELLED", "UNKNOWN"])
 def test_running_preserves_outcome_until_hook_requests_stop(monkeypatch, outcome):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_PIPELINE_ID", "pipeline-1")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setenv("CI_JOB_STATUS", "success")
@@ -326,7 +326,7 @@ def test_running_preserves_outcome_until_hook_requests_stop(monkeypatch, outcome
 
 
 def test_reports_from_different_jobs_are_not_overwritten(monkeypatch):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_PIPELINE_ID", "pipeline-1")
     ctx = SimpleNamespace(params={"ENV_NAMES": "cluster/env"}, sensitive_params=[])
     for job_id in ("job-1", "job-2"):
@@ -347,7 +347,7 @@ def test_reports_from_different_jobs_are_not_overwritten(monkeypatch):
 
 
 def test_pipeline_results_are_isolated_from_other_pipelines(monkeypatch):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("CI_PIPELINE_ID", "previous-pipeline")
     ctx = SimpleNamespace(params={}, sensitive_params=[])
@@ -370,7 +370,7 @@ def test_pipeline_results_are_isolated_from_other_pipelines(monkeypatch):
 
 
 def test_stop_from_fresh_shell_and_different_directory_is_not_repeated(monkeypatch, tmp_path):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "123")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "original-trace")
     monkeypatch.setenv("METRICS_COLLECTOR_PARENT_ID", "original-parent")
@@ -403,7 +403,7 @@ def test_stop_from_fresh_shell_and_different_directory_is_not_repeated(monkeypat
 def test_start_collects_params_without_building_pipeline_context(monkeypatch):
     from pipeline.pipeline_parameters import PipelineParametersHandler
 
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("METRICS_COLLECTOR_TRACE_ID", "shared-trace")
     monkeypatch.setenv("CI_JOB_ID", "job-123")
     monkeypatch.setenv("ENV_NAMES", "cluster/env-1\ncluster/env-2")

@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class MetricsCollectorActivity:
     def __init__(self, ctx, trace_id: str | None = None, parent_id: str | None = None):
         self.ctx = ctx
-        self.base_url = os.getenv("METRICS_COLLECTOR_URL", "").strip()
+        self.base_url = os.getenv("DOBP_METRICS_COLLECTOR_URL", "").strip()
         self.verify_ssl = self.to_bool(os.getenv("METRICS_COLLECTOR_SSL_VERIFY", True))
         self.trace_id = trace_id or (resolve_trace_id() if self.base_url else "")
         self.parent_id = parent_id if parent_id is not None else os.getenv("METRICS_COLLECTOR_PARENT_ID", "")
@@ -226,7 +226,7 @@ class MetricsCollectorActivity:
                 if response.status_code == 404:
                     logger.error(
                         "Metrics Collector activity endpoint not found (HTTP 404): %s. "
-                        "Check METRICS_COLLECTOR_URL: it must point to the collector base URL; "
+                        "Check DOBP_METRICS_COLLECTOR_URL: it must point to the collector base URL; "
                         "EnvGene appends /api/v1/activity. Also check the collector route configuration. "
                         "The activity event was not sent; pipeline execution will continue.",
                         activity_url,

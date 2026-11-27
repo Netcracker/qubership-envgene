@@ -89,7 +89,7 @@ from pipeline.metrics_collector_cli import main
         assert result.returncode == 0, result.stderr
 
     with ThreadingHTTPServer(("127.0.0.1", 0), Collector) as server:
-        monkeypatch.setenv("METRICS_COLLECTOR_URL", f"http://127.0.0.1:{server.server_port}")
+        monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", f"http://127.0.0.1:{server.server_port}")
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:

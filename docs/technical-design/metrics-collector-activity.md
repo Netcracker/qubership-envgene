@@ -30,7 +30,7 @@ EnvGene reports pipeline activity for an Instance pipeline run:
 
 | Parameter                      | Source | Required | Default   | Values / format   | Effect                                     |
 |--------------------------------|--------|----------|-----------|-------------------|--------------------------------------------|
-| `METRICS_COLLECTOR_URL`        | CI/CD  | No       | empty     | Base URL          | POST `{url}/api/v1/activity`, or skip      |
+| `DOBP_METRICS_COLLECTOR_URL`        | CI/CD  | No       | empty     | Base URL          | POST `{url}/api/v1/activity`, or skip      |
 | `METRICS_COLLECTOR_TRACE_ID`   | CI/CD  | No       | generated | UUID v4           | Event field `traceid`                      |
 | `METRICS_COLLECTOR_PARENT_ID`  | CI/CD  | No       | `""`      | Parent event `id` | Event field `parentid`                     |
 | `METRICS_COLLECTOR_SSL_VERIFY` | CI/CD  | No       | `true`    | `true` or `false` | `false` skips TLS certificate verification |
@@ -81,9 +81,9 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
 
 1. **Decide whether to run**
 
-   1. The Instance pipeline reads CI/CD variable `METRICS_COLLECTOR_URL`.
+   1. The Instance pipeline reads CI/CD variable `DOBP_METRICS_COLLECTOR_URL`.
 
-   2. The Instance pipeline skips Metrics Collector activity when `METRICS_COLLECTOR_URL` is empty or
+   2. The Instance pipeline skips Metrics Collector activity when `DOBP_METRICS_COLLECTOR_URL` is empty or
       absent.
 
 2. **Resolve correlation identifiers**
@@ -188,7 +188,7 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
 ## Result
 
 1. Metrics Collector Service receives one `start` event when the run begins and
-   `METRICS_COLLECTOR_URL` is set.
+   `DOBP_METRICS_COLLECTOR_URL` is set.
 
 2. Metrics Collector Service receives `running` events during job activity for each job that runs,
    including `env_prepare` and `sync` when present. The finished-job `running` event for
@@ -199,7 +199,7 @@ Terminal `status` values: `SUCCESS`, `FAILED`, `CANCELLED`, `SKIPPED`, `UNKNOWN`
 ## Error handling
 
 **1a.** The Instance pipeline skips Metrics Collector activity when CI/CD variable
-`METRICS_COLLECTOR_URL` is empty or absent. The Instance pipeline run continues.
+`DOBP_METRICS_COLLECTOR_URL` is empty or absent. The Instance pipeline run continues.
 
 **7a.** EnvGene logs the failure and continues the Instance pipeline run when Metrics Collector
 Service returns an error or is unavailable. EnvGene does not retry the POST.
@@ -504,5 +504,5 @@ Sequence:
 
 - [Metrics Collector events](/docs/features/metrics-collector-events.md)
 - [Instance pipeline flow](/docs/technical-design/instance-pipeline/flow.md)
-- [EnvGene repository variables](/docs/envgene-repository-variables.md#metrics_collector_url)
-- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_url)
+- [EnvGene repository variables](/docs/envgene-repository-variables.md#DOBP_METRICS_COLLECTOR_URL)
+- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#DOBP_METRICS_COLLECTOR_URL)
