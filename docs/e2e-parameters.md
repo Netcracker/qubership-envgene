@@ -250,12 +250,11 @@ fails.
 
 ## `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`
 
-**Description**: Public key of a key pair that Argo CD owns. When set, EnvGene adds it to the SOPS recipients so
-the Effective Set is encrypted for Argo CD as well as for `PUBLIC_AGE_KEYS`. EnvGene reads it from
-`effective-set/pipeline/parameters.yaml` after it generates the Effective Set. If the parameter is missing or
-empty, EnvGene logs a warning and encrypts with `PUBLIC_AGE_KEYS` only. EnvGene skips this step when `crypt` is
-`false`. Set it per Cloud. The private half, `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY`, is held on the Argo CD
-side and is not an EnvGene parameter. For why EnvGene uses a separate key pair and the setup steps, see
+**Description**: Public key of a key pair that Argo CD owns. When set, EnvGene encrypts the Effective Set for
+this key in addition to `PUBLIC_AGE_KEYS`, so Argo CD can decrypt it. Set it per Cloud. If it is missing or
+empty, EnvGene encrypts for `PUBLIC_AGE_KEYS` only. Ignored when `crypt` is `false`. The private half,
+`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY`, is held on the Argo CD side and is not an EnvGene parameter. For how
+EnvGene applies this key and why it uses a separate key pair, see
 [Letting Argo CD decrypt the Effective Set](/docs/features/credential-encryption.md#letting-argo-cd-decrypt-the-effective-set)
 and the [how-to](/docs/how-to/credential-encryption.md#let-argo-cd-decrypt-the-effective-set).
 
