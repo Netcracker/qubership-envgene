@@ -5,7 +5,7 @@
 | 2026-11-26 14:44 | docs | `npx markdownlint-cli --config .github/linters/.markdown-lint.yml <5 changed docs>` | 0 | clean; checker proven against a probe file reporting MD009 and MD047 |
 | 2026-11-26 14:44 | docs | `npx textlint --rule terminology <5 changed docs>` | 0 | clean |
 | 2026-11-26 14:44 | docs | - | - | writing-docs audit: two findings fixed, an invented marker word in `envgene-configs.md` and change-narration wording in `features/app-reg-defs.md` |
-| 2026-11-26 14:44 | docs | - | - | lint: super-linter not run, no docker on this machine; textlint, markdownlint and link-checker run in CI |
+| 2026-11-26 14:44 | docs | - | - | lint: super-linter not run, no Docker on this machine; textlint, markdownlint and link-checker run in CI |
 | 2026-11-26 14:44 | docs | - | - | note: UC-ARD-PM-3 added to `docs/use-cases/app-reg-defs.md`; writing-docs excludes use cases as a deprecated type, developer approved keeping the scenario in the actively-maintained file |
 | 2026-11-26 14:44 | docs | - | - | gate: docs check passes, committed as a19c8c58 `docs: Issues #1971 Extend app_reg_defs_placement with an env mode` (5 files, 127 insertions) |
 | 2026-11-26 14:46 | propose | `git rev-parse --short HEAD` | 0 | start at propose; base main @ c02bb812, HEAD a19c8c58 is the docs commit of this change on branch `app_reg_defs_placement` |
