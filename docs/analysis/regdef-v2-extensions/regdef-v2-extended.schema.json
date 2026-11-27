@@ -1,0 +1,428 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": [
+        "RegistryDefinition"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "enum": [
+        "v2"
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "authConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/AuthConfig"
+      }
+    },
+    "registries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/RegistryEntry"
+      }
+    }
+  },
+  "required": [
+    "kind",
+    "version",
+    "name",
+    "authConfig",
+    "registries"
+  ],
+  "definitions": {
+    "AccessRoles": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "read": {
+          "type": "string"
+        },
+        "publish": {
+          "type": "string"
+        },
+        "manage": {
+          "type": "string"
+        }
+      }
+    },
+    "GcpOIDC": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "URL": {
+          "type": "string"
+        },
+        "customParams": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "URL"
+      ]
+    },
+    "AuthConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "aws",
+            "azure",
+            "gcp",
+            "nexus",
+            "artifactory"
+          ]
+        },
+        "authMethod": {
+          "type": "string",
+          "enum": [
+            "anonymous",
+            "userPass",
+            "secret",
+            "serviceAccount",
+            "oauth2",
+            "federation",
+            "assumeRole"
+          ]
+        },
+        "baseUrl": {
+          "type": "string"
+        },
+        "accessRoles": {
+          "$ref": "#/definitions/AccessRoles"
+        },
+        "awsService": {
+          "type": "string",
+          "enum": [
+            "codeArtifact",
+            "ecr"
+          ]
+        },
+        "awsRegion": {
+          "type": "string"
+        },
+        "awsDomain": {
+          "type": "string"
+        },
+        "awsRoleSessionPrefix": {
+          "type": "string"
+        },
+        "awsSourceCredentialsId": {
+          "type": "string"
+        },
+        "gcpOIDC": {
+          "$ref": "#/definitions/GcpOIDC"
+        },
+        "gcpRegProject": {
+          "type": "string"
+        },
+        "gcpRegPoolId": {
+          "type": "string"
+        },
+        "gcpRegProviderId": {
+          "type": "string"
+        },
+        "gcpScopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gcpRegion": {
+          "type": "string"
+        },
+        "azureService": {
+          "type": "string",
+          "enum": [
+            "acr",
+            "artifacts"
+          ]
+        },
+        "azureTenantId": {
+          "type": "string"
+        },
+        "azureACRName": {
+          "type": "string"
+        },
+        "azureACRResource": {
+          "type": "string"
+        },
+        "azureOAuth2Params": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "provider",
+        "authMethod"
+      ],
+      "allOf": [
+        {
+          "comment": "EXT1: accessRoles required for every authMethod except anonymous.",
+          "if": {
+            "properties": {
+              "authMethod": {
+                "not": {
+                  "const": "anonymous"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "accessRoles"
+            ]
+          }
+        },
+        {
+          "comment": "EXT3: awsDomain required for aws codeArtifact.",
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "aws"
+              },
+              "awsService": {
+                "const": "codeArtifact"
+              }
+            },
+            "required": [
+              "provider",
+              "awsService"
+            ]
+          },
+          "then": {
+            "required": [
+              "awsDomain"
+            ]
+          }
+        },
+        {
+          "comment": "EXT3: azureACRName required for azure acr.",
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "azure"
+              },
+              "azureService": {
+                "const": "acr"
+              }
+            },
+            "required": [
+              "provider",
+              "azureService"
+            ]
+          },
+          "then": {
+            "required": [
+              "azureACRName"
+            ]
+          }
+        },
+        {
+          "comment": "gcp federation requires gcpOIDC.",
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "gcp"
+              },
+              "authMethod": {
+                "const": "federation"
+              }
+            },
+            "required": [
+              "provider",
+              "authMethod"
+            ]
+          },
+          "then": {
+            "required": [
+              "gcpOIDC"
+            ]
+          }
+        },
+        {
+          "comment": "Valid authMethod values per provider (Model section table).",
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "nexus"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": [
+                  "anonymous",
+                  "userPass"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "artifactory"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": [
+                  "anonymous",
+                  "userPass"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "aws"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": [
+                  "anonymous",
+                  "secret",
+                  "assumeRole"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "gcp"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": [
+                  "anonymous",
+                  "serviceAccount",
+                  "federation"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "azure"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": [
+                  "anonymous",
+                  "oauth2"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "snapshot",
+            "staging",
+            "release",
+            "snapshotGroup",
+            "releaseGroup",
+            "group",
+            "dev",
+            "proxy"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "repoName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "url"
+      ]
+    },
+    "RegistryEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "artifactType": {
+          "type": "string",
+          "enum": [
+            "maven",
+            "mavenDD",
+            "docker",
+            "helmLib",
+            "helmApp",
+            "helmLibOCI",
+            "helmAppOCI",
+            "go",
+            "npm",
+            "raw",
+            "python"
+          ]
+        },
+        "authConfig": {
+          "type": "string"
+        },
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Repository"
+          }
+        }
+      },
+      "required": [
+        "artifactType",
+        "authConfig",
+        "repositories"
+      ]
+    }
+  }
+}
