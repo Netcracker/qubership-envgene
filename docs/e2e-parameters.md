@@ -32,6 +32,7 @@
   - [`DCL_GIT_BRANCH`](#dcl_git_branch)
   - [`DCL_CONFIG_GITLAB_USER`](#dcl_config_gitlab_user)
   - [`DCL_CONFIG_GITLAB_TOKEN`](#dcl_config_gitlab_token)
+  - [`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`](#dcl_config_sops_dcl2argo_age_public_key)
 
 These are the parameters EnvGene reads from a Cloud's `e2eParameters`/`pipeline` (the `e2eParameters` block of
 `cloud.yml`). Each entry names the EnvGene component that consumes it. For the RegDef v2 adapter parameters, how each
@@ -246,3 +247,17 @@ fails.
 **Description**: Token or password for the external GitLab repository credentials.
 
 **Consumer**: Effective Set external export (`argocd-dpg`)
+
+## `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`
+
+**Description**: Public key of a key pair that Argo CD owns. When set, EnvGene encrypts the Effective Set for
+this key in addition to `PUBLIC_AGE_KEYS`, so Argo CD can decrypt it. Set it per Cloud. If it is missing or
+empty, EnvGene encrypts for `PUBLIC_AGE_KEYS` only. Ignored when `crypt` is `false`. The private half,
+`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY`, is held on the Argo CD side and is not an EnvGene parameter. For how
+EnvGene applies this key and why it uses a separate key pair, see
+[Letting Argo CD decrypt the Effective Set](/docs/features/credential-encryption.md#letting-argo-cd-decrypt-the-effective-set)
+and the [how-to](/docs/how-to/credential-encryption.md#let-argo-cd-decrypt-the-effective-set).
+
+**Consumer**: Effective Set encryption with SOPS
+
+**Example**: `age1abc123...`

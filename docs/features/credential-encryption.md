@@ -14,6 +14,7 @@
     - [Environment Instance level](#environment-instance-level)
     - [Effective Set level](#effective-set-level)
     - [Skip cases](#skip-cases)
+    - [Letting Argo CD decrypt the Effective Set](#letting-argo-cd-decrypt-the-effective-set)
   - [Decryption rules](#decryption-rules)
   - [Single-category validation](#single-category-validation)
   - [Job execution order](#job-execution-order)
@@ -201,6 +202,31 @@ into a single file that may hold literals and references side by side.
   (for example `{}`, `null`, `~`, or `---`).
 - A file whose content matches neither the environment instance entry map nor the Effective Set flat
   key-value shape fails with a schema violation error.
+
+### Letting Argo CD decrypt the Effective Set
+
+EnvGene encrypts the Effective Set for the recipients in `PUBLIC_AGE_KEYS`, the public half of the EnvGene key
+pair. Argo CD consumes the Effective Set and must decrypt it, but it must not hold `ENVGENE_AGE_PRIVATE_KEY`. To
+keep that private key out of Argo CD, EnvGene encrypts the Effective Set for a second recipient: a key pair that
+Argo CD owns.
+
+| Held by | Public key (encrypt)                      | Private key (decrypt)                      |
+|---------|-------------------------------------------|--------------------------------------------|
+| EnvGene | `PUBLIC_AGE_KEYS`                         | `ENVGENE_AGE_PRIVATE_KEY`                  |
+| Argo CD | `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY` | `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY` |
+
+The Argo CD public key is set per Cloud in `e2eParameters` as
+[`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`](/docs/e2e-parameters.md#dcl_config_sops_dcl2argo_age_public_key).
+After it generates the Effective Set, EnvGene reads the key from `effective-set/pipeline/parameters.yaml` and
+adds it to the SOPS recipients for the rest of the run, so the Effective Set is encrypted for both key pairs. If
+the parameter is missing or empty, EnvGene logs a warning and encrypts for `PUBLIC_AGE_KEYS` only, and Argo CD
+cannot decrypt the Effective Set. EnvGene skips this when `crypt` is `false`.
+
+The two key pairs have different owners and lifecycles: the EnvGene pair belongs to the instance repository,
+and the Argo CD pair belongs to each Argo CD instance. The private key
+`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY` stays on the Argo CD side and never enters the instance repository.
+For the setup steps, see
+[How to let Argo CD decrypt the Effective Set](/docs/how-to/credential-encryption.md#let-argo-cd-decrypt-the-effective-set).
 
 ## Decryption rules
 
