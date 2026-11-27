@@ -13,8 +13,8 @@ This guide shows you how to protect sensitive credentials in your instance repos
     - [Step 4: Install Encryption Tools](#step-4-install-encryption-tools)
     - [Step 5: Test the Setup](#step-5-test-the-setup)
     - [Verify Your Encryption is Working](#verify-your-encryption-is-working)
+    - [Let Argo CD decrypt the Effective Set](#let-argo-cd-decrypt-the-effective-set)
     - [Troubleshooting Common Issues](#troubleshooting-common-issues)
-  - [How to configure a separate AGE key pair for Argo CD](#how-to-configure-a-separate-age-key-pair-for-argo-cd)
   - [How to Migrate from Fernet to SOPS](#how-to-migrate-from-fernet-to-sops)
     - [Step 1: Prepare for Migration](#step-1-prepare-for-migration)
     - [Step 2: Set Up SOPS](#step-2-set-up-sops)
@@ -141,6 +141,33 @@ Use this guide when you need to enable [Credential](/docs/envgene-objects.md#cre
 
 After setting up SOPS, test that everything works correctly:
 
+### Let Argo CD decrypt the Effective Set
+
+Give EnvGene the public key of a key pair that Argo CD owns, so EnvGene encrypts the Effective Set for Argo CD
+as well as for itself and `ENVGENE_AGE_PRIVATE_KEY` never leaves the instance pipeline. For why EnvGene uses a
+separate key pair, see
+[Letting Argo CD decrypt the Effective Set](/docs/features/credential-encryption.md#letting-argo-cd-decrypt-the-effective-set).
+
+1. Obtain the public key of the Argo CD key pair. Argo CD owns this pair; its private half,
+   `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY`, stays on the Argo CD side and is never added to the instance
+   repository.
+2. Set the public key per Cloud in the `e2eParameters` of `cloud.yml` as
+   [`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`](/docs/e2e-parameters.md#dcl_config_sops_dcl2argo_age_public_key):
+
+   ```yaml
+   e2eParameters:
+     DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY: "age1abc123..."
+   ```
+
+3. Leave `PUBLIC_AGE_KEYS` and `ENVGENE_AGE_PRIVATE_KEY` unchanged. Setting the Argo CD key per Cloud keeps it
+   out of the instance-wide `PUBLIC_AGE_KEYS`.
+4. Run the instance pipeline. After it generates the Effective Set, EnvGene reads the parameter from
+   `effective-set/pipeline/parameters.yaml` and adds it to the SOPS recipients for the rest of the run.
+
+Confirm the result: `effective-set/pipeline/parameters.yaml` contains `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`,
+and the `credentials.yaml` files of the Effective Set carry a `sops:` block. If the parameter is missing or
+empty, EnvGene encrypts for `PUBLIC_AGE_KEYS` only and logs a warning, and Argo CD cannot decrypt the data.
+
 ### Troubleshooting Common Issues
 
 **Files not getting encrypted:**
@@ -160,44 +187,6 @@ After setting up SOPS, test that everything works correctly:
 - Ensure your local key files are in the `.git/` directory
 - Check that Python dependencies are installed in the virtual environment
 - Verify file permissions on the pre-commit hook
-
-## How to configure a separate AGE key pair for Argo CD
-
-Use this guide when Argo CD must decrypt the encrypted Effective Set without access to the EnvGene private key.
-Complete [How to enable Credential encryption](#how-to-enable-credential-encryption) first.
-
-EnvGene and Argo CD use two independent AGE key pairs:
-
-| Held by | Public key (encrypt)                      | Private key (decrypt)                      |
-|---------|-------------------------------------------|--------------------------------------------|
-| EnvGene | `PUBLIC_AGE_KEYS`                         | `ENVGENE_AGE_PRIVATE_KEY`                  |
-| Argo CD | `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY` | `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY` |
-
-1. Generate a new key pair for Argo CD:
-
-   ```bash
-   age-keygen -o argo-private-age-key.txt
-   age-keygen -y -i argo-private-age-key.txt > argo_public_age_key.txt
-   ```
-
-2. Store the private key (`argo-private-age-key.txt`) on the Argo CD side as
-   [`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PRIVATE_KEY`](/docs/e2e-parameters.md#dcl_config_sops_dcl2argo_age_private_key).
-   Do not add it to the instance repository.
-3. Set the public key in the `e2eParameters` of the Cloud as
-   [`DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`](/docs/e2e-parameters.md#dcl_config_sops_dcl2argo_age_public_key):
-
-   ```yaml
-   e2eParameters:
-     DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY: "age1abc123..."
-   ```
-
-4. Keep `PUBLIC_AGE_KEYS` and `ENVGENE_AGE_PRIVATE_KEY` as they are. Do not add the Argo CD public key to `PUBLIC_AGE_KEYS`.
-5. Run the instance pipeline. Check that `effective-set/pipeline/parameters.yaml` contains
-   `DCL_CONFIG_SOPS_DCL2ARGO_AGE_PUBLIC_KEY`, and that the `credentials.yaml` files of the Effective Set carry a
-   `sops:` block.
-
-If the parameter is missing, EnvGene logs a warning and encrypts with `PUBLIC_AGE_KEYS` only. Argo CD then cannot
-decrypt the data.
 
 ## How to Migrate from Fernet to SOPS
 
