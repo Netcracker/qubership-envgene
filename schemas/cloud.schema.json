@@ -28,7 +28,7 @@
         "null"
       ],
       "title": "Resource profile override",
-      "description": "Resource profile override for cloud. Can be not set",
+      "description": "Resource profile override for cloud.",
       "properties": {
         "name": {
           "type": [
@@ -43,12 +43,16 @@
         },
         "baseline": {
           "type": "string",
-          "title": "Baseline of RPO",
-          "description": "Baseline name of Resource profile override. Free-form string.",
+          "title": "Baseline of Resource Profile Override",
+          "description": "Baseline name of Resource Profile Override.",
           "examples": [
             "dev",
-            "qa",
-            "prod"
+            "dev-ha",
+            "prod",
+            "prod-nonha",
+            "small",
+            "medium",
+            "large"
           ]
         }
       }
