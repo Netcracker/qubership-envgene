@@ -99,6 +99,24 @@
         </dependency>
     </dependencies>
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>src/test/resources</directory>
+                <targetPath>warmup-env</targetPath>
+                <includes>
+                    <include>environments/cluster-01/pl-01/**</include>
+                    <include>configuration/registry.yml</include>
+                    <include>configuration/secret-stores.yml</include>
+                    <include>sboms/**</include>
+                </includes>
+                <excludes>
+                    <exclude>environments/cluster-01/pl-01/effective-set/**</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>${quarkus.platform.group-id}</groupId>

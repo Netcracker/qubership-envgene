@@ -27,6 +27,7 @@ import org.qubership.cloud.devops.cli.parser.CliParameterParser;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.EffectiveSetVersion;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.repository.implementation.FileDataRepositoryImpl;
+import org.qubership.cloud.devops.cli.warmup.AppCdsWarmup;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -60,6 +61,11 @@ public class CmdbCli implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        if (Boolean.getBoolean("envgene.appcds.warmup")) {
+            logInfo("AppCDS warmup mode: generating the archive and skipping effective set generation");
+            AppCdsWarmup.run(sharedData, fileDataRepository, parser);
+            return 0;
+        }
         initializeParams();
         try {
             Instant start = Instant.now();
