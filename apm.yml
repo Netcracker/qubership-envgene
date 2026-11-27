@@ -1,0 +1,22 @@
+name: envgene-ai-skills
+version: 0.1.0
+description: >-
+  The AI layer of EnvGene: the component flow overrides of this component
+  (orchestration, design, propose, plan, implementation, verification, review,
+  documentation, finish), the authoring crafts (writing-style, writing-docs,
+  writing-gherkin, writing-adrs, reviewing-docs), the BDD and documentation
+  audits, the change-request drafter, and the envgene-reviewer agent.
+author: "Netcracker"
+
+# Harnesses this repository deploys its own skills and agents to.
+# Resolution order: --target flag > this field > auto-detect.
+# A consumer of this package wins with its own --target or targets field.
+targets:
+  - claude
+  - cursor
+  - opencode
+  - agent-skills
+
+dependencies:
+  apm: []
+  mcp: []

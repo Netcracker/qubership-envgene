@@ -113,7 +113,7 @@ it sits at top level rather than under `docs/technical-design/`.
 ## Distinct from a feature doc
 
 The border between a technical-design doc and a
-[feature doc](/.claude/skills/writing-docs/references/feature.md) is a deterministic test. A
+[feature doc](/.apm/skills/writing-docs/references/feature.md) is a deterministic test. A
 technical-design doc specifies the internal wiring - which job or step, in what order, what each reads
 and writes - for an EnvGene developer, and is implementation-defining: a different internal implementation
 would force a rewrite, because the doc pins the wiring itself.
@@ -123,4 +123,4 @@ content is implementation-independent and belongs in a feature doc, written for 
 I/O contract - the `## Input parameters`, `## Processing flow`, `## Result`, and `## Error handling` of a
 step doc - is the clearest marker: it names exact files, parameters, and ordering, so it can only live in
 a technical-design doc. A feature doc that carries such a contract is misfiled (see
-[Distinct from a technical-design doc](/.claude/skills/writing-docs/references/feature.md#distinct-from-a-technical-design-doc)).
+[Distinct from a technical-design doc](/.apm/skills/writing-docs/references/feature.md#distinct-from-a-technical-design-doc)).

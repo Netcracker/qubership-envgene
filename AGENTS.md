@@ -5,6 +5,29 @@ Component ID: envgene
 This document contains guidelines and rules for AI coding assistants working with this repository.
 Claude Code reads it through `.claude/CLAUDE.md`, which imports this file.
 
+## Skills and agents installation
+
+The skills and the agent of this repository are source under `.apm/skills/` and `.apm/agents/`. The
+`apm.yml` at the repository root makes this repository an APM package, so another repository can install
+them as a dependency instead of copying them.
+
+The harness folders are generated and are not committed. Install once after a fresh clone, and again
+after a change to `apm.yml`:
+
+```bash
+pip install apm-cli
+apm install --target claude,cursor,opencode,agent-skills
+```
+
+The command deploys the skills to `.claude/skills/`, `.agents/skills/`, `.opencode/skills/` and the Cursor
+rules, and the agent to `.claude/agents/`. Paths like `.claude/skills/writing-style/` in this document
+mean those deployed copies. `.apm/skills/writing-style/` is the same file in the source tree.
+
+Thirteen skills carry the `envgene-` prefix. They are the component flow of EnvGene and the overrides of
+the flow slots. The other eight are the generic authoring and review crafts, and they keep their
+unsuffixed names on purpose: they are reusable in any component and are not slots of this one. Do not
+rename them to add the prefix.
+
 ## Repository overview
 
 EnvGene is a Git-native tool that generates and versions cloud environment configurations from Jinja2 templates. It bridges a **Template Repository** (Jinja templates) and an **Instance Repository** (per-environment generated YAML + credentials) to produce an **Effective Set** consumed by ArgoCD/deployers.
@@ -60,6 +83,13 @@ Each module keeps its own `AGENTS.md` with the rules for that module. It loads w
 `schemas/`, `build_envgene/`, `build_effective_set_generator/`.
 
 ## Change flow
+
+### Entry rule
+
+No code change without an open OpenSpec change. The behaviour of EnvGene is specified in
+`openspec/changes/<id>/` while a change is open, and in `openspec/specs/` once it is archived. A pull
+request that changes behaviour names the change folder it implements, and its code starts only after
+that change passed the propose and design gates.
 
 The stage order and its gates are defined in the `envgene-orchestration` skill. Two rules apply to every agent:
 

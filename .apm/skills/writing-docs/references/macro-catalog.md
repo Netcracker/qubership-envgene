@@ -81,13 +81,13 @@ Keep the labels and order identical across entries so the reader scans the same 
 ## Distinct from a parameter catalog and a feature doc
 
 A macro catalog is keyed by a template macro and opens with a resolution scope - the rule stating when and
-against what the macro resolves. A [parameter catalog](/.claude/skills/writing-docs/references/parameter-catalog.md)
+against what the macro resolves. A [parameter catalog](/.apm/skills/writing-docs/references/parameter-catalog.md)
 is keyed by a launch or pipeline parameter the operator passes to a run, and has no resolution-scope section.
 The entry templates differ - the macro catalog uses `**Type:**` / `**Basic usage:**` / `**Usage in sample:**`,
 the parameter catalog uses `**Default Value**` / `**Mandatory**`. The user has decided these are two separate
 types - do not fold one into the other.
 
-Against a [feature doc](/.claude/skills/writing-docs/references/feature.md) the border is the "why". A macro
+Against a [feature doc](/.apm/skills/writing-docs/references/feature.md) the border is the "why". A macro
 catalog states each macro's contract with no rationale narrative - it is a lookup register. When an entry
 starts explaining why a capability resolves the way it does end to end, that explanation belongs in the
 feature doc, cross-linked.

@@ -1,0 +1,1515 @@
+lockfile_version: '1'
+generated_at: '2026-11-26T11:40:19.942250+00:00'
+dependencies: []
+deployments:
+- kind: project-relative
+  target: agents
+  value: .agents/skills/bdd-test-review
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/bdd-test-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:bbc8a8d56e2b954a7ba8b76ae42101724a5f115b0d05dc8eff409ac62dbff175
+- kind: project-relative
+  target: agents
+  value: .agents/skills/bdd-test-review/references/report-format.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:fc38d173a1159fd53f03b4d7e8efe1086384af1982587e9c6a57ec11070935ea
+- kind: project-relative
+  target: agents
+  value: .agents/skills/design-to-cr
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/design-to-cr/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:8496dede4d8e83f30bca7dc7c96dce063b9f04a1a408e97d4b70f79fa108e8ce
+- kind: project-relative
+  target: agents
+  value: .agents/skills/design-to-cr/references/from-context.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:0cc85c6f264f9e5cab69b5c1a77ed5fcc2af17dc24a069c3ef6ed2cafb8bbd22
+- kind: project-relative
+  target: agents
+  value: .agents/skills/discrepancy-audit
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/discrepancy-audit/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:1282d5e35d5f33cd2667134bd6c76558d05239c499c7434e4f010adc3db21e5a
+- kind: project-relative
+  target: agents
+  value: .agents/skills/discrepancy-audit/references/acquisition-topic.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:f565f3276b3dbb205e39c8ec16f190a3e24d326b5574db7546d92ba6defd3c8e
+- kind: project-relative
+  target: agents
+  value: .agents/skills/discrepancy-audit/references/report-format.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:3eaea3c02f9bf448029c1b4ddb2e12dda9780801155c20946d35505830b68e1e
+- kind: project-relative
+  target: agents
+  value: .agents/skills/discrepancy-audit/references/verdict-model.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:7314e4b22f56543ccb50dd9aa86ce575843dfd2b50e8d74db519a99d24983afa
+- kind: project-relative
+  target: agents
+  value: .agents/skills/discrepancy-audit/references/verify-before-claim.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:8818bcd8ea15a3c6dcf6b0bb9e0a6627fa21f7c5ce7497ef239a6e9f6aa394d2
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-analyst-authoring
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-analyst-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4d824b67858f0679890bc19ee86a9f4b99539ea2932e87268301ebaf1706660e
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-bdd-tests
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-bdd-tests/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:b46a44629832aab5fcd745539e14c60a9f256a358278e1b2db9748f8bfaa2f4a
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-code-review
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-code-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4af931080a8161ee5643b9593c50df4d665b5ee4fc77693a24483dc7ea50b344
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-design
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-design/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:ae59945e3702bf212500e62ac3041afe2e23bf4ead7aa702c822406c0e297b05
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-documentation
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-documentation/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:6d3dea7fb536eb11e81c09a7e621fb566c43b8e68f4a460801dde66c035f13aa
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-explore
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-explore/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:42f1c297a0418eb0147e021268cbd7f789dc5d3827efdc6aa58a5c2273310164
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-finish
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-finish/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:d93976b80e6e9519aaa009e4d882e478f07df5a274b0326e7e22498b059c9faf
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-implementation
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-implementation/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:a8ea93493bc4957de11a0218941f0f7651b78b37bb872032e735615b7f64bd23
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-orchestration
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-orchestration/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:acc521a4c814dd0c2ae1d3393cd00090b7fad05d422d70edbc423dfe90d6cd69
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-orchestration/references/ledger.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:60f1e3253cede9a0dcad4a68ba8dee611b794f16840e6ee1924b93a55e8474b9
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-plan
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-plan/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:0693b1efa95a4640a96279b1343c4f4c457d4075cc8c26603cf0a6a19b88e65d
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-propose
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-propose/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:3db7083c69c18c4f68c451794ba1c28394189335a993887eab34fe25d0f4094f
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-review
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:5d9a1b3ab88eb3d2d380bd43684d50238fb0e3b1edfee806705e65cce590b8ec
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-verification
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/envgene-verification/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:e0e92ce08827d711cf1e535cd5af49807c1918e81abb92f8350831480b3cce34
+- kind: project-relative
+  target: agents
+  value: .agents/skills/reviewing-docs
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/reviewing-docs/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:200259fa61b0258e0cff61c68f418a903a2a4739da3c79c39417874fe31c44c0
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-adrs
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-adrs/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4e48ea06c6e25ff6f8b46746735090b104521e2a964ed3ce4d724f4f18673698
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:28f29f9262f836b92e33f5caa0b48989223cad341ffa63033a4f1825014b7bfe
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/content-integrity.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:dfee848d121a2abf90322d1aaa6d0f7dfcaf04bca54cf3ec68059c800e5394d1
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/doc-structure.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:af80ba2f15cf0ce631cc2a8988ffafcf080a477d02b63e5e58af41a6d50c9942
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/examples-and-samples.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:3cb6f5680f89507dc20635c0aa2d4849429f98cd84dc4cb43417967df859ab17
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/feature.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:92da948d2c11de88d9ae04ea40c763287cf584f3a3996d8f9fdce3e7ce72ee70
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/glossary.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:38a9567e85579df2013c4d89cf7ba279d3141ea98426ae442563c12aa23f6af2
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/how-to.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:9e99294a4c6665a09a37d22dbf844cf62239af1ff2a31d92899af26d32d8212d
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/macro-catalog.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:aca66cdad75811f7cf96a2239658018bc324641d96f06877488ad5fff3ce28c3
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/markdown.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:6f61468ae64fd20e4c809dfa259d13c68ee2b077328601b99e93711e783fa4f9
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/object-model-reference.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:e8f229674fef8acb4985fe62df97336a6e349a9d803913d19be33b1cfd806010
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/parameter-catalog.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:71dfa22377fe07b5cf1a22736d98994f2e3a33774c17217108c2de9f7221186d
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/policy-architecture-note.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:026e56afb444f2a9390146581e46abe07d541272c565d25b27f4787cc4a5c215
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/technical-design.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:17ecfc83f84750a680aa8649377f64db1a0aa725b9dc4e579f590110ede8caee
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-docs/references/tutorial.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:ec951bceb41c612751d431b937d87a35f04c34726646ba2b3abe9019ad97d103
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-gherkin
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-gherkin/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:e17695bc4577580e6c2ab0b60d22783496b1c8002a750ea87ab04314fdb3d486
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-gherkin/references/acquisition.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:43be49e9bf49654ac5aad254ac3d76a4eaf6610a5c8eb9952f22bd7431f7acc6
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-gherkin/references/enumeration.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4a901e9ee2f0e87552e04d1865a346b5a45556f9e404d3fbf0e6c67b845d55bb
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-gherkin/references/grounding.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:7b0acea043bda4d8415175aa0a3f9075641374c7625d68c4e19b0831af653a24
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-gherkin/references/rendering.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:9447243f286b290f9980568a29b96a9b0f3d0215768c3226e6506a8d32ff5405
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-style
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-style/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:33124be0f8ec1dbe274be5a0884acbcc6f656aadbaf1206ad3d66d346c04a78d
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-style/references/formatting.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:cacfd3b2f053f407ad08e26ef2163539503b8adaee709e091aac199896eddd04
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-style/references/integrity.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:d74dc9cdad01980189b97128a76da9738cbf9bcd95ab01999a65be5856741beb
+- kind: project-relative
+  target: agents
+  value: .agents/skills/writing-style/references/prose-style.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:e8faa6aed38439b71e10c20dc1e1e6206eece7e13ec8d21875178e576e8ce302
+- kind: project-relative
+  target: claude
+  value: .claude/agents/envgene-reviewer.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:f9208999da9948637bdf9ae89d10078ed9d67d3f20a701fe37869125a53c0620
+- kind: project-relative
+  target: claude
+  value: .claude/skills/bdd-test-review
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/bdd-test-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:bbc8a8d56e2b954a7ba8b76ae42101724a5f115b0d05dc8eff409ac62dbff175
+- kind: project-relative
+  target: claude
+  value: .claude/skills/bdd-test-review/references/report-format.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:fc38d173a1159fd53f03b4d7e8efe1086384af1982587e9c6a57ec11070935ea
+- kind: project-relative
+  target: claude
+  value: .claude/skills/design-to-cr
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/design-to-cr/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:8496dede4d8e83f30bca7dc7c96dce063b9f04a1a408e97d4b70f79fa108e8ce
+- kind: project-relative
+  target: claude
+  value: .claude/skills/design-to-cr/references/from-context.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:0cc85c6f264f9e5cab69b5c1a77ed5fcc2af17dc24a069c3ef6ed2cafb8bbd22
+- kind: project-relative
+  target: claude
+  value: .claude/skills/discrepancy-audit
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/discrepancy-audit/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:1282d5e35d5f33cd2667134bd6c76558d05239c499c7434e4f010adc3db21e5a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/discrepancy-audit/references/acquisition-topic.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:f565f3276b3dbb205e39c8ec16f190a3e24d326b5574db7546d92ba6defd3c8e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/discrepancy-audit/references/report-format.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:3eaea3c02f9bf448029c1b4ddb2e12dda9780801155c20946d35505830b68e1e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/discrepancy-audit/references/verdict-model.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:7314e4b22f56543ccb50dd9aa86ce575843dfd2b50e8d74db519a99d24983afa
+- kind: project-relative
+  target: claude
+  value: .claude/skills/discrepancy-audit/references/verify-before-claim.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:8818bcd8ea15a3c6dcf6b0bb9e0a6627fa21f7c5ce7497ef239a6e9f6aa394d2
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-analyst-authoring
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-analyst-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4d824b67858f0679890bc19ee86a9f4b99539ea2932e87268301ebaf1706660e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-bdd-tests
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-bdd-tests/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:b46a44629832aab5fcd745539e14c60a9f256a358278e1b2db9748f8bfaa2f4a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-code-review
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-code-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4af931080a8161ee5643b9593c50df4d665b5ee4fc77693a24483dc7ea50b344
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-design
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-design/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:ae59945e3702bf212500e62ac3041afe2e23bf4ead7aa702c822406c0e297b05
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-documentation
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-documentation/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:6d3dea7fb536eb11e81c09a7e621fb566c43b8e68f4a460801dde66c035f13aa
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-explore
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-explore/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:42f1c297a0418eb0147e021268cbd7f789dc5d3827efdc6aa58a5c2273310164
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-finish
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-finish/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:d93976b80e6e9519aaa009e4d882e478f07df5a274b0326e7e22498b059c9faf
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-implementation
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-implementation/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:a8ea93493bc4957de11a0218941f0f7651b78b37bb872032e735615b7f64bd23
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-orchestration
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-orchestration/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:acc521a4c814dd0c2ae1d3393cd00090b7fad05d422d70edbc423dfe90d6cd69
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-orchestration/references/ledger.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:60f1e3253cede9a0dcad4a68ba8dee611b794f16840e6ee1924b93a55e8474b9
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-plan
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-plan/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:0693b1efa95a4640a96279b1343c4f4c457d4075cc8c26603cf0a6a19b88e65d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-propose
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-propose/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:3db7083c69c18c4f68c451794ba1c28394189335a993887eab34fe25d0f4094f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-review
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:5d9a1b3ab88eb3d2d380bd43684d50238fb0e3b1edfee806705e65cce590b8ec
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-verification
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/envgene-verification/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:e0e92ce08827d711cf1e535cd5af49807c1918e81abb92f8350831480b3cce34
+- kind: project-relative
+  target: claude
+  value: .claude/skills/reviewing-docs
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/reviewing-docs/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:200259fa61b0258e0cff61c68f418a903a2a4739da3c79c39417874fe31c44c0
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-adrs
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-adrs/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4e48ea06c6e25ff6f8b46746735090b104521e2a964ed3ce4d724f4f18673698
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:28f29f9262f836b92e33f5caa0b48989223cad341ffa63033a4f1825014b7bfe
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/content-integrity.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:dfee848d121a2abf90322d1aaa6d0f7dfcaf04bca54cf3ec68059c800e5394d1
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/doc-structure.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:af80ba2f15cf0ce631cc2a8988ffafcf080a477d02b63e5e58af41a6d50c9942
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/examples-and-samples.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:3cb6f5680f89507dc20635c0aa2d4849429f98cd84dc4cb43417967df859ab17
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/feature.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:92da948d2c11de88d9ae04ea40c763287cf584f3a3996d8f9fdce3e7ce72ee70
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/glossary.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:38a9567e85579df2013c4d89cf7ba279d3141ea98426ae442563c12aa23f6af2
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/how-to.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:9e99294a4c6665a09a37d22dbf844cf62239af1ff2a31d92899af26d32d8212d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/macro-catalog.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:aca66cdad75811f7cf96a2239658018bc324641d96f06877488ad5fff3ce28c3
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/markdown.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:6f61468ae64fd20e4c809dfa259d13c68ee2b077328601b99e93711e783fa4f9
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/object-model-reference.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:e8f229674fef8acb4985fe62df97336a6e349a9d803913d19be33b1cfd806010
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/parameter-catalog.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:71dfa22377fe07b5cf1a22736d98994f2e3a33774c17217108c2de9f7221186d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/policy-architecture-note.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:026e56afb444f2a9390146581e46abe07d541272c565d25b27f4787cc4a5c215
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/technical-design.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:17ecfc83f84750a680aa8649377f64db1a0aa725b9dc4e579f590110ede8caee
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-docs/references/tutorial.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:ec951bceb41c612751d431b937d87a35f04c34726646ba2b3abe9019ad97d103
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-gherkin
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-gherkin/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:e17695bc4577580e6c2ab0b60d22783496b1c8002a750ea87ab04314fdb3d486
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-gherkin/references/acquisition.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:43be49e9bf49654ac5aad254ac3d76a4eaf6610a5c8eb9952f22bd7431f7acc6
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-gherkin/references/enumeration.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:4a901e9ee2f0e87552e04d1865a346b5a45556f9e404d3fbf0e6c67b845d55bb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-gherkin/references/grounding.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:7b0acea043bda4d8415175aa0a3f9075641374c7625d68c4e19b0831af653a24
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-gherkin/references/rendering.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:9447243f286b290f9980568a29b96a9b0f3d0215768c3226e6506a8d32ff5405
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-style
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-style/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:33124be0f8ec1dbe274be5a0884acbcc6f656aadbaf1206ad3d66d346c04a78d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-style/references/formatting.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:cacfd3b2f053f407ad08e26ef2163539503b8adaee709e091aac199896eddd04
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-style/references/integrity.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:d74dc9cdad01980189b97128a76da9738cbf9bcd95ab01999a65be5856741beb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-style/references/prose-style.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:e8faa6aed38439b71e10c20dc1e1e6206eece7e13ec8d21875178e576e8ce302
+- kind: project-relative
+  target: cursor
+  value: .cursor/agents/envgene-reviewer.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:f9208999da9948637bdf9ae89d10078ed9d67d3f20a701fe37869125a53c0620
+- kind: project-relative
+  target: opencode
+  value: .opencode/agents/envgene-reviewer.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:f9208999da9948637bdf9ae89d10078ed9d67d3f20a701fe37869125a53c0620
+local_deployed_files:
+- .agents/skills/bdd-test-review
+- .agents/skills/bdd-test-review/SKILL.md
+- .agents/skills/bdd-test-review/references/report-format.md
+- .agents/skills/design-to-cr
+- .agents/skills/design-to-cr/SKILL.md
+- .agents/skills/design-to-cr/references/from-context.md
+- .agents/skills/discrepancy-audit
+- .agents/skills/discrepancy-audit/SKILL.md
+- .agents/skills/discrepancy-audit/references/acquisition-topic.md
+- .agents/skills/discrepancy-audit/references/report-format.md
+- .agents/skills/discrepancy-audit/references/verdict-model.md
+- .agents/skills/discrepancy-audit/references/verify-before-claim.md
+- .agents/skills/envgene-analyst-authoring
+- .agents/skills/envgene-analyst-authoring/SKILL.md
+- .agents/skills/envgene-bdd-tests
+- .agents/skills/envgene-bdd-tests/SKILL.md
+- .agents/skills/envgene-code-review
+- .agents/skills/envgene-code-review/SKILL.md
+- .agents/skills/envgene-design
+- .agents/skills/envgene-design/SKILL.md
+- .agents/skills/envgene-documentation
+- .agents/skills/envgene-documentation/SKILL.md
+- .agents/skills/envgene-explore
+- .agents/skills/envgene-explore/SKILL.md
+- .agents/skills/envgene-finish
+- .agents/skills/envgene-finish/SKILL.md
+- .agents/skills/envgene-implementation
+- .agents/skills/envgene-implementation/SKILL.md
+- .agents/skills/envgene-orchestration
+- .agents/skills/envgene-orchestration/SKILL.md
+- .agents/skills/envgene-orchestration/references/ledger.md
+- .agents/skills/envgene-plan
+- .agents/skills/envgene-plan/SKILL.md
+- .agents/skills/envgene-propose
+- .agents/skills/envgene-propose/SKILL.md
+- .agents/skills/envgene-review
+- .agents/skills/envgene-review/SKILL.md
+- .agents/skills/envgene-verification
+- .agents/skills/envgene-verification/SKILL.md
+- .agents/skills/reviewing-docs
+- .agents/skills/reviewing-docs/SKILL.md
+- .agents/skills/writing-adrs
+- .agents/skills/writing-adrs/SKILL.md
+- .agents/skills/writing-docs
+- .agents/skills/writing-docs/SKILL.md
+- .agents/skills/writing-docs/references/content-integrity.md
+- .agents/skills/writing-docs/references/doc-structure.md
+- .agents/skills/writing-docs/references/examples-and-samples.md
+- .agents/skills/writing-docs/references/feature.md
+- .agents/skills/writing-docs/references/glossary.md
+- .agents/skills/writing-docs/references/how-to.md
+- .agents/skills/writing-docs/references/macro-catalog.md
+- .agents/skills/writing-docs/references/markdown.md
+- .agents/skills/writing-docs/references/object-model-reference.md
+- .agents/skills/writing-docs/references/parameter-catalog.md
+- .agents/skills/writing-docs/references/policy-architecture-note.md
+- .agents/skills/writing-docs/references/technical-design.md
+- .agents/skills/writing-docs/references/tutorial.md
+- .agents/skills/writing-gherkin
+- .agents/skills/writing-gherkin/SKILL.md
+- .agents/skills/writing-gherkin/references/acquisition.md
+- .agents/skills/writing-gherkin/references/enumeration.md
+- .agents/skills/writing-gherkin/references/grounding.md
+- .agents/skills/writing-gherkin/references/rendering.md
+- .agents/skills/writing-style
+- .agents/skills/writing-style/SKILL.md
+- .agents/skills/writing-style/references/formatting.md
+- .agents/skills/writing-style/references/integrity.md
+- .agents/skills/writing-style/references/prose-style.md
+- .claude/agents/envgene-reviewer.md
+- .claude/skills/bdd-test-review
+- .claude/skills/bdd-test-review/SKILL.md
+- .claude/skills/bdd-test-review/references/report-format.md
+- .claude/skills/design-to-cr
+- .claude/skills/design-to-cr/SKILL.md
+- .claude/skills/design-to-cr/references/from-context.md
+- .claude/skills/discrepancy-audit
+- .claude/skills/discrepancy-audit/SKILL.md
+- .claude/skills/discrepancy-audit/references/acquisition-topic.md
+- .claude/skills/discrepancy-audit/references/report-format.md
+- .claude/skills/discrepancy-audit/references/verdict-model.md
+- .claude/skills/discrepancy-audit/references/verify-before-claim.md
+- .claude/skills/envgene-analyst-authoring
+- .claude/skills/envgene-analyst-authoring/SKILL.md
+- .claude/skills/envgene-bdd-tests
+- .claude/skills/envgene-bdd-tests/SKILL.md
+- .claude/skills/envgene-code-review
+- .claude/skills/envgene-code-review/SKILL.md
+- .claude/skills/envgene-design
+- .claude/skills/envgene-design/SKILL.md
+- .claude/skills/envgene-documentation
+- .claude/skills/envgene-documentation/SKILL.md
+- .claude/skills/envgene-explore
+- .claude/skills/envgene-explore/SKILL.md
+- .claude/skills/envgene-finish
+- .claude/skills/envgene-finish/SKILL.md
+- .claude/skills/envgene-implementation
+- .claude/skills/envgene-implementation/SKILL.md
+- .claude/skills/envgene-orchestration
+- .claude/skills/envgene-orchestration/SKILL.md
+- .claude/skills/envgene-orchestration/references/ledger.md
+- .claude/skills/envgene-plan
+- .claude/skills/envgene-plan/SKILL.md
+- .claude/skills/envgene-propose
+- .claude/skills/envgene-propose/SKILL.md
+- .claude/skills/envgene-review
+- .claude/skills/envgene-review/SKILL.md
+- .claude/skills/envgene-verification
+- .claude/skills/envgene-verification/SKILL.md
+- .claude/skills/reviewing-docs
+- .claude/skills/reviewing-docs/SKILL.md
+- .claude/skills/writing-adrs
+- .claude/skills/writing-adrs/SKILL.md
+- .claude/skills/writing-docs
+- .claude/skills/writing-docs/SKILL.md
+- .claude/skills/writing-docs/references/content-integrity.md
+- .claude/skills/writing-docs/references/doc-structure.md
+- .claude/skills/writing-docs/references/examples-and-samples.md
+- .claude/skills/writing-docs/references/feature.md
+- .claude/skills/writing-docs/references/glossary.md
+- .claude/skills/writing-docs/references/how-to.md
+- .claude/skills/writing-docs/references/macro-catalog.md
+- .claude/skills/writing-docs/references/markdown.md
+- .claude/skills/writing-docs/references/object-model-reference.md
+- .claude/skills/writing-docs/references/parameter-catalog.md
+- .claude/skills/writing-docs/references/policy-architecture-note.md
+- .claude/skills/writing-docs/references/technical-design.md
+- .claude/skills/writing-docs/references/tutorial.md
+- .claude/skills/writing-gherkin
+- .claude/skills/writing-gherkin/SKILL.md
+- .claude/skills/writing-gherkin/references/acquisition.md
+- .claude/skills/writing-gherkin/references/enumeration.md
+- .claude/skills/writing-gherkin/references/grounding.md
+- .claude/skills/writing-gherkin/references/rendering.md
+- .claude/skills/writing-style
+- .claude/skills/writing-style/SKILL.md
+- .claude/skills/writing-style/references/formatting.md
+- .claude/skills/writing-style/references/integrity.md
+- .claude/skills/writing-style/references/prose-style.md
+- .cursor/agents/envgene-reviewer.md
+- .opencode/agents/envgene-reviewer.md
+local_deployed_file_hashes:
+  .agents/skills/bdd-test-review/SKILL.md: sha256:bbc8a8d56e2b954a7ba8b76ae42101724a5f115b0d05dc8eff409ac62dbff175
+  .agents/skills/bdd-test-review/references/report-format.md: sha256:fc38d173a1159fd53f03b4d7e8efe1086384af1982587e9c6a57ec11070935ea
+  .agents/skills/design-to-cr/SKILL.md: sha256:8496dede4d8e83f30bca7dc7c96dce063b9f04a1a408e97d4b70f79fa108e8ce
+  .agents/skills/design-to-cr/references/from-context.md: sha256:0cc85c6f264f9e5cab69b5c1a77ed5fcc2af17dc24a069c3ef6ed2cafb8bbd22
+  .agents/skills/discrepancy-audit/SKILL.md: sha256:1282d5e35d5f33cd2667134bd6c76558d05239c499c7434e4f010adc3db21e5a
+  .agents/skills/discrepancy-audit/references/acquisition-topic.md: sha256:f565f3276b3dbb205e39c8ec16f190a3e24d326b5574db7546d92ba6defd3c8e
+  .agents/skills/discrepancy-audit/references/report-format.md: sha256:3eaea3c02f9bf448029c1b4ddb2e12dda9780801155c20946d35505830b68e1e
+  .agents/skills/discrepancy-audit/references/verdict-model.md: sha256:7314e4b22f56543ccb50dd9aa86ce575843dfd2b50e8d74db519a99d24983afa
+  .agents/skills/discrepancy-audit/references/verify-before-claim.md: sha256:8818bcd8ea15a3c6dcf6b0bb9e0a6627fa21f7c5ce7497ef239a6e9f6aa394d2
+  .agents/skills/envgene-analyst-authoring/SKILL.md: sha256:4d824b67858f0679890bc19ee86a9f4b99539ea2932e87268301ebaf1706660e
+  .agents/skills/envgene-bdd-tests/SKILL.md: sha256:b46a44629832aab5fcd745539e14c60a9f256a358278e1b2db9748f8bfaa2f4a
+  .agents/skills/envgene-code-review/SKILL.md: sha256:4af931080a8161ee5643b9593c50df4d665b5ee4fc77693a24483dc7ea50b344
+  .agents/skills/envgene-design/SKILL.md: sha256:ae59945e3702bf212500e62ac3041afe2e23bf4ead7aa702c822406c0e297b05
+  .agents/skills/envgene-documentation/SKILL.md: sha256:6d3dea7fb536eb11e81c09a7e621fb566c43b8e68f4a460801dde66c035f13aa
+  .agents/skills/envgene-explore/SKILL.md: sha256:42f1c297a0418eb0147e021268cbd7f789dc5d3827efdc6aa58a5c2273310164
+  .agents/skills/envgene-finish/SKILL.md: sha256:d93976b80e6e9519aaa009e4d882e478f07df5a274b0326e7e22498b059c9faf
+  .agents/skills/envgene-implementation/SKILL.md: sha256:a8ea93493bc4957de11a0218941f0f7651b78b37bb872032e735615b7f64bd23
+  .agents/skills/envgene-orchestration/SKILL.md: sha256:acc521a4c814dd0c2ae1d3393cd00090b7fad05d422d70edbc423dfe90d6cd69
+  .agents/skills/envgene-orchestration/references/ledger.md: sha256:60f1e3253cede9a0dcad4a68ba8dee611b794f16840e6ee1924b93a55e8474b9
+  .agents/skills/envgene-plan/SKILL.md: sha256:0693b1efa95a4640a96279b1343c4f4c457d4075cc8c26603cf0a6a19b88e65d
+  .agents/skills/envgene-propose/SKILL.md: sha256:3db7083c69c18c4f68c451794ba1c28394189335a993887eab34fe25d0f4094f
+  .agents/skills/envgene-review/SKILL.md: sha256:5d9a1b3ab88eb3d2d380bd43684d50238fb0e3b1edfee806705e65cce590b8ec
+  .agents/skills/envgene-verification/SKILL.md: sha256:e0e92ce08827d711cf1e535cd5af49807c1918e81abb92f8350831480b3cce34
+  .agents/skills/reviewing-docs/SKILL.md: sha256:200259fa61b0258e0cff61c68f418a903a2a4739da3c79c39417874fe31c44c0
+  .agents/skills/writing-adrs/SKILL.md: sha256:4e48ea06c6e25ff6f8b46746735090b104521e2a964ed3ce4d724f4f18673698
+  .agents/skills/writing-docs/SKILL.md: sha256:28f29f9262f836b92e33f5caa0b48989223cad341ffa63033a4f1825014b7bfe
+  .agents/skills/writing-docs/references/content-integrity.md: sha256:dfee848d121a2abf90322d1aaa6d0f7dfcaf04bca54cf3ec68059c800e5394d1
+  .agents/skills/writing-docs/references/doc-structure.md: sha256:af80ba2f15cf0ce631cc2a8988ffafcf080a477d02b63e5e58af41a6d50c9942
+  .agents/skills/writing-docs/references/examples-and-samples.md: sha256:3cb6f5680f89507dc20635c0aa2d4849429f98cd84dc4cb43417967df859ab17
+  .agents/skills/writing-docs/references/feature.md: sha256:92da948d2c11de88d9ae04ea40c763287cf584f3a3996d8f9fdce3e7ce72ee70
+  .agents/skills/writing-docs/references/glossary.md: sha256:38a9567e85579df2013c4d89cf7ba279d3141ea98426ae442563c12aa23f6af2
+  .agents/skills/writing-docs/references/how-to.md: sha256:9e99294a4c6665a09a37d22dbf844cf62239af1ff2a31d92899af26d32d8212d
+  .agents/skills/writing-docs/references/macro-catalog.md: sha256:aca66cdad75811f7cf96a2239658018bc324641d96f06877488ad5fff3ce28c3
+  .agents/skills/writing-docs/references/markdown.md: sha256:6f61468ae64fd20e4c809dfa259d13c68ee2b077328601b99e93711e783fa4f9
+  .agents/skills/writing-docs/references/object-model-reference.md: sha256:e8f229674fef8acb4985fe62df97336a6e349a9d803913d19be33b1cfd806010
+  .agents/skills/writing-docs/references/parameter-catalog.md: sha256:71dfa22377fe07b5cf1a22736d98994f2e3a33774c17217108c2de9f7221186d
+  .agents/skills/writing-docs/references/policy-architecture-note.md: sha256:026e56afb444f2a9390146581e46abe07d541272c565d25b27f4787cc4a5c215
+  .agents/skills/writing-docs/references/technical-design.md: sha256:17ecfc83f84750a680aa8649377f64db1a0aa725b9dc4e579f590110ede8caee
+  .agents/skills/writing-docs/references/tutorial.md: sha256:ec951bceb41c612751d431b937d87a35f04c34726646ba2b3abe9019ad97d103
+  .agents/skills/writing-gherkin/SKILL.md: sha256:e17695bc4577580e6c2ab0b60d22783496b1c8002a750ea87ab04314fdb3d486
+  .agents/skills/writing-gherkin/references/acquisition.md: sha256:43be49e9bf49654ac5aad254ac3d76a4eaf6610a5c8eb9952f22bd7431f7acc6
+  .agents/skills/writing-gherkin/references/enumeration.md: sha256:4a901e9ee2f0e87552e04d1865a346b5a45556f9e404d3fbf0e6c67b845d55bb
+  .agents/skills/writing-gherkin/references/grounding.md: sha256:7b0acea043bda4d8415175aa0a3f9075641374c7625d68c4e19b0831af653a24
+  .agents/skills/writing-gherkin/references/rendering.md: sha256:9447243f286b290f9980568a29b96a9b0f3d0215768c3226e6506a8d32ff5405
+  .agents/skills/writing-style/SKILL.md: sha256:33124be0f8ec1dbe274be5a0884acbcc6f656aadbaf1206ad3d66d346c04a78d
+  .agents/skills/writing-style/references/formatting.md: sha256:cacfd3b2f053f407ad08e26ef2163539503b8adaee709e091aac199896eddd04
+  .agents/skills/writing-style/references/integrity.md: sha256:d74dc9cdad01980189b97128a76da9738cbf9bcd95ab01999a65be5856741beb
+  .agents/skills/writing-style/references/prose-style.md: sha256:e8faa6aed38439b71e10c20dc1e1e6206eece7e13ec8d21875178e576e8ce302
+  .claude/agents/envgene-reviewer.md: sha256:f9208999da9948637bdf9ae89d10078ed9d67d3f20a701fe37869125a53c0620
+  .claude/skills/bdd-test-review/SKILL.md: sha256:bbc8a8d56e2b954a7ba8b76ae42101724a5f115b0d05dc8eff409ac62dbff175
+  .claude/skills/bdd-test-review/references/report-format.md: sha256:fc38d173a1159fd53f03b4d7e8efe1086384af1982587e9c6a57ec11070935ea
+  .claude/skills/design-to-cr/SKILL.md: sha256:8496dede4d8e83f30bca7dc7c96dce063b9f04a1a408e97d4b70f79fa108e8ce
+  .claude/skills/design-to-cr/references/from-context.md: sha256:0cc85c6f264f9e5cab69b5c1a77ed5fcc2af17dc24a069c3ef6ed2cafb8bbd22
+  .claude/skills/discrepancy-audit/SKILL.md: sha256:1282d5e35d5f33cd2667134bd6c76558d05239c499c7434e4f010adc3db21e5a
+  .claude/skills/discrepancy-audit/references/acquisition-topic.md: sha256:f565f3276b3dbb205e39c8ec16f190a3e24d326b5574db7546d92ba6defd3c8e
+  .claude/skills/discrepancy-audit/references/report-format.md: sha256:3eaea3c02f9bf448029c1b4ddb2e12dda9780801155c20946d35505830b68e1e
+  .claude/skills/discrepancy-audit/references/verdict-model.md: sha256:7314e4b22f56543ccb50dd9aa86ce575843dfd2b50e8d74db519a99d24983afa
+  .claude/skills/discrepancy-audit/references/verify-before-claim.md: sha256:8818bcd8ea15a3c6dcf6b0bb9e0a6627fa21f7c5ce7497ef239a6e9f6aa394d2
+  .claude/skills/envgene-analyst-authoring/SKILL.md: sha256:4d824b67858f0679890bc19ee86a9f4b99539ea2932e87268301ebaf1706660e
+  .claude/skills/envgene-bdd-tests/SKILL.md: sha256:b46a44629832aab5fcd745539e14c60a9f256a358278e1b2db9748f8bfaa2f4a
+  .claude/skills/envgene-code-review/SKILL.md: sha256:4af931080a8161ee5643b9593c50df4d665b5ee4fc77693a24483dc7ea50b344
+  .claude/skills/envgene-design/SKILL.md: sha256:ae59945e3702bf212500e62ac3041afe2e23bf4ead7aa702c822406c0e297b05
+  .claude/skills/envgene-documentation/SKILL.md: sha256:6d3dea7fb536eb11e81c09a7e621fb566c43b8e68f4a460801dde66c035f13aa
+  .claude/skills/envgene-explore/SKILL.md: sha256:42f1c297a0418eb0147e021268cbd7f789dc5d3827efdc6aa58a5c2273310164
+  .claude/skills/envgene-finish/SKILL.md: sha256:d93976b80e6e9519aaa009e4d882e478f07df5a274b0326e7e22498b059c9faf
+  .claude/skills/envgene-implementation/SKILL.md: sha256:a8ea93493bc4957de11a0218941f0f7651b78b37bb872032e735615b7f64bd23
+  .claude/skills/envgene-orchestration/SKILL.md: sha256:acc521a4c814dd0c2ae1d3393cd00090b7fad05d422d70edbc423dfe90d6cd69
+  .claude/skills/envgene-orchestration/references/ledger.md: sha256:60f1e3253cede9a0dcad4a68ba8dee611b794f16840e6ee1924b93a55e8474b9
+  .claude/skills/envgene-plan/SKILL.md: sha256:0693b1efa95a4640a96279b1343c4f4c457d4075cc8c26603cf0a6a19b88e65d
+  .claude/skills/envgene-propose/SKILL.md: sha256:3db7083c69c18c4f68c451794ba1c28394189335a993887eab34fe25d0f4094f
+  .claude/skills/envgene-review/SKILL.md: sha256:5d9a1b3ab88eb3d2d380bd43684d50238fb0e3b1edfee806705e65cce590b8ec
+  .claude/skills/envgene-verification/SKILL.md: sha256:e0e92ce08827d711cf1e535cd5af49807c1918e81abb92f8350831480b3cce34
+  .claude/skills/reviewing-docs/SKILL.md: sha256:200259fa61b0258e0cff61c68f418a903a2a4739da3c79c39417874fe31c44c0
+  .claude/skills/writing-adrs/SKILL.md: sha256:4e48ea06c6e25ff6f8b46746735090b104521e2a964ed3ce4d724f4f18673698
+  .claude/skills/writing-docs/SKILL.md: sha256:28f29f9262f836b92e33f5caa0b48989223cad341ffa63033a4f1825014b7bfe
+  .claude/skills/writing-docs/references/content-integrity.md: sha256:dfee848d121a2abf90322d1aaa6d0f7dfcaf04bca54cf3ec68059c800e5394d1
+  .claude/skills/writing-docs/references/doc-structure.md: sha256:af80ba2f15cf0ce631cc2a8988ffafcf080a477d02b63e5e58af41a6d50c9942
+  .claude/skills/writing-docs/references/examples-and-samples.md: sha256:3cb6f5680f89507dc20635c0aa2d4849429f98cd84dc4cb43417967df859ab17
+  .claude/skills/writing-docs/references/feature.md: sha256:92da948d2c11de88d9ae04ea40c763287cf584f3a3996d8f9fdce3e7ce72ee70
+  .claude/skills/writing-docs/references/glossary.md: sha256:38a9567e85579df2013c4d89cf7ba279d3141ea98426ae442563c12aa23f6af2
+  .claude/skills/writing-docs/references/how-to.md: sha256:9e99294a4c6665a09a37d22dbf844cf62239af1ff2a31d92899af26d32d8212d
+  .claude/skills/writing-docs/references/macro-catalog.md: sha256:aca66cdad75811f7cf96a2239658018bc324641d96f06877488ad5fff3ce28c3
+  .claude/skills/writing-docs/references/markdown.md: sha256:6f61468ae64fd20e4c809dfa259d13c68ee2b077328601b99e93711e783fa4f9
+  .claude/skills/writing-docs/references/object-model-reference.md: sha256:e8f229674fef8acb4985fe62df97336a6e349a9d803913d19be33b1cfd806010
+  .claude/skills/writing-docs/references/parameter-catalog.md: sha256:71dfa22377fe07b5cf1a22736d98994f2e3a33774c17217108c2de9f7221186d
+  .claude/skills/writing-docs/references/policy-architecture-note.md: sha256:026e56afb444f2a9390146581e46abe07d541272c565d25b27f4787cc4a5c215
+  .claude/skills/writing-docs/references/technical-design.md: sha256:17ecfc83f84750a680aa8649377f64db1a0aa725b9dc4e579f590110ede8caee
+  .claude/skills/writing-docs/references/tutorial.md: sha256:ec951bceb41c612751d431b937d87a35f04c34726646ba2b3abe9019ad97d103
+  .claude/skills/writing-gherkin/SKILL.md: sha256:e17695bc4577580e6c2ab0b60d22783496b1c8002a750ea87ab04314fdb3d486
+  .claude/skills/writing-gherkin/references/acquisition.md: sha256:43be49e9bf49654ac5aad254ac3d76a4eaf6610a5c8eb9952f22bd7431f7acc6
+  .claude/skills/writing-gherkin/references/enumeration.md: sha256:4a901e9ee2f0e87552e04d1865a346b5a45556f9e404d3fbf0e6c67b845d55bb
+  .claude/skills/writing-gherkin/references/grounding.md: sha256:7b0acea043bda4d8415175aa0a3f9075641374c7625d68c4e19b0831af653a24
+  .claude/skills/writing-gherkin/references/rendering.md: sha256:9447243f286b290f9980568a29b96a9b0f3d0215768c3226e6506a8d32ff5405
+  .claude/skills/writing-style/SKILL.md: sha256:33124be0f8ec1dbe274be5a0884acbcc6f656aadbaf1206ad3d66d346c04a78d
+  .claude/skills/writing-style/references/formatting.md: sha256:cacfd3b2f053f407ad08e26ef2163539503b8adaee709e091aac199896eddd04
+  .claude/skills/writing-style/references/integrity.md: sha256:d74dc9cdad01980189b97128a76da9738cbf9bcd95ab01999a65be5856741beb
+  .claude/skills/writing-style/references/prose-style.md: sha256:e8faa6aed38439b71e10c20dc1e1e6206eece7e13ec8d21875178e576e8ce302
+  .cursor/agents/envgene-reviewer.md: sha256:f9208999da9948637bdf9ae89d10078ed9d67d3f20a701fe37869125a53c0620
+  .opencode/agents/envgene-reviewer.md: sha256:f9208999da9948637bdf9ae89d10078ed9d67d3f20a701fe37869125a53c0620

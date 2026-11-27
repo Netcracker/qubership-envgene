@@ -75,9 +75,9 @@ the using docs at it rather than repeating the definition in each.
 ## Distinct from an object-model reference and a feature doc
 
 The glossary defines a term in one or two sentences and dispatches to the canonical doc. An
-[object-model reference](/.claude/skills/writing-docs/references/object-model-reference.md) defines an object's
+[object-model reference](/.apm/skills/writing-docs/references/object-model-reference.md) defines an object's
 fields in full with an annotated-YAML dictionary - the glossary entry for that object is a one-line gloss that
 links to the reference, not a second copy of the field list. Against a
-[feature doc](/.claude/skills/writing-docs/references/feature.md) the border is depth and the "why": the
+[feature doc](/.apm/skills/writing-docs/references/feature.md) the border is depth and the "why": the
 glossary never explains why a thing exists or how it behaves - it names it and links out. Any explanation that
 creeps into a glossary entry belongs in the canonical doc the entry points to.

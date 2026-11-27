@@ -69,7 +69,7 @@ divergent shape is not the canon.
 
 ## Distinct from a how-to
 
-The border against a [how-to guide](/.claude/skills/writing-docs/references/how-to.md) is the inverse of the
+The border against a [how-to guide](/.apm/skills/writing-docs/references/how-to.md) is the inverse of the
 how-to's. A tutorial teaches understanding on one fixed scenario and narrates the why as it goes - it
 explains while doing, for a reader who is new to the capability. A how-to assumes you already know the
 domain and just lists the steps for one task you came to do, with no teaching. If the document stops
@@ -85,4 +85,4 @@ coherent docs in the repository, because a worked example narrates every step. T
 [`resource-profiles.md`](/docs/tutorials/resource-profiles.md) is about 465 lines and
 [`effective-set.md`](/docs/tutorials/effective-set.md) about 469. A tutorial longer than this is usually
 teaching two capabilities and should split, each with its own scenario. See
-[One document, one job](/.claude/skills/writing-docs/references/doc-structure.md#one-document-one-job).
+[One document, one job](/.apm/skills/writing-docs/references/doc-structure.md#one-document-one-job).

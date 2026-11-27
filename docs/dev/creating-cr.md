@@ -338,5 +338,6 @@ template above. The design can come from a doc PR, a feature doc, or the working
 drafts the body, you review and fill any sections it cannot derive, and it files the issue on your
 go-ahead.
 
-The skill lives in the repository at `.claude/skills/design-to-cr/`, so Claude Code picks it up
-automatically when working in this repository.
+The skill source is `.apm/skills/design-to-cr/`. `apm install` deploys it to `.claude/skills/design-to-cr/`,
+so Claude Code picks it up automatically when you work in this repository. Run the install once after a
+fresh clone, as `AGENTS.md` describes.
