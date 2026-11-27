@@ -15,6 +15,7 @@
   - [Placement modes](#placement-modes)
     - [UC-ARD-PM-1: Root mode behavior (auto-migration from legacy layout)](#uc-ard-pm-1-root-mode-behavior-auto-migration-from-legacy-layout)
     - [UC-ARD-PM-2: Dual mode behavior (upgrade with no cleanup)](#uc-ard-pm-2-dual-mode-behavior-upgrade-with-no-cleanup)
+    - [UC-ARD-PM-3: Env mode behavior (per-environment only)](#uc-ard-pm-3-env-mode-behavior-per-environment-only)
   - [CMDB integration](#cmdb-integration)
     - [UC-ARD-CI-1: Export definitions to CMDB](#uc-ard-ci-1-export-definitions-to-cmdb)
 
@@ -27,15 +28,15 @@ The use cases cover:
 1. Template rendering
 2. Centralized definition generation
 3. Definition override processing (replace and add)
-4. Placement mode behavior (root and dual, includes auto-migration from legacy layout)
+4. Placement mode behavior (root, env, and dual, includes auto-migration from legacy layout)
 5. CMDB integration
 6. Definition lifecycle handling
 
 > [!NOTE]
-> Use cases below describe behavior of effective definitions written to `/appdefs/`, `/regdefs/`. In `dual` placement
-> mode (default), the same effective definitions are also written as compatibility copies to
-> `/environments/<cluster>/<env>/AppDefs|RegDefs/`. See the [Placement modes](#placement-modes) group for mode-specific
-> upgrade scenarios.
+> Use cases below describe behavior of effective definitions written to `/appdefs/`, `/regdefs/`, the default `root`
+> placement mode. The `env` mode writes them to `/environments/<cluster>/<env>/AppDefs|RegDefs/` instead, and `dual`
+> writes them to both locations. See the [Placement modes](#placement-modes) group for mode-specific upgrade
+> scenarios.
 
 ## Use case groups
 
@@ -45,7 +46,7 @@ This document is organized into the following functional groups:
 |---------------------------|--------------------------------------------------------------------|
 | Template Rendering (TR)   | Generation of AppDef and RegDef objects from templates             |
 | Definition Overrides (DO) | Replace or add definitions using definition overrides              |
-| Placement Modes (PM)      | Behavior of `app_reg_def_process` in root and dual placement modes |
+| Placement Modes (PM)      | Behavior of `app_reg_def_process` in root, env, and dual modes     |
 | CMDB Integration (CI)     | Export and synchronization of definitions to CMDB systems          |
 
 ## Template rendering
@@ -341,9 +342,10 @@ template-rendered ones.
 
 ## Placement modes
 
-This group covers behavior of the `app_reg_def_process` step in each placement mode (`root` and `dual`). Both UCs use
-the upgrade-from-legacy-layout scenario as the canonical illustration. The same Steps apply in steady state when no
-legacy files exist (`root` cleanup finds nothing to remove, and `dual` writes copies without legacy coexistence).
+This group covers behavior of the `app_reg_def_process` step in each placement mode (`root`, `env`, and `dual`).
+UC-ARD-PM-1 and UC-ARD-PM-2 use the upgrade-from-legacy-layout scenario as the canonical illustration. The same
+Steps apply in steady state when no legacy files exist (`root` cleanup finds nothing to remove, `env` recreates the
+per-environment folders from the current render output, and `dual` writes copies without legacy coexistence).
 
 ### UC-ARD-PM-1: Root mode behavior (auto-migration from legacy layout)
 
@@ -391,8 +393,9 @@ per-environment AppDef/RegDef files and writes effective definitions only at the
 
 **Description:**
 
-On an upgraded instance repository configured for `dual` placement mode (default), no migration cleanup is performed.
-Legacy per-environment files coexist with new dual-mode compatibility copies.
+On an upgraded instance repository configured for `dual` placement mode, the step writes root-level definitions and
+per-environment compatibility copies. The per-environment folders are rebuilt on each run, so they hold exactly the
+definitions of that run. Root-level definitions that no template produces are not removed.
 
 **Pre-requisites:**
 
@@ -418,18 +421,56 @@ Legacy per-environment files coexist with new dual-mode compatibility copies.
    1. Renders AppDef and RegDef templates with current environment context
    2. Applies definition overrides from `/configuration/appdefs/*`, `/configuration/regdefs/*` (if present)
    3. Writes effective definitions to `/appdefs/*`, `/regdefs/*`
-   4. Writes per-environment compatibility copies to `/environments/<cluster>/<env>/AppDefs/*`,
-      `/environments/<cluster>/<env>/RegDefs/*`, overwriting any pre-existing files with matching names
-   5. Does not touch per-environment files whose names do not match any current template-rendered definition or
-      definition override
+   4. Removes `/environments/<cluster>/<env>/AppDefs/` and `/environments/<cluster>/<env>/RegDefs/` and writes the
+      effective definitions to `/environments/<cluster>/<env>/AppDefs/*`,
+      `/environments/<cluster>/<env>/RegDefs/*`
+   5. Leaves `/appdefs/*` and `/regdefs/*` files that no current definition produces untouched
 
 **Results:**
 
 1. Files in `/appdefs/*`, `/regdefs/*` contain current effective definitions
-2. Per-environment folders contain copies of the current files
-3. Legacy files with names matching current definitions are overwritten with fresh content
-4. Legacy files with names not matching anything (orphans) persist until manually removed or the environment is
-   regenerated
+2. Per-environment folders hold exactly the effective definitions of the current run
+3. Legacy per-environment files with names matching current definitions are replaced with fresh content
+4. Legacy per-environment files with names not matching anything (orphans) are removed when the folders are rebuilt
+
+### UC-ARD-PM-3: Env mode behavior (per-environment only)
+
+**Description:**
+
+An instance repository configured for `env` placement mode receives effective definitions in the per-environment
+folders only. The step does not write the root-level folders.
+
+**Pre-requisites:**
+
+1. Instance repository is configured for `env` placement mode:
+
+   ```yaml
+   app_reg_defs_placement: env
+   ```
+
+2. Template repository contains AppDef and RegDef templates in `/templates/appdefs/*`, `/templates/regdefs/*`.
+
+3. Definition overrides optionally exist in `/configuration/appdefs/*`, `/configuration/regdefs/*`.
+
+**Trigger:** Instance pipeline (GitLab or GitHub) is started with `ENV_NAMES`, `ENV_BUILDER: true`.
+
+**Steps:**
+
+1. The `app_reg_def_process` step runs:
+   1. Renders AppDef and RegDef templates with current environment context
+   2. Applies definition overrides from `/configuration/appdefs/*`, `/configuration/regdefs/*` (if present)
+   3. Removes `/environments/<cluster>/<env>/AppDefs/` and `/environments/<cluster>/<env>/RegDefs/` and writes the
+      effective definitions to `/environments/<cluster>/<env>/AppDefs/*`,
+      `/environments/<cluster>/<env>/RegDefs/*`
+   4. Does not create or update `/appdefs/*`, `/regdefs/*`
+
+**Results:**
+
+1. Per-environment folders hold the effective definitions of the current run plus definition overrides
+2. `/appdefs/*`, `/regdefs/*` keep the content committed before the run
+3. Definition resolution reads the per-environment folders, see
+   [Placement modes](/docs/features/app-reg-defs.md#placement-modes)
+4. A repeated run produces the same folders and files
 
 ## CMDB integration
 
