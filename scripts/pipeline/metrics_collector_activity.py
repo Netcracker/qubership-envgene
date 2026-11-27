@@ -13,7 +13,7 @@ from urllib.parse import urljoin
 import requests
 from cloudevents.core.bindings.http import to_structured_event
 from cloudevents.core.v1.event import CloudEvent
-from envgene_shared.utils.business_utils import to_bool
+from configparser import ConfigParser
 
 if TYPE_CHECKING:
     from pipeline.orchestrator import StepResult
@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 class MetricsCollectorActivity:
     def __init__(self, ctx, trace_id: str | None = None, parent_id: str | None = None):
         self.ctx = ctx
-        self.base_url = os.getenv("METRICS_COLLECTOR_URL", "").strip()
-        self.verify_ssl = to_bool(os.getenv("METRICS_COLLECTOR_SSL_VERIFY"), default=True)
+        self.base_url = os.getenv("DOBP_METRICS_COLLECTOR_URL", "").strip()
+        self.verify_ssl = self.to_bool(os.getenv("METRICS_COLLECTOR_SSL_VERIFY", True))
         self.trace_id = trace_id or (resolve_trace_id() if self.base_url else "")
         self.parent_id = parent_id if parent_id is not None else os.getenv("METRICS_COLLECTOR_PARENT_ID", "")
 
@@ -43,6 +43,12 @@ class MetricsCollectorActivity:
 
     def send_start(self) -> None:
         self._send("start", "IN_PROGRESS")
+
+    @staticmethod
+    def to_bool(value) -> bool:
+        return ConfigParser.BOOLEAN_STATES.get(
+            str(value).strip().lower(), True
+        )
 
     def send_running(self, status: str = "IN_PROGRESS", results: list[StepResult] | None = None,
                      *, use_recorded_completion: bool = False) -> None:
@@ -220,7 +226,7 @@ class MetricsCollectorActivity:
                 if response.status_code == 404:
                     logger.error(
                         "Metrics Collector activity endpoint not found (HTTP 404): %s. "
-                        "Check METRICS_COLLECTOR_URL: it must point to the collector base URL; "
+                        "Check DOBP_METRICS_COLLECTOR_URL: it must point to the collector base URL; "
                         "EnvGene appends /api/v1/activity. Also check the collector route configuration. "
                         "The activity event was not sent; pipeline execution will continue.",
                         activity_url,
@@ -307,4 +313,4 @@ def build_structured_event_body(
 
 
 def resolve_technical_version() -> str:
-    return os.getenv("ENVGENE_DD_VERSION", "").strip()
+    return os.getenv("ENVGENE_VERSION", "").strip()

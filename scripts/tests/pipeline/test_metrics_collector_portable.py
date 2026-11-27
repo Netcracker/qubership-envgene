@@ -5,11 +5,37 @@ import subprocess
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from importlib.metadata import distribution
 from pathlib import Path
+
+from packaging.requirements import Requirement
 
 
 def test_copied_client_runs_both_jobs_without_full_pipeline_package(monkeypatch, tmp_path):
     events = []
+    dependencies = tmp_path / "site-packages"
+    dependencies.mkdir()
+    pending = ["requests", "cloudevents"]
+    copied = set()
+    while pending:
+        package = distribution(pending.pop())
+        name = package.metadata["Name"]
+        if name in copied:
+            continue
+        copied.add(name)
+        for value in package.requires or []:
+            requirement = Requirement(value)
+            if requirement.marker is None or requirement.marker.evaluate({"extra": ""}):
+                pending.append(requirement.name)
+        for file in package.files or []:
+            # Console scripts live outside site-packages and are not needed by the client.
+            if file.is_absolute() or ".." in file.parts or file.suffix == ".pyc":
+                continue
+            source = package.locate_file(file)
+            if source.is_file():
+                target = dependencies / file
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
 
     class Collector(BaseHTTPRequestHandler):
         def do_POST(self):
@@ -39,29 +65,31 @@ def test_copied_client_runs_both_jobs_without_full_pipeline_package(monkeypatch,
     monkeypatch.setenv("CI_PROJECT_ID", "project-1")
     monkeypatch.setenv("CI_PROJECT_DIR", str(job1))
     monkeypatch.setenv("CI_JOB_ID", "prepare")
-    monkeypatch.setenv("ENVGENE_DD_VERSION", "1.2.3")
+    monkeypatch.setenv("ENVGENE_VERSION", "1.2.3")
 
     prefix = """
+import importlib.util
 import os, sys
 from pathlib import Path
 from types import SimpleNamespace
-sys.path.insert(0, sys.argv[1])
+sys.path[:0] = [sys.argv[1], sys.argv[2]]
+for name in ("envgene_shared", "envgenehelper"):
+    assert importlib.util.find_spec(name) is None, f"{name} must be absent from the portable runtime"
 from pipeline.metrics_collector_activity import MetricsCollectorActivity
 from pipeline.metrics_collector_cli import main
 """
 
     def run_client(root, script):
         env = dict(os.environ)
-        env["PYTHONPATH"] = os.pathsep.join(str(Path(path).resolve())
-                                          for path in env.get("PYTHONPATH", "").split(os.pathsep) if path)
         result = subprocess.run(
-            [sys.executable, "-c", prefix + script, str(root / ".metrics-collector-client")],
+            [sys.executable, "-I", "-S", "-c", prefix + script,
+             str(root / ".metrics-collector-client"), str(dependencies)],
             cwd=root, env=env, capture_output=True, text=True, timeout=20,
         )
         assert result.returncode == 0, result.stderr
 
     with ThreadingHTTPServer(("127.0.0.1", 0), Collector) as server:
-        monkeypatch.setenv("METRICS_COLLECTOR_URL", f"http://127.0.0.1:{server.server_port}")
+        monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", f"http://127.0.0.1:{server.server_port}")
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:

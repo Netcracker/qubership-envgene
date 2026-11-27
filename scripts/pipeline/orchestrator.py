@@ -384,7 +384,7 @@ def _run_step(step: PipelineStep, ctx: PipelineParametersHandler, results: list[
 def run_single_env_pipeline() -> None:
     logging.basicConfig(level=getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
 
-    if os.getenv("METRICS_COLLECTOR_URL", "").strip():
+    if os.getenv("DOBP_METRICS_COLLECTOR_URL", "").strip():
         resolve_trace_id()
     ctx = PipelineParametersHandler.from_env()
     ctx.log_pipeline_params()
@@ -491,7 +491,7 @@ def dispatch() -> int:
             return 0
 
         os.environ["ENV_NAMES"] = env_names[0]
-        if os.getenv("METRICS_COLLECTOR_URL", "").strip():
+        if os.getenv("DOBP_METRICS_COLLECTOR_URL", "").strip():
             resolve_trace_id()
         handler = PipelineParametersHandler.from_env()
         handler.write_dotenv(exclude_keys={"ENV_NAMES"})

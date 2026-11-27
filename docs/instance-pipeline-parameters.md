@@ -42,7 +42,7 @@
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`SAVE_ARTIFACTS_STRATEGY`](#save_artifacts_strategy)
     - [`ENVGENE_LOG_LEVEL`](#envgene_log_level)
-    - [`METRICS_COLLECTOR_URL`](#metrics_collector_url)
+    - [`DOBP_METRICS_COLLECTOR_URL`](#DOBP_METRICS_COLLECTOR_URL)
     - [`METRICS_COLLECTOR_SSL_VERIFY`](#metrics_collector_ssl_verify)
     - [`METRICS_COLLECTOR_TRACE_ID`](#metrics_collector_trace_id)
     - [`METRICS_COLLECTOR_PARENT_ID`](#metrics_collector_parent_id)
@@ -1046,10 +1046,10 @@ This variable is passed to the pipeline and is supported by EnvGene Python and J
 
 **Mandatory**: No
 
-### `METRICS_COLLECTOR_URL`
+### `DOBP_METRICS_COLLECTOR_URL`
 
 **Description**: Base URL of Metrics Collector Service. When this variable is set, the Instance pipeline
-sends CloudEvents activity to `{METRICS_COLLECTOR_URL}/api/v1/activity`. When it is empty or absent,
+sends CloudEvents activity to `{DOBP_METRICS_COLLECTOR_URL}/api/v1/activity`. When it is empty or absent,
 EnvGene skips those requests and the pipeline run continues. See
 [Metrics Collector activity](/docs/technical-design/metrics-collector-activity.md).
 
@@ -1078,7 +1078,7 @@ Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.
 
 **Description**: Correlation ID for Metrics Collector activity events (`traceid`). A parent pipeline can
 pass this value so EnvGene events join the parent deployment session. When it is empty and
-`METRICS_COLLECTOR_URL` is set, EnvGene generates a UUID v4 for the run. All events in that run share
+`DOBP_METRICS_COLLECTOR_URL` is set, EnvGene generates a UUID v4 for the run. All events in that run share
 it.
 
 Processed at both `PIPELINE_TYPE: GITLAB_DEPLOY` and `PIPELINE_TYPE: LEGACY`.

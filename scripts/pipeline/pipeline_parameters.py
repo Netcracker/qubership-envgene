@@ -101,7 +101,7 @@ class PipelineParametersHandler(BaseModel):
             "BGD_OPERATION": getenv("BGD_OPERATION"),
             "BG_STATE": getenv("BG_STATE"),
             "EXTERNAL_CREDENTIAL_PROVISIONING": getenv("EXTERNAL_CREDENTIAL_PROVISIONING", ExternalCredentialProvisioning.APPLY.value),
-            "METRICS_COLLECTOR_URL": getenv("METRICS_COLLECTOR_URL", ""),
+            "DOBP_METRICS_COLLECTOR_URL": getenv("DOBP_METRICS_COLLECTOR_URL", ""),
             "METRICS_COLLECTOR_PARENT_ID": getenv("METRICS_COLLECTOR_PARENT_ID", ""),
             "METRICS_COLLECTOR_TRACE_ID": getenv("METRICS_COLLECTOR_TRACE_ID", ""),
         }

@@ -14,7 +14,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--status", choices=("IN_PROGRESS", "SUCCESS", "FAILED", "CANCELLED", "SKIPPED", "UNKNOWN"))
     args = parser.parse_args(argv)
     logging.basicConfig(level=os.getenv("ENVGENE_LOG_LEVEL", "INFO").upper())
-    if not os.getenv("METRICS_COLLECTOR_URL", "").strip():
+    if not os.getenv("DOBP_METRICS_COLLECTOR_URL", "").strip():
         return 0
     if args.event == "trace-id":
         # Export this value in the first job and pass it to later hooks/jobs via dotenv.

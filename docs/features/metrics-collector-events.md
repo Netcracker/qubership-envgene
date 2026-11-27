@@ -63,7 +63,7 @@ results, and every event in the run shares one trace ID.
 
 ### Optional integration
 
-EnvGene sends events only when `METRICS_COLLECTOR_URL` is set. When the variable is empty or absent,
+EnvGene sends events only when `DOBP_METRICS_COLLECTOR_URL` is set. When the variable is empty or absent,
 EnvGene sends nothing and the Instance pipeline run continues. That is the expected state where
 Metrics Collector Service is not deployed.
 
@@ -75,7 +75,7 @@ TLS certificate checks stay on unless `METRICS_COLLECTOR_SSL_VERIFY` is `false`.
    `data` structure, and request examples
 - [Instance pipeline flow](/docs/technical-design/instance-pipeline/flow.md) - Instance pipeline
    steps reported with the finished job
-- [EnvGene repository variables](/docs/envgene-repository-variables.md#metrics_collector_url) - CI/CD
+- [EnvGene repository variables](/docs/envgene-repository-variables.md#DOBP_METRICS_COLLECTOR_URL) - CI/CD
    settings for this integration
-- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#metrics_collector_url) - the
+- [Instance pipeline parameters](/docs/instance-pipeline-parameters.md#DOBP_METRICS_COLLECTOR_URL) - the
    same settings as pipeline inputs

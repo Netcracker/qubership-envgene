@@ -61,7 +61,7 @@ def test_build_structured_event_body_contains_cloudevent_fields(monkeypatch):
     monkeypatch.setenv("CI_PROJECT_URL", "https://gitlab.example.com/platform/env-instance-repo")
     monkeypatch.setenv("CI_JOB_NAME", "instance_pipeline")
     monkeypatch.setenv("CI_JOB_ID", "5550001")
-    monkeypatch.setenv("ENVGENE_DD_VERSION", "1.2.3")
+    monkeypatch.setenv("ENVGENE_VERSION", "1.2.3")
     monkeypatch.setenv("CI_PIPELINE_ID", "987654")
     monkeypatch.setenv("CI_PROJECT_ID", "12345")
 
@@ -97,7 +97,7 @@ def test_build_structured_event_body_contains_cloudevent_fields(monkeypatch):
 def test_build_structured_event_body_omits_empty_parent_id(monkeypatch):
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.delenv("CI_JOB_NAME", raising=False)
-    monkeypatch.delenv("ENVGENE_DD_VERSION", raising=False)
+    monkeypatch.delenv("ENVGENE_VERSION", raising=False)
 
     body, _ = build_structured_event_body(
         event_type="start", status="IN_PROGRESS", trace_id="trace-1", parent_id=" ", data={},
@@ -128,7 +128,7 @@ def test_serialize_step_results_formats_rounded_durations():
 
 def test_send_skips_when_url_is_absent(monkeypatch):
     calls = []
-    monkeypatch.delenv("METRICS_COLLECTOR_URL", raising=False)
+    monkeypatch.delenv("DOBP_METRICS_COLLECTOR_URL", raising=False)
     monkeypatch.setattr("pipeline.metrics_collector_activity.requests.post", lambda **kwargs: calls.append(kwargs))
 
     MetricsCollectorActivity(_ctx()).send_start()
@@ -146,8 +146,8 @@ def test_send_start_and_stop_events(monkeypatch, ssl_verify, expected_verify):
         monkeypatch.delenv("METRICS_COLLECTOR_SSL_VERIFY", raising=False)
     else:
         monkeypatch.setenv("METRICS_COLLECTOR_SSL_VERIFY", ssl_verify)
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com/base")
-    monkeypatch.setenv("ENVGENE_DD_VERSION", "2.3.4")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com/base")
+    monkeypatch.setenv("ENVGENE_VERSION", "2.3.4")
     monkeypatch.setenv("CI_JOB_NAME", "instance_pipeline")
     monkeypatch.setenv("CI_JOB_ID", "5550001")
     monkeypatch.setenv("GITLAB_USER_LOGIN", "test-user")
@@ -214,7 +214,7 @@ def test_send_start_and_stop_events(monkeypatch, ssl_verify, expected_verify):
 
 def test_send_logs_request_body_before_post(monkeypatch, caplog):
     caplog.set_level(logging.DEBUG, logger="pipeline.metrics_collector_activity")
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setattr(
         "pipeline.metrics_collector_activity.requests.post",
@@ -230,7 +230,7 @@ def test_send_logs_request_body_before_post(monkeypatch, caplog):
 
 
 def test_send_logs_and_continues_on_transport_error(monkeypatch):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
 
     def raise_error(*args, **kwargs):
@@ -242,7 +242,7 @@ def test_send_logs_and_continues_on_transport_error(monkeypatch):
 
 
 def test_send_logs_api_error_response(monkeypatch, caplog):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setattr("pipeline.metrics_collector_activity.requests.post", lambda *args, **kwargs: _ErrorResponse())
 
@@ -254,7 +254,7 @@ def test_send_logs_api_error_response(monkeypatch, caplog):
 
 @pytest.mark.parametrize("base_path", ["", "/base", "/base/"])
 def test_send_logs_actionable_message_for_missing_endpoint(monkeypatch, caplog, base_path):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com" + base_path)
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com" + base_path)
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     response = SimpleNamespace(
         ok=False,
@@ -267,7 +267,7 @@ def test_send_logs_actionable_message_for_missing_endpoint(monkeypatch, caplog, 
 
     assert "endpoint not found (HTTP 404)" in caplog.text
     assert "https://collector.example.com" + base_path.rstrip("/") + "/api/v1/activity" in caplog.text
-    assert "Check METRICS_COLLECTOR_URL" in caplog.text
+    assert "Check DOBP_METRICS_COLLECTOR_URL" in caplog.text
     assert "collector base URL" in caplog.text
     assert "pipeline execution will continue" in caplog.text
     assert "<html>" not in caplog.text
@@ -275,7 +275,7 @@ def test_send_logs_actionable_message_for_missing_endpoint(monkeypatch, caplog, 
 
 def test_send_skips_event_larger_than_one_mib(monkeypatch):
     calls = []
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setattr("pipeline.metrics_collector_activity.MAX_EVENT_BODY_BYTES", 1)
     monkeypatch.setattr(
@@ -291,7 +291,7 @@ def test_send_skips_event_larger_than_one_mib(monkeypatch):
 
 @pytest.mark.parametrize("other_job", [False, True])
 def test_stop_retains_delivered_reports_for_downstream_jobs(monkeypatch, tmp_path, other_job):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", str(tmp_path))
     activity = MetricsCollectorActivity(_ctx(), trace_id="current")
@@ -312,7 +312,7 @@ def test_stop_retains_delivered_reports_for_downstream_jobs(monkeypatch, tmp_pat
 
 @pytest.mark.parametrize("failure", ["transport", "rejected", "oversized", "malformed"])
 def test_stop_keeps_reports_when_not_delivered(monkeypatch, tmp_path, failure):
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", str(tmp_path))
     activity = MetricsCollectorActivity(_ctx(), trace_id="current")
@@ -337,7 +337,7 @@ def test_stop_keeps_reports_when_not_delivered(monkeypatch, tmp_path, failure):
 def test_repeated_stop_retains_reports_without_deleting_files(monkeypatch, tmp_path, caplog):
     from pathlib import Path
 
-    monkeypatch.setenv("METRICS_COLLECTOR_URL", "https://collector.example.com")
+    monkeypatch.setenv("DOBP_METRICS_COLLECTOR_URL", "https://collector.example.com")
     monkeypatch.setenv("CI_JOB_ID", "job-1")
     monkeypatch.setenv("METRICS_COLLECTOR_RESULTS_ROOT", str(tmp_path))
     activity = MetricsCollectorActivity(_ctx(), trace_id="current")
